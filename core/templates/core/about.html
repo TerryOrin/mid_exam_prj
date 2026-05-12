@@ -1,0 +1,79 @@
+{% extends "core/base.html" %}
+{% load static %}
+
+{% block title %}關於客棧{% endblock %}
+
+{% block content %}
+<section class="page-hero">
+  <div class="container">
+    <h1><i class="bi bi-info-circle me-2"></i>關於風雲客棧</h1>
+    <p>水井村在地文化 × 虎科大 USR 行動 × 數位平台整合</p>
+  </div>
+</section>
+
+<section class="section-block">
+  <div class="container">
+    <div class="row g-4 align-items-center mb-4">
+      <div class="col-lg-7">
+        <h2 class="section-title">平台定位</h2>
+        <p class="section-subtitle">
+          風雲客棧是水井村數位入口，提供活動資訊、在地故事與 USR 成果展示。
+          平台目標是讓社區資訊可持續維護、可被搜尋、可被更多人看見。
+        </p>
+      </div>
+      <div class="col-lg-5">
+        <img src="{% static 'img/about/about-positioning.jpg' %}" alt="風雲客棧平台定位" class="about-photo">
+      </div>
+    </div>
+
+    <div class="row g-4 align-items-center mb-4">
+      <div class="col-lg-5 order-lg-2">
+        <img src="{% static 'img/about/about-waterwheel.jpg' %}" alt="水井社區" class="about-photo">
+      </div>
+      <div class="col-lg-7 order-lg-1">
+        <h2 class="section-title">服務內容</h2>
+        <div class="row g-3">
+          <div class="col-md-6">
+            <div class="about-point">
+              <h6 class="fw-bold mb-1"><i class="bi bi-calendar-event me-1"></i>活動資訊</h6>
+              <p class="mb-0 text-meta">集中管理活動日期、地點與詳細內容，方便社區推廣。</p>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="about-point">
+              <h6 class="fw-bold mb-1"><i class="bi bi-journal-text me-1"></i>水井故事</h6>
+              <p class="mb-0 text-meta">將地方歷史、文化記憶與人物故事做成可瀏覽內容。</p>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="about-point">
+              <h6 class="fw-bold mb-1"><i class="bi bi-mortarboard me-1"></i>USR 成果</h6>
+              <p class="mb-0 text-meta">呈現師生團隊在社區的實作成果與合作案例。</p>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="about-point">
+              <h6 class="fw-bold mb-1"><i class="bi bi-cpu me-1"></i>AIoT 應用</h6>
+              <p class="mb-0 text-meta">結合智慧監測與資料應用，強化數位治理能力。</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="row g-4 align-items-center">
+      <div class="col-lg-7">
+        <h2 class="section-title">合作願景</h2>
+        <p class="section-subtitle">
+          以「在地需求」為中心，串接社區、學校與民眾。平台不只是展示網站，
+          也是可持續運作的內容管理系統，支援後台維護、活動更新與資訊傳遞。
+        </p>
+        <a href="{% url 'usr' %}" class="btn btn-brand">查看 USR 成果</a>
+      </div>
+      <div class="col-lg-5">
+        <img src="{% static 'img/about/about-pond.jpg' %}" alt="USR 在地合作" class="about-photo">
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}

@@ -1,0 +1,130 @@
+/* Global contrast and usability fixes for Django + Jazzmin admin */
+
+:root {
+  --admin-input-bg: #ffffff;
+  --admin-input-fg: #0f172a;
+  --admin-input-border: #cbd5e1;
+  --admin-focus: #0ea5e9;
+  --admin-muted: #475569;
+  --admin-surface: #f8fafc;
+}
+
+/* Ensure form controls keep readable contrast */
+input[type="text"],
+input[type="search"],
+input[type="email"],
+input[type="url"],
+input[type="number"],
+input[type="date"],
+input[type="time"],
+input[type="datetime-local"],
+input[type="password"],
+textarea,
+select,
+.form-control,
+.select2-selection,
+.select2-selection__rendered {
+  background: var(--admin-input-bg) !important;
+  color: var(--admin-input-fg) !important;
+  border-color: var(--admin-input-border) !important;
+}
+
+select option {
+  background: #ffffff !important;
+  color: #111827 !important;
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: #64748b !important;
+}
+
+/* Better focus visibility */
+input:focus,
+textarea:focus,
+select:focus,
+.form-control:focus,
+.select2-container--focus .select2-selection {
+  border-color: var(--admin-focus) !important;
+  box-shadow: 0 0 0 0.18rem rgba(14, 165, 233, 0.22) !important;
+}
+
+/* Improve help and readonly appearance */
+.help,
+.helptext,
+.form-text,
+.small,
+.text-muted {
+  color: var(--admin-muted) !important;
+}
+
+.readonly,
+.vTextField[readonly],
+textarea[readonly] {
+  background: var(--admin-surface) !important;
+  color: #1f2937 !important;
+  border-color: #dbe2ea !important;
+}
+
+/* Make category radio options easy to scan/click */
+fieldset .radiolist,
+fieldset .radiolist li {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+fieldset .radiolist li {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin: 0 0.65rem 0.35rem 0;
+  padding: 0.35rem 0.55rem;
+  border: 1px solid #dbe2ea;
+  border-radius: 999px;
+  background: #ffffff;
+  color: #0f172a;
+}
+
+fieldset .radiolist input[type="radio"] {
+  margin: 0;
+}
+
+/* Sticky save row for long forms */
+.submit-row {
+  position: sticky;
+  bottom: 0;
+  z-index: 50;
+  background: rgba(255, 255, 255, 0.98);
+  backdrop-filter: saturate(1.1) blur(1px);
+  border-top: 1px solid #e5e7eb;
+}
+
+/* Table readability */
+.change-list .results table thead th {
+  background: #f1f5f9 !important;
+  color: #0f172a !important;
+}
+
+.change-list .results table tbody td,
+.change-list .results table tbody th {
+  color: #111827 !important;
+}
+
+.change-list .results tr:nth-child(even) {
+  background: #fafafa;
+}
+
+/* Message colors */
+.messagelist .success {
+  background: #dcfce7 !important;
+  color: #166534 !important;
+}
+.messagelist .warning {
+  background: #fef3c7 !important;
+  color: #92400e !important;
+}
+.messagelist .error {
+  background: #fee2e2 !important;
+  color: #991b1b !important;
+}

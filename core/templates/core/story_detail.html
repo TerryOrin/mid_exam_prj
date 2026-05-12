@@ -1,0 +1,48 @@
+{% extends "core/base.html" %}
+
+{% block title %}{{ post.title }}{% endblock %}
+
+{% block content %}
+<section class="page-hero">
+  <div class="container">
+    <h1>{{ post.title }}</h1>
+    <p>
+      <a href="{{ back_url }}" class="text-white text-decoration-underline">回上一頁</a>
+    </p>
+  </div>
+</section>
+
+<section class="section-block">
+  <div class="container">
+    <div class="row g-4">
+      <div class="col-lg-8">
+        {% if post.image %}
+        <img src="{{ post.image.url }}" alt="{{ post.title }}" class="event-detail-cover mb-3">
+        {% endif %}
+        <div class="surface-card p-4">
+          <h2 class="section-title fs-3 mb-2">內容詳情</h2>
+          <p class="text-meta mb-3">{{ post.summary }}</p>
+          <div class="event-content">{{ post.content|linebreaksbr|urlize }}</div>
+        </div>
+      </div>
+      <div class="col-lg-4">
+        <div class="surface-card p-4">
+          <h5 class="fw-bold mb-3">文章資訊</h5>
+          <ul class="meta-list">
+            <li><i class="bi bi-bookmark me-2"></i>{{ post.get_category_display }}</li>
+            <li><i class="bi bi-clock me-2"></i>發布：{{ post.created_at|date:"Y/m/d H:i" }}</li>
+            <li><i class="bi bi-clock-history me-2"></i>更新：{{ post.updated_at|date:"Y/m/d H:i" }}</li>
+            {% if post.is_featured %}
+            <li><span class="badge-soft badge-soft--accent"><i class="bi bi-star-fill"></i>精選文章</span></li>
+            {% endif %}
+          </ul>
+        </div>
+        <div class="d-grid gap-2 mt-3">
+          <a href="{{ back_url }}" class="btn btn-brand">回上一頁</a>
+          <a href="{% url 'contact' %}" class="btn btn-outline-brand">聯絡我們</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}

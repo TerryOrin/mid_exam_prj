@@ -1,0 +1,72 @@
+{% extends "core/base.html" %}
+
+{% block title %}聯絡我們{% endblock %}
+
+{% block content %}
+<section class="page-hero">
+  <div class="container">
+    <h1><i class="bi bi-envelope-paper me-2"></i>聯絡我們</h1>
+    <p>有活動合作或內容建議，歡迎留下訊息。</p>
+  </div>
+</section>
+
+<section class="section-block">
+  <div class="container">
+    <div class="row g-4">
+      <div class="col-lg-5">
+        <div class="contact-block mb-3">
+          <h5 class="fw-bold mb-3">聯絡資訊</h5>
+          <ul class="list-unstyled mb-0 text-meta">
+            <li class="mb-2"><i class="bi bi-geo-alt me-2"></i>雲林縣虎尾鎮文化路 64 號</li>
+            <li class="mb-2"><i class="bi bi-telephone me-2"></i>(05) 631-5000</li>
+            <li class="mb-2"><i class="bi bi-envelope me-2"></i>fengcloud@nfu.edu.tw</li>
+            <li><i class="bi bi-clock me-2"></i>週一至週五 09:00 - 17:00</li>
+          </ul>
+        </div>
+        <div class="contact-block">
+          <h6 class="fw-bold">合作方向</h6>
+          <p class="mb-0 text-meta">
+            活動協作、在地故事蒐集、USR 成果展示、社區數位轉譯。
+          </p>
+        </div>
+      </div>
+      <div class="col-lg-7">
+        <div class="surface-card p-4 contact-form">
+          <h5 class="fw-bold mb-3">送出訊息</h5>
+          {% if submitted %}
+          <div class="alert alert-success">
+            已成功送出訊息，我們會盡快與你聯繫。
+          </div>
+          {% endif %}
+          <form method="post" action="{% url 'contact' %}">
+            {% csrf_token %}
+            <div class="mb-3">
+              <label class="form-label fw-semibold" for="id_name">{{ form.name.label }}</label>
+              {{ form.name }}
+              {% if form.name.errors %}<div class="text-danger small mt-1">{{ form.name.errors.0 }}</div>{% endif %}
+            </div>
+            <div class="mb-3">
+              <label class="form-label fw-semibold" for="id_email">{{ form.email.label }}</label>
+              {{ form.email }}
+              {% if form.email.errors %}<div class="text-danger small mt-1">{{ form.email.errors.0 }}</div>{% endif %}
+            </div>
+            <div class="mb-3">
+              <label class="form-label fw-semibold" for="id_subject">{{ form.subject.label }}</label>
+              {{ form.subject }}
+              {% if form.subject.errors %}<div class="text-danger small mt-1">{{ form.subject.errors.0 }}</div>{% endif %}
+            </div>
+            <div class="mb-3">
+              <label class="form-label fw-semibold" for="id_message">{{ form.message.label }}</label>
+              {{ form.message }}
+              {% if form.message.errors %}<div class="text-danger small mt-1">{{ form.message.errors.0 }}</div>{% endif %}
+            </div>
+            <button class="btn btn-brand w-100" type="submit">
+              <i class="bi bi-send me-1"></i>送出訊息
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}

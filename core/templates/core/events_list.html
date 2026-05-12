@@ -1,0 +1,86 @@
+{% extends "core/base.html" %}
+
+{% block title %}活動資訊{% endblock %}
+
+{% block content %}
+<section class="page-hero">
+  <div class="container">
+    <h1><i class="bi bi-calendar-event me-2"></i>活動資訊</h1>
+    <p>瀏覽水井村與 USR 相關活動，支援關鍵字搜尋。</p>
+  </div>
+</section>
+
+<section class="section-block">
+  <div class="container">
+    <form method="get" class="search-wrap mb-3">
+      <div class="input-group">
+        <span class="input-group-text bg-white border-0"><i class="bi bi-search"></i></span>
+        <input type="text" name="q" value="{{ query }}" placeholder="搜尋活動名稱、內容或地點…">
+        <button class="btn btn-brand" type="submit">搜尋</button>
+      </div>
+    </form>
+
+    {% if query %}
+    <p class="text-meta mb-3">搜尋「{{ query }}」共 {{ page_obj.paginator.count }} 筆結果。</p>
+    {% endif %}
+
+    {% if page_obj %}
+    <div class="news-grid">
+      {% for event in page_obj %}
+      <article class="entry-card">
+        {% if event.cover_image %}
+        <div class="entry-card__img-wrap">
+          <img src="{{ event.cover_image.url }}" alt="{{ event.title }}">
+        </div>
+        {% endif %}
+        <div class="entry-card__body">
+          {% if event.is_featured %}
+          <span class="badge-soft badge-soft--accent"><i class="bi bi-star-fill"></i>推薦</span>
+          {% endif %}
+          <h3 class="entry-card__title">{{ event.title }}</h3>
+          <p class="entry-card__summary">{{ event.short_description|truncatechars:96 }}</p>
+          <div class="entry-card__meta">
+            <span><i class="bi bi-clock me-1"></i>{{ event.date|date:"Y/m/d H:i" }}</span>
+            <span><i class="bi bi-geo-alt me-1"></i>{{ event.location }}</span>
+          </div>
+          <div class="entry-card__actions">
+            <a href="{{ event.get_absolute_url }}" class="btn btn-brand btn-sm">查看詳情</a>
+          </div>
+        </div>
+      </article>
+      {% endfor %}
+    </div>
+
+    {% if page_obj.has_other_pages %}
+    <nav class="mt-4">
+      <ul class="pagination justify-content-center">
+        {% if page_obj.has_previous %}
+        <li class="page-item">
+          <a class="page-link" href="?{% if query %}q={{ query }}&{% endif %}page={{ page_obj.previous_page_number }}">上一頁</a>
+        </li>
+        {% endif %}
+
+        {% for num in page_obj.paginator.page_range %}
+          {% if page_obj.number == num %}
+          <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+          {% elif num > page_obj.number|add:"-3" and num < page_obj.number|add:"3" %}
+          <li class="page-item">
+            <a class="page-link" href="?{% if query %}q={{ query }}&{% endif %}page={{ num }}">{{ num }}</a>
+          </li>
+          {% endif %}
+        {% endfor %}
+
+        {% if page_obj.has_next %}
+        <li class="page-item">
+          <a class="page-link" href="?{% if query %}q={{ query }}&{% endif %}page={{ page_obj.next_page_number }}">下一頁</a>
+        </li>
+        {% endif %}
+      </ul>
+    </nav>
+    {% endif %}
+    {% else %}
+    <div class="empty-state surface-card">目前沒有活動資料。</div>
+    {% endif %}
+  </div>
+</section>
+{% endblock %}

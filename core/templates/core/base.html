@@ -1,0 +1,209 @@
+{% load static %}
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="csrf-token" content="{{ csrf_token }}">
+  <title>{% block title %}風雲客棧{% endblock %}｜水井村數位平台</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700;800&family=Noto+Serif+TC:wght@500;700;900&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+  <link href="{% static 'css/style.css' %}" rel="stylesheet">
+  {% block extra_css %}{% endblock %}
+</head>
+<body>
+  <nav class="navbar navbar-expand-lg navbar-dark site-nav">
+    <div class="container">
+      <a class="navbar-brand" href="{% url 'home' %}">
+        <i class="bi bi-house-door-fill me-1"></i>風雲客棧
+      </a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNav">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="mainNav">
+        <ul class="navbar-nav ms-auto align-items-lg-center gap-lg-1">
+          <li class="nav-item"><a class="nav-link" href="{% url 'home' %}">首頁</a></li>
+          <li class="nav-item"><a class="nav-link" href="{% url 'about' %}">關於客棧</a></li>
+          <li class="nav-item"><a class="nav-link" href="{% url 'events_list' %}">活動資訊</a></li>
+          <li class="nav-item"><a class="nav-link" href="{% url 'stories' %}">水井故事</a></li>
+          <li class="nav-item"><a class="nav-link" href="{% url 'usr' %}">USR 成果</a></li>
+          <li class="nav-item"><a class="nav-link" href="{% url 'contact' %}">聯絡我們</a></li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+
+  <main class="site-main">
+    {% block content %}{% endblock %}
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      <div class="row g-4">
+        <div class="col-lg-4">
+          <h5 class="fw-bold">風雲客棧</h5>
+          <p class="footer-muted mb-0">
+            水井村數位入口平台，整合在地故事、USR 成果與活動資訊，
+            讓社區內容可以持續更新與擴散。
+          </p>
+        </div>
+        <div class="col-lg-4">
+          <h5 class="fw-bold">快速連結</h5>
+          <ul class="list-unstyled footer-muted mb-0">
+            <li><a href="{% url 'events_list' %}">活動資訊</a></li>
+            <li><a href="{% url 'stories' %}">水井故事</a></li>
+            <li><a href="{% url 'usr' %}">USR 成果</a></li>
+            <li><a href="{% url 'contact' %}">聯絡我們</a></li>
+          </ul>
+        </div>
+        <div class="col-lg-4">
+          <h5 class="fw-bold">聯絡資訊</h5>
+          <ul class="list-unstyled footer-muted mb-0">
+            <li><i class="bi bi-geo-alt me-1"></i>雲林縣虎尾鎮文化路 64 號</li>
+            <li><i class="bi bi-telephone me-1"></i>(05) 631-5000</li>
+            <li><i class="bi bi-envelope me-1"></i>fengcloud@nfu.edu.tw</li>
+          </ul>
+        </div>
+      </div>
+      <hr class="border-secondary-subtle my-4">
+      <p class="footer-muted text-center mb-0">
+        © 2026 國立虎尾科技大學 USR 計畫｜風雲客棧數位平台
+      </p>
+    </div>
+  </footer>
+
+  <div class="chat-launcher">
+    <button class="chat-btn" id="chatOpenBtn" aria-label="開啟 AI 客棧助理" aria-expanded="false">
+      <i class="bi bi-chat-dots-fill"></i>
+    </button>
+  </div>
+
+  <div class="chat-backdrop" id="chatBackdrop" aria-hidden="true"></div>
+
+  <div class="chat-panel" id="chatPanel">
+    <div class="chat-head">
+      <strong>AI 客棧助理</strong>
+      <button class="btn btn-sm btn-light py-0" id="chatCloseBtn">關閉</button>
+    </div>
+    <div class="chat-log" id="chatLog">
+      <div class="chat-msg bot">可詢問活動時間、故事重點、USR/AIoT 成果。我會優先提供站內可點擊連結。</div>
+    </div>
+    <div class="chat-quick" id="chatQuick">
+      <button type="button" class="chat-quick__item" data-question="請列出近期活動，附上可點擊連結">近期活動＋連結</button>
+      <button type="button" class="chat-quick__item" data-question="請整理三則水井故事重點，附上詳情頁連結">水井故事重點</button>
+      <button type="button" class="chat-quick__item" data-question="USR 成果有哪些？請附可閱讀詳情的連結">USR 成果查詢</button>
+      <button type="button" class="chat-quick__item" data-question="AIoT 相關成果在哪裡看？請直接給我站內連結">AIoT 快速入口</button>
+    </div>
+    <div class="chat-input">
+      <input type="text" id="chatInput" placeholder="例：下週活動有哪些？附連結">
+      <button class="btn btn-brand btn-sm" id="chatSendBtn">送出</button>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+  (function () {
+    const panel = document.getElementById("chatPanel");
+    const backdrop = document.getElementById("chatBackdrop");
+    const openBtn = document.getElementById("chatOpenBtn");
+    const openIcon = openBtn?.querySelector("i");
+    const closeBtn = document.getElementById("chatCloseBtn");
+    const sendBtn = document.getElementById("chatSendBtn");
+    const input = document.getElementById("chatInput");
+    const log = document.getElementById("chatLog");
+    const quick = document.getElementById("chatQuick");
+    const csrf = document.querySelector('meta[name="csrf-token"]')?.content || "";
+
+    function appendMsg(role, text) {
+      const div = document.createElement("div");
+      div.className = "chat-msg " + role;
+      div.textContent = text;
+      log.appendChild(div);
+      log.scrollTop = log.scrollHeight;
+    }
+
+    async function send(rawText) {
+      const text = (rawText || input.value || "").trim();
+      if (!text) return;
+      input.value = "";
+      appendMsg("user", text);
+      appendMsg("bot", "正在查詢中…");
+      const waiting = log.lastElementChild;
+      try {
+        const res = await fetch("{% url 'chatbot_api' %}", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-CSRFToken": csrf
+          },
+          body: JSON.stringify({
+            message: text,
+            page_path: window.location.pathname,
+            page_title: document.title
+          })
+        });
+        const data = await res.json();
+        waiting.remove();
+        const replyText = data.reply || "目前無法取得回應。";
+        if (data.redirect_url) {
+          appendMsg("bot", `${replyText}\n\n已為你開啟相關頁面…`);
+          setTimeout(() => {
+            window.location.href = data.redirect_url;
+          }, 500);
+          return;
+        }
+        appendMsg("bot", replyText);
+      } catch (err) {
+        waiting.remove();
+        appendMsg("bot", "連線發生問題，請稍後再試。");
+      }
+    }
+
+    function setPanelState(isOpen) {
+      panel?.classList.toggle("open", isOpen);
+      backdrop?.classList.toggle("open", isOpen);
+      document.body.classList.toggle("chat-open", isOpen);
+      if (openBtn) {
+        openBtn.setAttribute("aria-expanded", String(isOpen));
+        openBtn.setAttribute("aria-label", isOpen ? "關閉 AI 客棧助理" : "開啟 AI 客棧助理");
+      }
+      if (openIcon) {
+        openIcon.className = isOpen ? "bi bi-x-lg" : "bi bi-chat-dots-fill";
+      }
+      if (isOpen) {
+        input?.focus();
+      }
+    }
+
+    function togglePanel() {
+      const isOpen = panel?.classList.contains("open");
+      setPanelState(!isOpen);
+    }
+
+    openBtn?.addEventListener("click", () => {
+      togglePanel();
+    });
+    backdrop?.addEventListener("click", () => {
+      setPanelState(false);
+    });
+    closeBtn?.addEventListener("click", () => setPanelState(false));
+    sendBtn?.addEventListener("click", send);
+    input?.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") send();
+    });
+    quick?.addEventListener("click", (e) => {
+      const btn = e.target.closest(".chat-quick__item");
+      if (!btn) return;
+      send(btn.dataset.question || "");
+    });
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") setPanelState(false);
+    });
+  })();
+  </script>
+  {% block extra_js %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,171 @@
+{% extends "core/base.html" %}
+
+{% block title %}首頁{% endblock %}
+
+{% block content %}
+<section class="hero-home">
+  {% if slides.0.image %}
+  <div class="hero-home__bg" style="background-image:url('{{ slides.0.image.url }}')"></div>
+  {% else %}
+  <div class="hero-home__bg" style="background:linear-gradient(135deg,#2e6b53,#1f4a39)"></div>
+  {% endif %}
+  <div class="hero-home__overlay"></div>
+  <div class="container hero-home__content">
+    <span class="badge-soft badge-soft--accent"><i class="bi bi-stars"></i>數位策展平台</span>
+    <h1 class="hero-home__title">
+      {% if slides.0 %}{{ slides.0.title }}{% else %}風雲客棧{% endif %}
+    </h1>
+    <p class="hero-home__desc">
+      {% if slides.0.subtitle %}
+      {{ slides.0.subtitle }}
+      {% else %}
+      以水井村為核心，整合在地故事、USR 行動與活動資訊，讓社區內容持續被看見。
+      {% endif %}
+    </p>
+    <div class="d-flex gap-2 flex-wrap mt-3">
+      <a href="{% url 'events_list' %}" class="btn btn-warning fw-bold">查看活動</a>
+      <a href="{% url 'usr' %}" class="btn btn-outline-light fw-bold">查看 USR 成果</a>
+    </div>
+    <div class="hero-kpi">
+      <div class="hero-kpi__item">
+        <p class="hero-kpi__num">{{ featured_events|length }}</p>
+        <p class="hero-kpi__label">精選活動</p>
+      </div>
+      <div class="hero-kpi__item">
+        <p class="hero-kpi__num">{{ water_stories|length }}</p>
+        <p class="hero-kpi__label">水井故事</p>
+      </div>
+      <div class="hero-kpi__item">
+        <p class="hero-kpi__num">{{ usr_posts|length }}</p>
+        <p class="hero-kpi__label">USR 文章</p>
+      </div>
+      <div class="hero-kpi__item">
+        <p class="hero-kpi__num">{{ aiot_posts|length }}</p>
+        <p class="hero-kpi__label">AIoT 案例</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section-block pt-0">
+  <div class="container">
+    <div class="d-flex justify-content-between align-items-end mb-3 flex-wrap gap-2">
+      <div>
+        <h2 class="section-title mb-1">精選活動</h2>
+        <p class="section-subtitle mb-0">來自目前資料庫中的最新活動內容。</p>
+      </div>
+      <a href="{% url 'events_list' %}" class="btn btn-outline-brand">全部活動</a>
+    </div>
+    {% if featured_events %}
+    <div class="news-grid">
+      {% for event in featured_events %}
+      <article class="entry-card">
+        {% if event.cover_image %}
+        <div class="entry-card__img-wrap">
+          <img src="{{ event.cover_image.url }}" alt="{{ event.title }}">
+        </div>
+        {% endif %}
+        <div class="entry-card__body">
+          <span class="badge-soft badge-soft--brand"><i class="bi bi-calendar-event"></i>活動</span>
+          <h3 class="entry-card__title">{{ event.title }}</h3>
+          <p class="entry-card__summary">{{ event.short_description|truncatechars:92 }}</p>
+          <div class="entry-card__meta">
+            <span><i class="bi bi-clock me-1"></i>{{ event.date|date:"Y/m/d H:i" }}</span>
+            <span><i class="bi bi-geo-alt me-1"></i>{{ event.location }}</span>
+          </div>
+          <div class="entry-card__actions">
+            <a href="{{ event.get_absolute_url }}" class="btn btn-brand btn-sm">閱讀詳情</a>
+          </div>
+        </div>
+      </article>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state surface-card">目前尚無活動資料。</div>
+    {% endif %}
+  </div>
+</section>
+
+<section class="section-block pt-0">
+  <div class="container">
+    <div class="d-flex justify-content-between align-items-end mb-3 flex-wrap gap-2">
+      <div>
+        <h2 class="section-title mb-1">水井故事</h2>
+        <p class="section-subtitle mb-0">收錄在地記憶與社區脈絡。</p>
+      </div>
+      <a href="{% url 'stories' %}" class="btn btn-outline-brand">全部故事</a>
+    </div>
+    {% if water_stories %}
+    <div class="story-grid">
+      {% for story in water_stories %}
+      <article class="entry-card">
+        {% if story.image %}
+        <div class="entry-card__img-wrap">
+          <img src="{{ story.image.url }}" alt="{{ story.title }}">
+        </div>
+        {% endif %}
+        <div class="entry-card__body">
+          <span class="badge-soft badge-soft--accent"><i class="bi bi-book"></i>{{ story.get_category_display }}</span>
+          <h3 class="entry-card__title">{{ story.title }}</h3>
+          <p class="entry-card__summary">{{ story.summary|truncatechars:96 }}</p>
+          <div class="entry-card__actions">
+            <a href="{{ story.get_absolute_url }}" class="btn btn-brand btn-sm">查看詳情</a>
+          </div>
+        </div>
+      </article>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state surface-card">目前尚無故事資料。</div>
+    {% endif %}
+  </div>
+</section>
+
+<section class="section-block pt-0">
+  <div class="container">
+    <div class="d-flex justify-content-between align-items-end mb-3 flex-wrap gap-2">
+      <div>
+        <h2 class="section-title mb-1">USR 與 AIoT 成果</h2>
+        <p class="section-subtitle mb-0">大學社會責任與智慧應用實踐案例。</p>
+      </div>
+      <a href="{% url 'usr' %}" class="btn btn-outline-brand">進入成果頁</a>
+    </div>
+    <div class="usr-grid">
+      {% for post in usr_posts %}
+      <article class="entry-card">
+        {% if post.image %}
+        <div class="entry-card__img-wrap">
+          <img src="{{ post.image.url }}" alt="{{ post.title }}">
+        </div>
+        {% endif %}
+        <div class="entry-card__body">
+          <span class="badge-soft badge-soft--brand">{{ post.get_category_display }}</span>
+          <h3 class="entry-card__title">{{ post.title }}</h3>
+          <p class="entry-card__summary">{{ post.summary|truncatechars:92 }}</p>
+          <div class="entry-card__actions">
+            <a href="{{ post.get_absolute_url }}" class="btn btn-brand btn-sm">查看詳情</a>
+          </div>
+        </div>
+      </article>
+      {% endfor %}
+      {% for post in aiot_posts %}
+      <article class="entry-card">
+        {% if post.image %}
+        <div class="entry-card__img-wrap">
+          <img src="{{ post.image.url }}" alt="{{ post.title }}">
+        </div>
+        {% endif %}
+        <div class="entry-card__body">
+          <span class="badge-soft badge-soft--accent">{{ post.get_category_display }}</span>
+          <h3 class="entry-card__title">{{ post.title }}</h3>
+          <p class="entry-card__summary">{{ post.summary|truncatechars:92 }}</p>
+          <div class="entry-card__actions">
+            <a href="{{ post.get_absolute_url }}" class="btn btn-brand btn-sm">查看詳情</a>
+          </div>
+        </div>
+      </article>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+{% endblock %}

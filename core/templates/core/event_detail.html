@@ -1,0 +1,48 @@
+{% extends "core/base.html" %}
+
+{% block title %}{{ event.title }}{% endblock %}
+
+{% block content %}
+<section class="page-hero">
+  <div class="container">
+    <h1>{{ event.title }}</h1>
+    <p>
+      <a href="{% url 'events_list' %}" class="text-white text-decoration-underline">回活動列表</a>
+    </p>
+  </div>
+</section>
+
+<section class="section-block">
+  <div class="container">
+    <div class="row g-4">
+      <div class="col-lg-8">
+        {% if event.cover_image %}
+        <img src="{{ event.cover_image.url }}" alt="{{ event.title }}" class="event-detail-cover mb-3">
+        {% endif %}
+        <div class="surface-card p-4">
+          <h2 class="section-title fs-3 mb-2">活動內容</h2>
+          <p class="text-meta mb-3">{{ event.short_description }}</p>
+          <div class="event-content">{{ event.description|linebreaksbr|urlize }}</div>
+        </div>
+      </div>
+      <div class="col-lg-4">
+        <div class="surface-card p-4">
+          <h5 class="fw-bold mb-3">活動資訊</h5>
+          <ul class="meta-list">
+            <li><i class="bi bi-calendar3 me-2"></i>{{ event.date|date:"Y/m/d H:i" }}</li>
+            <li><i class="bi bi-geo-alt me-2"></i>{{ event.location }}</li>
+            <li><i class="bi bi-clock-history me-2"></i>更新：{{ event.updated_at|date:"Y/m/d" }}</li>
+            {% if event.is_featured %}
+            <li><span class="badge-soft badge-soft--accent"><i class="bi bi-star-fill"></i>精選活動</span></li>
+            {% endif %}
+          </ul>
+        </div>
+        <div class="d-grid gap-2 mt-3">
+          <a href="{% url 'events_list' %}" class="btn btn-brand">回活動列表</a>
+          <a href="{% url 'contact' %}" class="btn btn-outline-brand">聯絡我們</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}

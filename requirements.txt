@@ -1,0 +1,5 @@
+Django>=4.2,<7.0
+Pillow
+google-genai
+python-dotenv
+django-jazzmin

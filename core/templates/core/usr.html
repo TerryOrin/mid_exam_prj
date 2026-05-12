@@ -1,0 +1,50 @@
+{% extends "core/base.html" %}
+
+{% block title %}USR 成果{% endblock %}
+
+{% block content %}
+<section class="page-hero">
+  <div class="container">
+    <h1><i class="bi bi-mortarboard-fill me-2"></i>USR 成果與實踐</h1>
+    <p>整合 USR、體驗活動與 AIoT 內容，支援分類瀏覽。</p>
+  </div>
+</section>
+
+<section class="section-block">
+  <div class="container">
+    <div class="filter-bar">
+      <a href="{% url 'usr' %}" class="filter-chip {% if not selected_category %}active{% endif %}">全部</a>
+      <a href="{% url 'usr' %}?category=usr" class="filter-chip {% if selected_category == 'usr' %}active{% endif %}">USR</a>
+      <a href="{% url 'usr' %}?category=experience" class="filter-chip {% if selected_category == 'experience' %}active{% endif %}">體驗活動</a>
+      <a href="{% url 'usr' %}?category=aiot" class="filter-chip {% if selected_category == 'aiot' %}active{% endif %}">AIoT</a>
+    </div>
+
+    {% if posts %}
+    <div class="usr-grid">
+      {% for post in posts %}
+      <article class="entry-card">
+        {% if post.image %}
+        <div class="entry-card__img-wrap">
+          <img src="{{ post.image.url }}" alt="{{ post.title }}">
+        </div>
+        {% endif %}
+        <div class="entry-card__body">
+          <span class="badge-soft badge-soft--brand">{{ post.get_category_display }}</span>
+          <h3 class="entry-card__title">{{ post.title }}</h3>
+          <p class="entry-card__summary">{{ post.summary }}</p>
+          <div class="entry-card__meta">
+            <span><i class="bi bi-clock me-1"></i>{{ post.created_at|date:"Y/m/d" }}</span>
+          </div>
+          <div class="entry-card__actions">
+            <a href="{{ post.get_absolute_url }}" class="btn btn-brand btn-sm">查看詳情</a>
+          </div>
+        </div>
+      </article>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state surface-card">此分類目前沒有資料。</div>
+    {% endif %}
+  </div>
+</section>
+{% endblock %}

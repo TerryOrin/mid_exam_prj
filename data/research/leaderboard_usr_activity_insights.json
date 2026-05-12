@@ -1,0 +1,3963 @@
+{
+  "generated_at": "2026-04-18T19:37:14.961704",
+  "source": "https://voteweb.pythonanywhere.com/api/post/leaderboard/",
+  "summary": {
+    "site_count": 30,
+    "pythonanywhere_count": 26,
+    "available_site_count": 24,
+    "ui_signal_counts": {
+      "bootstrap_ui": 24,
+      "contact_form": 22,
+      "card_layout": 20,
+      "search_ui": 15,
+      "hero_section": 12,
+      "django_admin": 10,
+      "timeline_section": 6,
+      "glass_effect": 6,
+      "chatbot_ui": 3
+    },
+    "keyword_counts": {
+      "水井": 159,
+      "風雲客棧": 82,
+      "USR": 81,
+      "活動": 64,
+      "故事": 40,
+      "永續": 37,
+      "體驗": 33,
+      "計畫": 29,
+      "社區": 24,
+      "AIoT": 20,
+      "課程": 19,
+      "導覽": 12,
+      "服務": 8,
+      "工作坊": 5
+    },
+    "top_sites_by_extracted_content": [
+      {
+        "rank": 3,
+        "site_url": "https://web41243166.pythonanywhere.com",
+        "article_title": "風雲客棧",
+        "snippets": 20,
+        "ui_signals": [
+          "bootstrap_ui",
+          "card_layout",
+          "contact_form",
+          "django_admin",
+          "glass_effect",
+          "hero_section",
+          "search_ui",
+          "timeline_section"
+        ]
+      },
+      {
+        "rank": 1,
+        "site_url": "https://41443122linruiyan.pythonanywhere.com/",
+        "article_title": "風雲客棧網站22",
+        "snippets": 20,
+        "ui_signals": [
+          "bootstrap_ui",
+          "card_layout",
+          "contact_form",
+          "django_admin",
+          "hero_section",
+          "search_ui",
+          "timeline_section"
+        ]
+      },
+      {
+        "rank": 2,
+        "site_url": "https://n41443154.pythonanywhere.com/",
+        "article_title": "風雲客棧54",
+        "snippets": 20,
+        "ui_signals": [
+          "bootstrap_ui",
+          "card_layout",
+          "chatbot_ui",
+          "contact_form",
+          "django_admin",
+          "hero_section",
+          "search_ui"
+        ]
+      },
+      {
+        "rank": 23,
+        "site_url": "https://41243260.pythonanywhere.com/",
+        "article_title": "水井村「風雲客棧」",
+        "snippets": 20,
+        "ui_signals": [
+          "bootstrap_ui",
+          "card_layout",
+          "contact_form",
+          "django_admin",
+          "hero_section",
+          "search_ui",
+          "timeline_section"
+        ]
+      },
+      {
+        "rank": 20,
+        "site_url": "https://41350126.pythonanywhere.com/",
+        "article_title": "風雲課棧",
+        "snippets": 20,
+        "ui_signals": [
+          "bootstrap_ui",
+          "card_layout",
+          "contact_form",
+          "django_admin",
+          "glass_effect",
+          "hero_section",
+          "search_ui"
+        ]
+      },
+      {
+        "rank": 7,
+        "site_url": "https://41443116.pythonanywhere.com",
+        "article_title": "風雲客棧",
+        "snippets": 20,
+        "ui_signals": [
+          "bootstrap_ui",
+          "card_layout",
+          "contact_form",
+          "hero_section",
+          "search_ui",
+          "timeline_section"
+        ]
+      },
+      {
+        "rank": 9,
+        "site_url": "https://41443139.pythonanywhere.com/",
+        "article_title": "風雲客棧",
+        "snippets": 20,
+        "ui_signals": [
+          "bootstrap_ui",
+          "card_layout",
+          "contact_form",
+          "hero_section",
+          "search_ui",
+          "timeline_section"
+        ]
+      },
+      {
+        "rank": 28,
+        "site_url": "https://41243168.pythonanywhere.com/",
+        "article_title": "風雲客棧",
+        "snippets": 20,
+        "ui_signals": [
+          "bootstrap_ui",
+          "card_layout",
+          "contact_form",
+          "django_admin",
+          "glass_effect",
+          "search_ui"
+        ]
+      },
+      {
+        "rank": 11,
+        "site_url": "https://41143158.pythonanywhere.com/",
+        "article_title": "風雲客棧",
+        "snippets": 20,
+        "ui_signals": [
+          "bootstrap_ui",
+          "card_layout",
+          "contact_form",
+          "hero_section",
+          "search_ui"
+        ]
+      },
+      {
+        "rank": 8,
+        "site_url": "https://yzhi.pythonanywhere.com/",
+        "article_title": "風雲客棧",
+        "snippets": 20,
+        "ui_signals": [
+          "bootstrap_ui",
+          "card_layout",
+          "contact_form",
+          "django_admin",
+          "search_ui"
+        ]
+      }
+    ]
+  },
+  "results": [
+    {
+      "rank": 1,
+      "slug": "22",
+      "article_title": "風雲客棧網站22",
+      "student_id": "41443122",
+      "author": "林睿彥",
+      "article_url": "https://voteweb.pythonanywhere.com/articles_list/22/",
+      "site_url": "https://41443122linruiyan.pythonanywhere.com/",
+      "site_host": "41443122linruiyan.pythonanywhere.com",
+      "is_pythonanywhere": true,
+      "likes_count": 7,
+      "views": 965,
+      "root_status": 200,
+      "ui_signals": [
+        "bootstrap_ui",
+        "card_layout",
+        "contact_form",
+        "django_admin",
+        "hero_section",
+        "search_ui",
+        "timeline_section"
+      ],
+      "ui_signal_sources": [
+        "https://41443122linruiyan.pythonanywhere.com/",
+        "https://41443122linruiyan.pythonanywhere.com/events/",
+        "https://41443122linruiyan.pythonanywhere.com/about/",
+        "https://41443122linruiyan.pythonanywhere.com/contact/"
+      ],
+      "usr_activity_snippets": [
+        {
+          "text": "水井村風雲客棧 | 數位平台",
+          "source_url": "https://41443122linruiyan.pythonanywhere.com/"
+        },
+        {
+          "text": "風雲客棧數位入口平台",
+          "source_url": "https://41443122linruiyan.pythonanywhere.com/"
+        },
+        {
+          "text": "社區推廣人次",
+          "source_url": "https://41443122linruiyan.pythonanywhere.com/"
+        },
+        {
+          "text": "環境永續目標",
+          "source_url": "https://41443122linruiyan.pythonanywhere.com/"
+        },
+        {
+          "text": "鑿井師傅的故鄉 這個村莊名為「水井」",
+          "source_url": "https://41443122linruiyan.pythonanywhere.com/"
+        },
+        {
+          "text": "點擊閱讀故事 →",
+          "source_url": "https://41443122linruiyan.pythonanywhere.com/"
+        },
+        {
+          "text": "口湖水井村水首三大王",
+          "source_url": "https://41443122linruiyan.pythonanywhere.com/"
+        },
+        {
+          "text": "USR大學社會責任實踐計畫",
+          "source_url": "https://41443122linruiyan.pythonanywhere.com/"
+        },
+        {
+          "text": "客棧與校內活動",
+          "source_url": "https://41443122linruiyan.pythonanywhere.com/events/"
+        },
+        {
+          "text": "2025第二屆永續週「微藻固碳系統啟動儀式暨永續週成果展」圓滿成功！！",
+          "source_url": "https://41443122linruiyan.pythonanywhere.com/events/"
+        },
+        {
+          "text": "2025第二屆永續週「微藻固碳系統啟動儀式暨永續週成果展」圓滿成功，永續處以「實踐綠生活、形塑綠校園」目標，展出微藻固碳系統、四大永續轉型成果、二手玩具市集及環保互動體驗等攤位，並由校長及貴賓共同啟動微藻固碳系統，驅動虎科大邁向永續綠色校園。",
+          "source_url": "https://41443122linruiyan.pythonanywhere.com/events/"
+        },
+        {
+          "text": "【社會責任實踐教育課程成果活動】資材循環創價實務課程–學生作品成果展於圖書館歡迎參觀 !!",
+          "source_url": "https://41443122linruiyan.pythonanywhere.com/events/"
+        },
+        {
+          "text": "【社會責任實踐教育課程成果活動】資材循環創價實務課程–學生作品成果展",
+          "source_url": "https://41443122linruiyan.pythonanywhere.com/events/"
+        },
+        {
+          "text": "114年「永續行動大學-綠領人才ft.永續實踐 x 博雅通識 聯合博覽會 暨ECOCO智慧循環經濟系統啟動儀式」，12/18(四)在第一校區大草皮 熱烈歡迎參與!",
+          "source_url": "https://41443122linruiyan.pythonanywhere.com/events/"
+        },
+        {
+          "text": "一、本次活動以「永續行動大學」為題，結合雲林縣政府、本校永續處與通識教育中心之豐碩成果共同辦理，活動策劃不同類型計畫共…",
+          "source_url": "https://41443122linruiyan.pythonanywhere.com/events/"
+        },
+        {
+          "text": "水井村:風雲客棧",
+          "source_url": "https://41443122linruiyan.pythonanywhere.com/about/"
+        },
+        {
+          "text": "來自國立虎尾科技大學的30位師生走進塵封多年的「風雲客棧」，以雙手與熱情，喚醒這座沉睡已久的古厝，展開「風雲客棧永續行動」。",
+          "source_url": "https://41443122linruiyan.pythonanywhere.com/about/"
+        },
+        {
+          "text": "虎科大攜手水井村 風雲再起，點亮古厝新生命",
+          "source_url": "https://41443122linruiyan.pythonanywhere.com/about/"
+        },
+        {
+          "text": "師生與社區居民並肩整理環境、分工合作，不只是空間的重整，更是一場情感的連結。青年學子的投入，讓原本靜默的老屋再次充滿笑聲與溫度，也讓村庄重新感受到久違的活力與希望。這份來自校園的「虎力」，正是永續實踐最真實的模樣。",
+          "source_url": "https://41443122linruiyan.pythonanywhere.com/about/"
+        },
+        {
+          "text": "緊接著於3月11日登場的「風雲共識SIG活動」，再次將人群帶回這座逐漸甦醒的場域。村民與師長齊聚一堂，在風雲客棧內回顧過去一年水井USR計畫的豐碩成果：從在地特色的「水井三寶」、充滿創意的「不蒜花」，到融合科技與美學的工藝作品，以及象徵未來願景的智慧魚塭模擬模型與USR紀錄影片，每一項成果都承載著地方與學界共同努力的痕跡，現場更獲得村民一致肯定與熱烈回響。",
+          "source_url": "https://41443122linruiyan.pythonanywhere.com/about/"
+        }
+      ],
+      "crawled_pages": [
+        {
+          "url": "https://41443122linruiyan.pythonanywhere.com/",
+          "status": 200,
+          "content_type": "text/html; charset=utf-8",
+          "error": ""
+        },
+        {
+          "url": "https://41443122linruiyan.pythonanywhere.com/events/",
+          "status": 200,
+          "content_type": "text/html; charset=utf-8",
+          "error": ""
+        },
+        {
+          "url": "https://41443122linruiyan.pythonanywhere.com/event/",
+          "status": 404,
+          "content_type": "text/html; charset=utf-8",
+          "error": ""
+        },
+        {
+          "url": "https://41443122linruiyan.pythonanywhere.com/stories/",
+          "status": 404,
+          "content_type": "text/html; charset=utf-8",
+          "error": ""
+        },
+        {
+          "url": "https://41443122linruiyan.pythonanywhere.com/story/",
+          "status": 404,
+          "content_type": "text/html; charset=utf-8",
+          "error": ""
+        },
+        {
+          "url": "https://41443122linruiyan.pythonanywhere.com/usr/",
+          "status": 404,
+          "content_type": "text/html; charset=utf-8",
+          "error": ""
+        },
+        {
+          "url": "https://41443122linruiyan.pythonanywhere.com/about/",
+          "status": 200,
+          "content_type": "text/html; charset=utf-8",
+          "error": ""
+        },
+        {
+          "url": "https://41443122linruiyan.pythonanywhere.com/contact/",
+          "status": 200,
+          "content_type": "text/html; charset=utf-8",
+          "error": ""
+        }
+      ]
+    },
+    {
+      "rank": 2,
+      "slug": "54",
+      "article_title": "風雲客棧54",
+      "student_id": "41443154",
+      "author": "簡嘉亨",
+      "article_url": "https://voteweb.pythonanywhere.com/articles_list/54/",
+      "site_url": "https://n41443154.pythonanywhere.com/",
+      "site_host": "n41443154.pythonanywhere.com",
+      "is_pythonanywhere": true,
+      "likes_count": 4,
+      "views": 145,
+      "root_status": 200,
+      "ui_signals": [
+        "bootstrap_ui",
+        "card_layout",
+        "chatbot_ui",
+        "contact_form",
+        "django_admin",
+        "hero_section",
+        "search_ui"
+      ],
+      "ui_signal_sources": [
+        "https://n41443154.pythonanywhere.com/",
+        "https://n41443154.pythonanywhere.com/events/",
+        "https://n41443154.pythonanywhere.com/stories/",
+        "https://n41443154.pythonanywhere.com/usr/"
+      ],
+      "usr_activity_snippets": [
+        {
+          "text": "首頁｜風雲客棧",
+          "source_url": "https://n41443154.pythonanywhere.com/"
+        },
+        {
+          "text": "水井村風雲客棧 · 數位探索入口",
+          "source_url": "https://n41443154.pythonanywhere.com/"
+        },
+        {
+          "text": "本平台以水井村風雲客棧為核心，整合地方故事、活動推廣、USR成果與智慧科技應用，打造一個兼具文化深度與數位體驗的入口平台。",
+          "source_url": "https://n41443154.pythonanywhere.com/"
+        },
+        {
+          "text": "透過系統化的內容展示與互動設計，讓村民、遊客與學習者都能輕鬆探索在地價值，參與多元活動，並深入理解水井村的人文脈絡與發展成果。",
+          "source_url": "https://n41443154.pythonanywhere.com/"
+        },
+        {
+          "text": "探索地方故事",
+          "source_url": "https://n41443154.pythonanywhere.com/"
+        },
+        {
+          "text": "查看最新活動",
+          "source_url": "https://n41443154.pythonanywhere.com/"
+        },
+        {
+          "text": "地方故事 × USR × 社區推廣",
+          "source_url": "https://n41443154.pythonanywhere.com/"
+        },
+        {
+          "text": "地方故事、活動推廣、USR 成果展示。",
+          "source_url": "https://n41443154.pythonanywhere.com/"
+        },
+        {
+          "text": "活動資訊｜風雲客棧",
+          "source_url": "https://n41443154.pythonanywhere.com/events/"
+        },
+        {
+          "text": "查看最新活動、體驗課程與社區推廣內容。",
+          "source_url": "https://n41443154.pythonanywhere.com/events/"
+        },
+        {
+          "text": "智慧科技創新應用與在地共學實作活動",
+          "source_url": "https://n41443154.pythonanywhere.com/events/"
+        },
+        {
+          "text": "本活動結合大學社會責任（USR）精神與智慧科技實作，透過學生團隊進行機器人、自走車與感測模組的開發與測試，展現跨域學習與實作應用成果。活動中，學生運用程式設計、硬體組裝、3D列印…",
+          "source_url": "https://n41443154.pythonanywhere.com/events/"
+        },
+        {
+          "text": "水井村智慧減碳節水三生一體USR計畫",
+          "source_url": "https://n41443154.pythonanywhere.com/events/"
+        },
+        {
+          "text": "三寶奇緣文化體驗活動",
+          "source_url": "https://n41443154.pythonanywhere.com/events/"
+        },
+        {
+          "text": "結合地方文化與手作創作的USR實踐",
+          "source_url": "https://n41443154.pythonanywhere.com/events/"
+        },
+        {
+          "text": "在USR計畫的推動下，「三寶奇緣」活動成為水井村文化推廣的重要實踐之一。活動以地方文化元素「水井三寶」為主題，結合手作體驗與文化交流，讓參與…",
+          "source_url": "https://n41443154.pythonanywhere.com/events/"
+        },
+        {
+          "text": "地方故事｜風雲客棧",
+          "source_url": "https://n41443154.pythonanywhere.com/stories/"
+        },
+        {
+          "text": "從地方記憶、文化脈絡與社區故事出發，認識水井村的價值。",
+          "source_url": "https://n41443154.pythonanywhere.com/stories/"
+        },
+        {
+          "text": "水井村的生活記憶",
+          "source_url": "https://n41443154.pythonanywhere.com/stories/"
+        },
+        {
+          "text": "水井村的發展來自居民長期的努力與累積，無論是農業、生態環境，或社區活動，都蘊含著豐富的生活經驗。",
+          "source_url": "https://n41443154.pythonanywhere.com/stories/"
+        }
+      ],
+      "crawled_pages": [
+        {
+          "url": "https://n41443154.pythonanywhere.com/",
+          "status": 200,
+          "content_type": "text/html; charset=utf-8",
+          "error": ""
+        },
+        {
+          "url": "https://n41443154.pythonanywhere.com/events/",
+          "status": 200,
+          "content_type": "text/html; charset=utf-8",
+          "error": ""
+        },
+        {
+          "url": "https://n41443154.pythonanywhere.com/event/",
+          "status": 404,
+          "content_type": "text/html; charset=utf-8",
+          "error": ""
+        },
+        {
+          "url": "https://n41443154.pythonanywhere.com/stories/",
+          "status": 200,
+          "content_type": "text/html; charset=utf-8",
+          "error": ""
+        },
+        {
+          "url": "https://n41443154.pythonanywhere.com/story/",
+          "status": 404,
+          "content_type": "text/html; charset=utf-8",
+          "error": ""
+        },
+        {
+          "url": "https://n41443154.pythonanywhere.com/usr/",
+          "status": 200,
+          "content_type": "text/html; charset=utf-8",
+          "error": ""
+        },
+        {
+          "url": "https://n41443154.pythonanywhere.com/about/",
+          "status": 404,
+          "content_type": "text/html; charset=utf-8",
+          "error": ""
+        },
+        {
+          "url": "https://n41443154.pythonanywhere.com/contact/",
+          "status": 404,
+          "content_type": "text/html; charset=utf-8",
+          "error": ""
+        }
+      ]
+    },
+    {
+      "rank": 3,
+      "slug": "post-18",
+      "article_title": "風雲客棧",
+      "student_id": "41243166",
+      "author": "廖子科",
+      "article_url": "https://voteweb.pythonanywhere.com/articles_list/post-18/",
+      "site_url": "https://web41243166.pythonanywhere.com",
+      "site_host": "web41243166.pythonanywhere.com",
+      "is_pythonanywhere": true,
+      "likes_count": 3,
+      "views": 106,
+      "root_status": 200,
+      "ui_signals": [
+        "bootstrap_ui",
+        "card_layout",
+        "contact_form",
+        "django_admin",
+        "glass_effect",
+        "hero_section",
+        "search_ui",
+        "timeline_section"
+      ],
+      "ui_signal_sources": [
+        "https://web41243166.pythonanywhere.com/",
+        "https://web41243166.pythonanywhere.com/events/",
+        "https://web41243166.pythonanywhere.com/story/",
+        "https://web41243166.pythonanywhere.com/usr/",
+        "https://web41243166.pythonanywhere.com/about/",
+        "https://web41243166.pythonanywhere.com/contact/"
+      ],
+      "usr_activity_snippets": [
+        {
+          "text": "風雲客棧數位平台",
+          "source_url": "https://web41243166.pythonanywhere.com/"
+        },
+        {
+          "text": "關於風雲客棧",
+          "source_url": "https://web41243166.pythonanywhere.com/"
+        },
+        {
+          "text": "USR 成果",
+          "source_url": "https://web41243166.pythonanywhere.com/"
+        },
+        {
+          "text": "USR榮獲在地共融首獎！",
+          "source_url": "https://web41243166.pythonanywhere.com/"
+        },
+        {
+          "text": "虎科大團隊導入智慧科技與在地合作，推動水井村在生產、生態與生活上的轉型發展，打造三生共好典範，並榮獲USR在地共融首獎。",
+          "source_url": "https://web41243166.pythonanywhere.com/"
+        },
+        {
+          "text": "社區共融與在地連結",
+          "source_url": "https://web41243166.pythonanywhere.com/"
+        },
+        {
+          "text": "透過USR計畫串聯在地居民與學校資源，社區情感，展現人與土地之間緊密連結的生活樣貌。",
+          "source_url": "https://web41243166.pythonanywhere.com/"
+        },
+        {
+          "text": "風雲客棧作為在地交流的重要場域，迎接國立虎尾科技大學校長與電機資訊學院院長蒞臨參訪。藉由實地了解與交流互動，深化校地合作基礎，為地方發展與人才培育注入更多能量。",
+          "source_url": "https://web41243166.pythonanywhere.com/"
+        },
+        {
+          "text": "活動資訊・水井村",
+          "source_url": "https://web41243166.pythonanywhere.com/events/"
+        },
+        {
+          "text": "水井村最新活動・體驗課程・社區消息",
+          "source_url": "https://web41243166.pythonanywhere.com/events/"
+        },
+        {
+          "text": "本活動以 MATRIX 機器人為核心，結合程式設計與實作體驗，帶領學員從零開始學習機器人控制與邏輯思維。課程內容涵蓋基礎機構組裝、感測器應用與簡易程式撰寫，透過循序漸進的教學方式，讓沒有程式基礎的學員也能輕鬆上手。",
+          "source_url": "https://web41243166.pythonanywhere.com/events/"
+        },
+        {
+          "text": "在課程後段，學員將進行機器人任務挑戰與競賽，透過實際操作與問題解決，培養邏輯思考與團隊合作能力。本活動亦結合大學USR精神，期望將科技教育帶入在地社區與偏鄉學校，培育更多具備基礎程式能力與創新思維的學習者。",
+          "source_url": "https://web41243166.pythonanywhere.com/events/"
+        },
+        {
+          "text": "水井風雲客棧 × OTTO 機器人",
+          "source_url": "https://web41243166.pythonanywhere.com/events/"
+        },
+        {
+          "text": "水井村的故事・以水成家",
+          "source_url": "https://web41243166.pythonanywhere.com/story/"
+        },
+        {
+          "text": "雲林縣口湖鄉 以水成家——出外賺食的水井人",
+          "source_url": "https://web41243166.pythonanywhere.com/story/"
+        },
+        {
+          "text": "水井村的百年記憶",
+          "source_url": "https://web41243166.pythonanywhere.com/story/"
+        },
+        {
+          "text": "水井村位於雲林縣口湖鄉沿海地帶，三面環水、風頭水尾，農業維生條件嚴苛。然而正是如此艱困的環境，造就了村民外出鑿井、走遍全台的生命故事。",
+          "source_url": "https://web41243166.pythonanywhere.com/story/"
+        },
+        {
+          "text": "全台鑿井技術源自水井村",
+          "source_url": "https://web41243166.pythonanywhere.com/story/"
+        },
+        {
+          "text": "USR 成果・虎科大 × 水井村",
+          "source_url": "https://web41243166.pythonanywhere.com/usr/"
+        },
+        {
+          "text": "NFU USR PROJECT",
+          "source_url": "https://web41243166.pythonanywhere.com/usr/"
+        }
+      ],
+      "crawled_pages": [
+        {
+          "url": "https://web41243166.pythonanywhere.com/",
+          "status": 200,
+          "content_type": "text/html; charset=utf-8",
+          "error": ""
+        },
+        {
+          "url": "https://web41243166.pythonanywhere.com/events/",
+          "status": 200,
+          "content_type": "text/html; charset=utf-8",
+          "error": ""
+        },
+        {
+          "url": "https://web41243166.pythonanywhere.com/event/",
+          "status": 404,
+          "content_type": "text/html; charset=utf-8",
+          "error": ""
+        },
+        {
+          "url": "https://web41243166.pythonanywhere.com/stories/",
+          "status": 404,
+          "content_type": "text/html; charset=utf-8",
+          "error": ""
+        },
+        {
+          "url": "https://web41243166.pythonanywhere.com/story/",
+          "status": 200,
+          "content_type": "text/html; charset=utf-8",
+          "error": ""
+        },
+        {
+          "url": "https://web41243166.pythonanywhere.com/usr/",
+          "status": 200,
+          "content_type": "text/html; charset=utf-8",
+          "error": ""
+        },
+        {
+          "url": "https://web41243166.pythonanywhere.com/about/",
+          "status": 200,
+          "content_type": "text/html; charset=utf-8",
+          "error": ""
+        },
+        {
+          "url": "https://web41243166.pythonanywhere.com/contact/",
+          "status": 200,
+          "content_type": "text/html; charset=utf-8",
+          "error": ""
+        }
+      ]
+    },
+    {
+      "rank": 4,
+      "slug": "post-12",
+      "article_title": "風雲客棧",
+      "student_id": "41443146",
+      "author": "楊金諺",
+      "article_url": "https://voteweb.pythonanywhere.com/articles_list/post-12/",
+      "site_url": "https://41443146.pythonanywhere.com/",
+      "site_host": "41443146.pythonanywhere.com",
+      "is_pythonanywhere": true,
+      "likes_count": 2,
+      "views": 32,
+      "root_status": 200,
+      "ui_signals": [
+        "bootstrap_ui",
+        "card_layout",
+        "contact_form",
+        "glass_effect",
+        "hero_section",
+        "search_ui"
+      ],
+      "ui_signal_sources": [
+        "https://41443146.pythonanywhere.com/",
+        "https://41443146.pythonanywhere.com/events/",
+        "https://41443146.pythonanywhere.com/about/",
+        "https://41443146.pythonanywhere.com/contact/"
+      ],
+      "usr_activity_snippets": [
+        {
+          "text": "風雲客棧 - 楊金諺 (41443146)",
+          "source_url": "https://41443146.pythonanywhere.com/"
+        },
+        {
+          "text": "USR 計畫",
+          "source_url": "https://41443146.pythonanywhere.com/"
+        },
+        {
+          "text": "智慧導覽。在地重生。USR 全新境界",
+          "source_url": "https://41443146.pythonanywhere.com/"
+        },
+        {
+          "text": "深入了解 USR >",
+          "source_url": "https://41443146.pythonanywhere.com/"
+        },
+        {
+          "text": "預約體驗 >",
+          "source_url": "https://41443146.pythonanywhere.com/"
+        },
+        {
+          "text": "專案活動 1",
+          "source_url": "https://41443146.pythonanywhere.com/events/"
+        },
+        {
+          "text": "智慧鄉村實作工作坊：當 AIoT 走進水井村",
+          "source_url": "https://41443146.pythonanywhere.com/events/"
+        },
+        {
+          "text": "探討智慧科技如何協助水井村的傳統產業。本工作坊將展示最新的智慧養殖監測系統與環境感測技術，展現大學專業技術與地方產業結合的無限可能。",
+          "source_url": "https://41443146.pythonanywhere.com/events/"
+        },
+        {
+          "text": "專案活動 2",
+          "source_url": "https://41443146.pythonanywhere.com/events/"
+        },
+        {
+          "text": "USR 成果發表會：數位入口平台正式啟用",
+          "source_url": "https://41443146.pythonanywhere.com/events/"
+        },
+        {
+          "text": "虎尾科技大學資工系師生團隊透過實地蹲點，為水井村開發專屬數位入口平台。本次發表會將展示如何利用 Django 框架結合在地文化，推動鄉村數位轉型，讓更多人看見水井村的美。",
+          "source_url": "https://41443146.pythonanywhere.com/events/"
+        },
+        {
+          "text": "USR 計畫：水井村數位轉型",
+          "source_url": "https://41443146.pythonanywhere.com/about/"
+        },
+        {
+          "text": "實地紀錄：資工系團隊於水井村實地蹲點",
+          "source_url": "https://41443146.pythonanywhere.com/about/"
+        },
+        {
+          "text": "我們不僅是在電腦前編寫程式碼，更親身踏入水井村。透過多次實地蹲點訪談，我們深刻理解了傳統農村在數位時代面臨的挑戰。本平台正是為了縮短數位落差、協助地方重生而誕生。",
+          "source_url": "https://41443146.pythonanywhere.com/about/"
+        },
+        {
+          "text": "與居民訪談，共創數位導覽藍圖。",
+          "source_url": "https://41443146.pythonanywhere.com/about/"
+        },
+        {
+          "text": "本專案透過 Python Django 框架開發，旨在建立雲林水井村「風雲客棧」的數",
+          "source_url": "https://voteweb.pythonanywhere.com/articles_list/post-12/"
+        },
+        {
+          "text": "位入口平台。結合虎科大 USR 計畫，串聯在地文化與智慧生活科技。",
+          "source_url": "https://voteweb.pythonanywhere.com/articles_list/post-12/"
+        }
+      ],
+      "crawled_pages": [
+        {
+          "url": "https://41443146.pythonanywhere.com/",
+          "status": 200,
+          "content_type": "text/html; charset=utf-8",
+          "error": ""
+        },
+        {
+          "url": "https://41443146.pythonanywhere.com/events/",
+          "status": 200,
+          "content_type": "text/html; charset=utf-8",
+          "error": ""
+        },
+        {
+          "url": "https://41443146.pythonanywhere.com/event/",
+          "status": 404,
+          "content_type": "text/html; charset=utf-8",
+          "error": ""
+        },
+        {
+          "url": "https://41443146.pythonanywhere.com/stories/",
+          "status": 404,
+          "content_type": "text/html; charset=utf-8",
+          "error": ""
+        },
+        {
+          "url": "https://41443146.pythonanywhere.com/story/",
+          "status": 404,
+          "content_type": "text/html; charset=utf-8",
+          "error": ""
+        },
+        {
+          "url": "https://41443146.pythonanywhere.com/usr/",
+          "status": 404,
+          "content_type": "text/html; charset=utf-8",
+          "error": ""
+        },
+        {
+          "url": "https://41443146.pythonanywhere.com/about/",
+          "status": 200,
+          "content_type": "text/html; charset=utf-8",
+          "error": ""
+        },
+        {
+          "url": "https://41443146.pythonanywhere.com/contact/",
+          "status": 200,
+          "content_type": "text/html; charset=utf-8",
+          "error": ""
+        }
+      ]
+    },
+    {
+      "rank": 5,
+      "slug": "post-9",
+      "article_title": "風雲客棧網站",
+      "student_id": "41443105",
+      "author": "鄭品均",
+      "article_url": "https://voteweb.pythonanywhere.com/articles_list/post-9/",
+      "site_url": "https://41443105.pythonanywhere.com/",
+      "site_host": "41443105.pythonanywhere.com",
+      "is_pythonanywhere": true,
+      "likes_count": 2,
+      "views": 42,
+      "root_status": 200,
+      "ui_signals": [
+        "bootstrap_ui",
+        "card_layout",
+        "chatbot_ui",
+        "contact_form",
+        "glass_effect",
+        "hero_section",
+        "search_ui"
+      ],
+      "ui_signal_sources": [
+        "https://41443105.pythonanywhere.com/",
+        "https://41443105.pythonanywhere.com/events/",
+        "https://41443105.pythonanywhere.com/about/",
+        "https://41443105.pythonanywhere.com/contact/"
+      ],
+      "usr_activity_snippets": [
+        {
+          "text": "風雲客棧數位平台",
+          "source_url": "https://41443105.pythonanywhere.com/"
+        },
+        {
+          "text": "AIoT 智慧連結",
+          "source_url": "https://41443105.pythonanywhere.com/"
+        },
+        {
+          "text": "沉浸式多媒體實踐體驗",
+          "source_url": "https://41443105.pythonanywhere.com/"
+        },
+        {
+          "text": "我們將水井村農場搬進了虛擬世界！立即進入體驗 360 度環景農場，或開啟 AR 智慧產品辨識功能。",
+          "source_url": "https://41443105.pythonanywhere.com/"
+        },
+        {
+          "text": "立即進入體驗",
+          "source_url": "https://41443105.pythonanywhere.com/"
+        },
+        {
+          "text": "結合擴增實境（AR）與 Python 後端技術，開發出專屬水井村番茄的辨識系統。消費者只需透過網頁開啟相機，即可在現實…",
+          "source_url": "https://41443105.pythonanywhere.com/"
+        },
+        {
+          "text": "水井村數位導覽",
+          "source_url": "https://41443105.pythonanywhere.com/"
+        },
+        {
+          "text": "水井村 VR 智慧魚塭 360 度全景上線",
+          "source_url": "https://41443105.pythonanywhere.com/"
+        },
+        {
+          "text": "最新活動與實踐成果",
+          "source_url": "https://41443105.pythonanywhere.com/events/"
+        },
+        {
+          "text": "記錄水井村與虎科大資工系共同成長的每一刻",
+          "source_url": "https://41443105.pythonanywhere.com/events/"
+        },
+        {
+          "text": "USR 實踐",
+          "source_url": "https://41443105.pythonanywhere.com/events/"
+        },
+        {
+          "text": "我們運用虛擬實境（VR）技術，為雲林水井村的智慧養殖魚塭建立了 360 度全景導覽系統。使用者透過手機或電腦，即可身歷…",
+          "source_url": "https://41443105.pythonanywhere.com/events/"
+        },
+        {
+          "text": "水井村智慧減碳節水成果",
+          "source_url": "https://41443105.pythonanywhere.com/about/"
+        },
+        {
+          "text": "這不僅是一段影片，更是我們對永續未來的承諾。透過",
+          "source_url": "https://41443105.pythonanywhere.com/about/"
+        },
+        {
+          "text": "AIoT 遠端自動化控制",
+          "source_url": "https://41443105.pythonanywhere.com/about/"
+        },
+        {
+          "text": "如果您對風雲客棧有任何問題，歡迎與我們聯繫！",
+          "source_url": "https://41443105.pythonanywhere.com/contact/"
+        },
+        {
+          "text": "國立虎尾科技大學 USR 尚虎雲團隊",
+          "source_url": "https://41443105.pythonanywhere.com/contact/"
+        }
+      ],
+      "crawled_pages": [
+        {
+          "url": "https://41443105.pythonanywhere.com/",
+          "status": 200,
+          "content_type": "text/html; charset=utf-8",
+          "error": ""
+        },
+        {
+          "url": "https://41443105.pythonanywhere.com/events/",
+          "status": 200,
+          "content_type": "text/html; charset=utf-8",
+          "error": ""
+        },
+        {
+          "url": "https://41443105.pythonanywhere.com/event/",
+          "status": 404,
+          "content_type": "text/html; charset=utf-8",
+          "error": ""
+        },
+        {
+          "url": "https://41443105.pythonanywhere.com/stories/",
+          "status": 404,
+          "content_type": "text/html; charset=utf-8",
+          "error": ""
+        },
+        {
+          "url": "https://41443105.pythonanywhere.com/story/",
+          "status": 404,
+          "content_type": "text/html; charset=utf-8",
+          "error": ""
+        },
+        {
+          "url": "https://41443105.pythonanywhere.com/usr/",
+          "status": 404,
+          "content_type": "text/html; charset=utf-8",
+          "error": ""
+        },
+        {
+          "url": "https://41443105.pythonanywhere.com/about/",
+          "status": 200,
+          "content_type": "text/html; charset=utf-8",
+          "error": ""
+        },
+        {
+          "url": "https://41443105.pythonanywhere.com/contact/",
+          "status": 200,
+          "content_type": "text/html; charset=utf-8",
+          "error": ""
+        }
+      ]
+    },
+    {
+      "rank": 6,
+      "slug": "post-13",
+      "article_title": "風雲客棧",
+      "student_id": "41443153",
+      "author": "戴文洋",
+      "article_url": "https://voteweb.pythonanywhere.com/articles_list/post-13/",
+      "site_url": "https://41443153.pythonanywhere.com/",
+      "site_host": "41443153.pythonanywhere.com",
+      "is_pythonanywhere": true,
+      "likes_count": 2,
+      "views": 25,
+      "root_status": 200,
+      "ui_signals": [
+        "bootstrap_ui",
+        "card_layout",
+        "contact_form",
+        "django_admin"
+      ],
+      "ui_signal_sources": [
+        "https://41443153.pythonanywhere.com/",
+        "https://41443153.pythonanywhere.com/events/",
+        "https://41443153.pythonanywhere.com/stories/",
+        "https://41443153.pythonanywhere.com/usr/",
+        "https://41443153.pythonanywhere.com/about/",
+        "https://41443153.pythonanywhere.com/contact/"
+      ],
+      "usr_activity_snippets": [
+        {
+          "text": "風雲客棧 - 水井村首頁",
+          "source_url": "https://41443153.pythonanywhere.com/"
+        },
+        {
+          "text": "🌾 風雲客棧",
+          "source_url": "https://41443153.pythonanywhere.com/"
+        },
+        {
+          "text": "關於風雲客棧",
+          "source_url": "https://41443153.pythonanywhere.com/"
+        },
+        {
+          "text": "USR 成果",
+          "source_url": "https://41443153.pythonanywhere.com/"
+        },
+        {
+          "text": "🌾 歡迎來到風雲客棧",
+          "source_url": "https://41443153.pythonanywhere.com/"
+        },
+        {
+          "text": "水井村 × 虎科大 USR 智慧減碳節水三生一體",
+          "source_url": "https://41443153.pythonanywhere.com/"
+        },
+        {
+          "text": "從傳統漁村到智慧永續新生活",
+          "source_url": "https://41443153.pythonanywhere.com/"
+        },
+        {
+          "text": "玄天上帝廟 × 水井村精神地標",
+          "source_url": "https://41443153.pythonanywhere.com/"
+        },
+        {
+          "text": "🌾 水井故事 ─ 在地人的努力過程",
+          "source_url": "https://41443153.pythonanywhere.com/stories/"
+        },
+        {
+          "text": "水井村衛星圖與在地手作工藝（水井三寶），結合傳統與創新。",
+          "source_url": "https://41443153.pythonanywhere.com/stories/"
+        },
+        {
+          "text": "水井村奉天宮，村民信仰中心，也是USR計畫的文化連結點。",
+          "source_url": "https://41443153.pythonanywhere.com/stories/"
+        },
+        {
+          "text": "© 2026 國立虎尾科技大學 多媒體應用期中考 ─ 水井村「風雲客棧」數位平台",
+          "source_url": "https://41443153.pythonanywhere.com/stories/"
+        },
+        {
+          "text": "USR 成果展示",
+          "source_url": "https://41443153.pythonanywhere.com/usr/"
+        },
+        {
+          "text": "🏆 虎科大 USR 成果 ─ 水井村智慧減碳節水三生一體",
+          "source_url": "https://41443153.pythonanywhere.com/usr/"
+        },
+        {
+          "text": "✅ 榮獲2026《遠見》USR獎「在地共融組」首獎！",
+          "source_url": "https://41443153.pythonanywhere.com/usr/"
+        },
+        {
+          "text": "水井三寶 ─ 智慧生態",
+          "source_url": "https://41443153.pythonanywhere.com/usr/"
+        },
+        {
+          "text": "AIoT水質監測 + 生態保育（烏龜代表健康魚塭）",
+          "source_url": "https://41443153.pythonanywhere.com/usr/"
+        },
+        {
+          "text": "🌾 關於風雲客棧",
+          "source_url": "https://41443153.pythonanywhere.com/about/"
+        },
+        {
+          "text": "水井村 × 虎科大 USR",
+          "source_url": "https://41443153.pythonanywhere.com/about/"
+        },
+        {
+          "text": "智慧減碳．節水．三生一體社會實踐計畫",
+          "source_url": "https://41443153.pythonanywhere.com/about/"
+        }
+      ],
+      "crawled_pages": [
+        {
+          "url": "https://41443153.pythonanywhere.com/",
+          "status": 200,
+          "content_type": "text/html; charset=utf-8",
+          "error": ""
+        },
+        {
+          "url": "https://41443153.pythonanywhere.com/events/",
+          "status": 200,
+          "content_type": "text/html; charset=utf-8",
+          "error": ""
+        },
+        {
+          "url": "https://41443153.pythonanywhere.com/event/",
+          "status": 404,
+          "content_type": "text/html; charset=utf-8",
+          "error": ""
+        },
+        {
+          "url": "https://41443153.pythonanywhere.com/stories/",
+          "status": 200,
+          "content_type": "text/html; charset=utf-8",
+          "error": ""
+        },
+        {
+          "url": "https://41443153.pythonanywhere.com/story/",
+          "status": 404,
+          "content_type": "text/html; charset=utf-8",
+          "error": ""
+        },
+        {
+          "url": "https://41443153.pythonanywhere.com/usr/",
+          "status": 200,
+          "content_type": "text/html; charset=utf-8",
+          "error": ""
+        },
+        {
+          "url": "https://41443153.pythonanywhere.com/about/",
+          "status": 200,
+          "content_type": "text/html; charset=utf-8",
+          "error": ""
+        },
+        {
+          "url": "https://41443153.pythonanywhere.com/contact/",
+          "status": 200,
+          "content_type": "text/html; charset=utf-8",
+          "error": ""
+        }
+      ]
+    },
+    {
+      "rank": 7,
+      "slug": "post-6",
+      "article_title": "風雲客棧",
+      "student_id": "41443116",
+      "author": "李銘諺",
+      "article_url": "https://voteweb.pythonanywhere.com/articles_list/post-6/",
+      "site_url": "https://41443116.pythonanywhere.com",
+      "site_host": "41443116.pythonanywhere.com",
+      "is_pythonanywhere": true,
+      "likes_count": 1,
+      "views": 25,
+      "root_status": 200,
+      "ui_signals": [
+        "bootstrap_ui",
+        "card_layout",
+        "contact_form",
+        "hero_section",
+        "search_ui",
+        "timeline_section"
+      ],
+      "ui_signal_sources": [
+        "https://41443116.pythonanywhere.com/",
+        "https://41443116.pythonanywhere.com/events/",
+        "https://41443116.pythonanywhere.com/stories/",
+        "https://41443116.pythonanywhere.com/usr/",
+        "https://41443116.pythonanywhere.com/about/",
+        "https://41443116.pythonanywhere.com/contact/"
+      ],
+      "usr_activity_snippets": [
+        {
+          "text": "風雲客棧 × 水井村數位平台",
+          "source_url": "https://41443116.pythonanywhere.com/"
+        },
+        {
+          "text": "USR 成果",
+          "source_url": "https://41443116.pythonanywhere.com/"
+        },
+        {
+          "text": "雲林縣口湖鄉水井村．永續共好社區",
+          "source_url": "https://41443116.pythonanywhere.com/"
+        },
+        {
+          "text": "共同打造水井村的永續未來。",
+          "source_url": "https://41443116.pythonanywhere.com/"
+        },
+        {
+          "text": "水井村村史．鑿井之鄉",
+          "source_url": "https://41443116.pythonanywhere.com/"
+        },
+        {
+          "text": "全台九成鑿井師傅出自水井村，蜘蛛車工法承載三百年智慧。",
+          "source_url": "https://41443116.pythonanywhere.com/"
+        },
+        {
+          "text": "風雲客棧．虎科大 USR",
+          "source_url": "https://41443116.pythonanywhere.com/"
+        },
+        {
+          "text": "虎科大師生深耕水井村，以科技之力，守護在地文化與產業。",
+          "source_url": "https://41443116.pythonanywhere.com/"
+        },
+        {
+          "text": "活動與體驗課程",
+          "source_url": "https://41443116.pythonanywhere.com/events/"
+        },
+        {
+          "text": "USR 計畫",
+          "source_url": "https://41443116.pythonanywhere.com/events/"
+        },
+        {
+          "text": "・ 虎尾科大永續處與通識教育中心",
+          "source_url": "https://41443116.pythonanywhere.com/events/"
+        },
+        {
+          "text": "國立虎尾科技大學永續發展暨社會責任處攜手鴻海教育基金會，共同推動偏鄉科技教育，今（7）日於校內舉辦「MATRIX 機器人挑戰營—從零到戰鬥…",
+          "source_url": "https://41443116.pythonanywhere.com/events/"
+        },
+        {
+          "text": "國立虎尾科技大學永續發展暨社會責任處攜手國立臺灣工藝研究發展中心樹藝工坊，於2月7日至2月8日辦理「OTTO雙足機器人兩日營」。課程以「自…",
+          "source_url": "https://41443116.pythonanywhere.com/events/"
+        },
+        {
+          "text": "雲林蒜頭糢化身「永生花」 虎科大攜手社區共創地方新價值",
+          "source_url": "https://41443116.pythonanywhere.com/events/"
+        },
+        {
+          "text": "國立虎尾科技大學永續發展暨社會責任處8/19(二)舉辦「農廢新生・手作傳承」藝術行動，運用雲林在地盛產的蒜頭，以其外層保護糢作為創作媒材，…",
+          "source_url": "https://41443116.pythonanywhere.com/events/"
+        },
+        {
+          "text": "水井故事 × 在地人的堅韌",
+          "source_url": "https://41443116.pythonanywhere.com/stories/"
+        },
+        {
+          "text": "水井村的故事",
+          "source_url": "https://41443116.pythonanywhere.com/stories/"
+        },
+        {
+          "text": "福建漳州葉姓先民渡黑水溝來台，帶來玄天上帝金身，建草寮供奉，後發展成今日的水井奉天宮。村名源自先民挖井取水的生存智慧，村落布局因周遭湖泊環繞，形似「井」字。",
+          "source_url": "https://41443116.pythonanywhere.com/stories/"
+        },
+        {
+          "text": "農曆 6 月 7 至 8 日，台灣西南沿海豪雨引發海水倒灌，口湖、四湖一帶九莊幾乎全毀，撈獲遺屍達 2300 多具。水井村受災嚴重，庄民就地收埋漂來的罹難者，後建小廟供奉「水首三大王」，每年農曆 6 月 14 日例祭至今。",
+          "source_url": "https://41443116.pythonanywhere.com/stories/"
+        },
+        {
+          "text": "因土地鹽分高、農業不易，水井村民走出一條獨特的生路——以鑿井為業。全盛期村內九成居民從事鑿井，使用傳統「蜘蛛車（柴井車）」工法，技術傳遍全台。據說全台九成鑿井師傅出自此村。",
+          "source_url": "https://41443116.pythonanywhere.com/stories/"
+        }
+      ],
+      "crawled_pages": [
+        {
+          "url": "https://41443116.pythonanywhere.com/",
+          "status": 200,
+          "content_type": "text/html; charset=utf-8",
+          "error": ""
+        },
+        {
+          "url": "https://41443116.pythonanywhere.com/events/",
+          "status": 200,
+          "content_type": "text/html; charset=utf-8",
+          "error": ""
+        },
+        {
+          "url": "https://41443116.pythonanywhere.com/event/",
+          "status": 404,
+          "content_type": "text/html; charset=utf-8",
+          "error": ""
+        },
+        {
+          "url": "https://41443116.pythonanywhere.com/stories/",
+          "status": 200,
+          "content_type": "text/html; charset=utf-8",
+          "error": ""
+        },
+        {
+          "url": "https://41443116.pythonanywhere.com/story/",
+          "status": 404,
+          "content_type": "text/html; charset=utf-8",
+          "error": ""
+        },
+        {
+          "url": "https://41443116.pythonanywhere.com/usr/",
+          "status": 200,
+          "content_type": "text/html; charset=utf-8",
+          "error": ""
+        },
+        {
+          "url": "https://41443116.pythonanywhere.com/about/",
+          "status": 200,
+          "content_type": "text/html; charset=utf-8",
+          "error": ""
+        },
+        {
+          "url": "https://41443116.pythonanywhere.com/contact/",
+          "status": 200,
+          "content_type": "text/html; charset=utf-8",
+          "error": ""
+        }
+      ]
+    },
+    {
+      "rank": 8,
+      "slug": "post-20",
+      "article_title": "風雲客棧",
+      "student_id": "41243167",
+      "author": "楊芷寧",
+      "article_url": "https://voteweb.pythonanywhere.com/articles_list/post-20/",
+      "site_url": "https://yzhi.pythonanywhere.com/",
+      "site_host": "yzhi.pythonanywhere.com",
+      "is_pythonanywhere": true,
+      "likes_count": 1,
+      "views": 7,
+      "root_status": 200,
+      "ui_signals": [
+        "bootstrap_ui",
+        "card_layout",
+        "contact_form",
+        "django_admin",
+        "search_ui"
+      ],
+      "ui_signal_sources": [
+        "https://yzhi.pythonanywhere.com/",
+        "https://yzhi.pythonanywhere.com/events/",
+        "https://yzhi.pythonanywhere.com/story/",
+        "https://yzhi.pythonanywhere.com/about/",
+        "https://yzhi.pythonanywhere.com/contact/"
+      ],
+      "usr_activity_snippets": [
+        {
+          "text": "風雲客棧平台",
+          "source_url": "https://yzhi.pythonanywhere.com/"
+        },
+        {
+          "text": "風雲客棧數位平台",
+          "source_url": "https://yzhi.pythonanywhere.com/"
+        },
+        {
+          "text": "三生共好 × 地方創生 × USR實踐",
+          "source_url": "https://yzhi.pythonanywhere.com/"
+        },
+        {
+          "text": "水井村，係位於雲林縣口湖鄉沿海地帶的村庄，為名符其實「風頭水尾」之地，不僅農業生產相當困難，又時常面臨自然災害帶來的威脅。",
+          "source_url": "https://yzhi.pythonanywhere.com/"
+        },
+        {
+          "text": "風雲客棧是水井社區的縮影，來. 到這能觀賞在地的傳統古農具及. 社區媽媽所做的手工藝品喔！",
+          "source_url": "https://yzhi.pythonanywhere.com/"
+        },
+        {
+          "text": "風雲客棧數位平台以「生產、生態、生活（三生共好）」為核心理念，",
+          "source_url": "https://yzhi.pythonanywhere.com/"
+        },
+        {
+          "text": "整合水井村在地農漁產業、文化資源與科技應用成果，",
+          "source_url": "https://yzhi.pythonanywhere.com/"
+        },
+        {
+          "text": "本平台不僅提供在地產品與活動資訊，",
+          "source_url": "https://yzhi.pythonanywhere.com/"
+        },
+        {
+          "text": "本區域整理風雲客棧與水井村近期舉辦的各項活動，",
+          "source_url": "https://yzhi.pythonanywhere.com/events/"
+        },
+        {
+          "text": "包含文化體驗課程、農漁業導覽、USR成果展示及社區推廣活動等。",
+          "source_url": "https://yzhi.pythonanywhere.com/events/"
+        },
+        {
+          "text": "透過這些活動，不僅能讓參與者親身體驗在地生活，",
+          "source_url": "https://yzhi.pythonanywhere.com/events/"
+        },
+        {
+          "text": "也能深入了解水井村在農業、漁業與文化發展上的努力與轉型歷程。",
+          "source_url": "https://yzhi.pythonanywhere.com/events/"
+        },
+        {
+          "text": "同時，活動也結合教育與科技元素，例如智慧養殖展示、AI互動體驗與創意手作課程，",
+          "source_url": "https://yzhi.pythonanywhere.com/events/"
+        },
+        {
+          "text": "透過持續舉辦多元活動，風雲客棧逐步成為連結地方與外界的重要橋樑。",
+          "source_url": "https://yzhi.pythonanywhere.com/events/"
+        },
+        {
+          "text": "水井村「風雲客棧永續行動」一日營",
+          "source_url": "https://yzhi.pythonanywhere.com/events/"
+        },
+        {
+          "text": "水井村名稱源自當地豐富的地下水資源與歷史悠久的水井文化，",
+          "source_url": "https://yzhi.pythonanywhere.com/story/"
+        },
+        {
+          "text": "早期居民仰賴水井作為生活與農業灌溉的重要來源，",
+          "source_url": "https://yzhi.pythonanywhere.com/story/"
+        },
+        {
+          "text": "隨著時代變遷，水井村從傳統農業逐步轉型，",
+          "source_url": "https://yzhi.pythonanywhere.com/story/"
+        },
+        {
+          "text": "近年來，在國立虎尾科技大學USR計畫的協助下，",
+          "source_url": "https://yzhi.pythonanywhere.com/story/"
+        },
+        {
+          "text": "導入智慧養殖與AIoT技術，",
+          "source_url": "https://yzhi.pythonanywhere.com/story/"
+        }
+      ],
+      "crawled_pages": [
+        {
+          "url": "https://yzhi.pythonanywhere.com/",
+          "status": 200,
+          "content_type": "text/html; charset=utf-8",
+          "error": ""
+        },
+        {
+          "url": "https://yzhi.pythonanywhere.com/events/",
+          "status": 200,
+          "content_type": "text/html; charset=utf-8",
+          "error": ""
+        },
+        {
+          "url": "https://yzhi.pythonanywhere.com/event/",
+          "status": 404,
+          "content_type": "text/html; charset=utf-8",
+          "error": ""
+        },
+        {
+          "url": "https://yzhi.pythonanywhere.com/stories/",
+          "status": 404,
+          "content_type": "text/html; charset=utf-8",
+          "error": ""
+        },
+        {
+          "url": "https://yzhi.pythonanywhere.com/story/",
+          "status": 200,
+          "content_type": "text/html; charset=utf-8",
+          "error": ""
+        },
+        {
+          "url": "https://yzhi.pythonanywhere.com/usr/",
+          "status": 404,
+          "content_type": "text/html; charset=utf-8",
+          "error": ""
+        },
+        {
+          "url": "https://yzhi.pythonanywhere.com/about/",
+          "status": 200,
+          "content_type": "text/html; charset=utf-8",
+          "error": ""
+        },
+        {
+          "url": "https://yzhi.pythonanywhere.com/contact/",
+          "status": 200,
+          "content_type": "text/html; charset=utf-8",
+          "error": ""
+        }
+      ]
+    },
+    {
+      "rank": 9,
+      "slug": "post-7",
+      "article_title": "風雲客棧",
+      "student_id": "41443139",
+      "author": "陳涵笙",
+      "article_url": "https://voteweb.pythonanywhere.com/articles_list/post-7/",
+      "site_url": "https://41443139.pythonanywhere.com/",
+      "site_host": "41443139.pythonanywhere.com",
+      "is_pythonanywhere": true,
+      "likes_count": 1,
+      "views": 20,
+      "root_status": 200,
+      "ui_signals": [
+        "bootstrap_ui",
+        "card_layout",
+        "contact_form",
+        "hero_section",
+        "search_ui",
+        "timeline_section"
+      ],
+      "ui_signal_sources": [
+        "https://41443139.pythonanywhere.com/",
+        "https://41443139.pythonanywhere.com/events/",
+        "https://41443139.pythonanywhere.com/usr/",
+        "https://41443139.pythonanywhere.com/about/",
+        "https://41443139.pythonanywhere.com/contact/"
+      ],
+      "usr_activity_snippets": [
+        {
+          "text": "水井村 | 風雲客棧",
+          "source_url": "https://41443139.pythonanywhere.com/"
+        },
+        {
+          "text": "USR 成果",
+          "source_url": "https://41443139.pythonanywhere.com/"
+        },
+        {
+          "text": "聽見水井的聲音",
+          "source_url": "https://41443139.pythonanywhere.com/"
+        },
+        {
+          "text": "生活：社區共融",
+          "source_url": "https://41443139.pythonanywhere.com/"
+        },
+        {
+          "text": "舉辦活動縮減數位落差，讓科技與生活結合。",
+          "source_url": "https://41443139.pythonanywhere.com/"
+        },
+        {
+          "text": "查看所有活動",
+          "source_url": "https://41443139.pythonanywhere.com/"
+        },
+        {
+          "text": "將田間廢棄物玉米籜轉化為在地藝術品，實踐永續。",
+          "source_url": "https://41443139.pythonanywhere.com/"
+        },
+        {
+          "text": "風雲客棧數位平台",
+          "source_url": "https://41443139.pythonanywhere.com/"
+        },
+        {
+          "text": "USR 計畫",
+          "source_url": "https://41443139.pythonanywhere.com/events/"
+        },
+        {
+          "text": "虎科大永續處攜手鴻海教育基金會，由林家驊處長與「尚虎雲團隊」廖子科、陳有臨老師共同指導。…",
+          "source_url": "https://41443139.pythonanywhere.com/events/"
+        },
+        {
+          "text": "核心內容（課程亮點）：",
+          "source_url": "https://41443139.pythonanywhere.com/events/"
+        },
+        {
+          "text": "2026 海洋科學節：水井村智慧養殖實踐展",
+          "source_url": "https://41443139.pythonanywhere.com/events/"
+        },
+        {
+          "text": "三生一體實踐： 推動「水井村智慧養殖減碳節水計畫」，融合海洋科學、綠色…",
+          "source_url": "https://41443139.pythonanywhere.com/events/"
+        },
+        {
+          "text": "虎科大「永續行動大學」聯合成果展",
+          "source_url": "https://41443139.pythonanywhere.com/events/"
+        },
+        {
+          "text": "USR 執行成果專刊",
+          "source_url": "https://41443139.pythonanywhere.com/usr/"
+        },
+        {
+          "text": "雲林水井村：三生共好數位管理平台之實踐路徑",
+          "source_url": "https://41443139.pythonanywhere.com/usr/"
+        },
+        {
+          "text": "社區賦能人次",
+          "source_url": "https://41443139.pythonanywhere.com/usr/"
+        },
+        {
+          "text": "AIoT 智慧養殖監測",
+          "source_url": "https://41443139.pythonanywhere.com/usr/"
+        },
+        {
+          "text": "針對水井村核心產業「草蝦與文蛤」，我們佈署了自主開發的監測系統。透過 Django 整合傳感器數據，村民可即時掌握溶氧與鹽度變化，將過去「靠天吃飯」的經驗轉化為「看數據說話」的科學養殖。",
+          "source_url": "https://41443139.pythonanywhere.com/usr/"
+        },
+        {
+          "text": "利用影像辨識技術（Computer Vision），我們對水井村特有的樹藝造型進行數位建模。這不僅是技術的展現，更是為了在開發過程中，保留聚落獨特的景觀記憶與文化脈絡。",
+          "source_url": "https://41443139.pythonanywhere.com/usr/"
+        }
+      ],
+      "crawled_pages": [
+        {
+          "url": "https://41443139.pythonanywhere.com/",
+          "status": 200,
+          "content_type": "text/html; charset=utf-8",
+          "error": ""
+        },
+        {
+          "url": "https://41443139.pythonanywhere.com/events/",
+          "status": 200,
+          "content_type": "text/html; charset=utf-8",
+          "error": ""
+        },
+        {
+          "url": "https://41443139.pythonanywhere.com/event/",
+          "status": 404,
+          "content_type": "text/html; charset=utf-8",
+          "error": ""
+        },
+        {
+          "url": "https://41443139.pythonanywhere.com/stories/",
+          "status": 404,
+          "content_type": "text/html; charset=utf-8",
+          "error": ""
+        },
+        {
+          "url": "https://41443139.pythonanywhere.com/story/",
+          "status": 404,
+          "content_type": "text/html; charset=utf-8",
+          "error": ""
+        },
+        {
+          "url": "https://41443139.pythonanywhere.com/usr/",
+          "status": 200,
+          "content_type": "text/html; charset=utf-8",
+          "error": ""
+        },
+        {
+          "url": "https://41443139.pythonanywhere.com/about/",
+          "status": 200,
+          "content_type": "text/html; charset=utf-8",
+          "error": ""
+        },
+        {
+          "url": "https://41443139.pythonanywhere.com/contact/",
+          "status": 200,
+          "content_type": "text/html; charset=utf-8",
+          "error": ""
+        }
+      ]
+    },
+    {
+      "rank": 10,
+      "slug": "post-14",
+      "article_title": "風雲客棧數位平台",
+      "student_id": "41443142",
+      "author": "黃宏駿",
+      "article_url": "https://voteweb.pythonanywhere.com/articles_list/post-14/",
+      "site_url": "https://41443142.pythonanywhere.com/",
+      "site_host": "41443142.pythonanywhere.com",
+      "is_pythonanywhere": true,
+      "likes_count": 1,
+      "views": 14,
+      "root_status": 200,
+      "ui_signals": [
+        "bootstrap_ui",
+        "card_layout",
+        "contact_form",
+        "search_ui"
+      ],
+      "ui_signal_sources": [
+        "https://41443142.pythonanywhere.com/",
+        "https://41443142.pythonanywhere.com/events/",
+        "https://41443142.pythonanywhere.com/about/",
+        "https://41443142.pythonanywhere.com/contact/"
+      ],
+      "usr_activity_snippets": [
+        {
+          "text": "水井村風雲客棧",
+          "source_url": "https://41443142.pythonanywhere.com/"
+        },
+        {
+          "text": "歡迎來到水井村風雲客棧",
+          "source_url": "https://41443142.pythonanywhere.com/"
+        },
+        {
+          "text": "水井村「風雲客棧」數位平台",
+          "source_url": "https://41443142.pythonanywhere.com/"
+        },
+        {
+          "text": "結合地方故事、活動推廣與 USR 成果展示，實踐科技服務社會的核心價值。",
+          "source_url": "https://41443142.pythonanywhere.com/"
+        },
+        {
+          "text": "查看最新活動",
+          "source_url": "https://41443142.pythonanywhere.com/"
+        },
+        {
+          "text": "深入了解水井村在地人的努力過程與文化底蘊。",
+          "source_url": "https://41443142.pythonanywhere.com/"
+        },
+        {
+          "text": "提供豐富的體驗課程，如不蒜花、姻緣花與 OTTO 機器人。",
+          "source_url": "https://41443142.pythonanywhere.com/"
+        },
+        {
+          "text": "查看活動 »",
+          "source_url": "https://41443142.pythonanywhere.com/"
+        },
+        {
+          "text": "關於風雲客棧",
+          "source_url": "https://41443142.pythonanywhere.com/about/"
+        },
+        {
+          "text": "結合 AIoT 科技與水井村在地文化的數位轉型之路",
+          "source_url": "https://41443142.pythonanywhere.com/about/"
+        },
+        {
+          "text": "師生走訪村落，記錄地方故事，落實 USR 社會責任精神。",
+          "source_url": "https://41443142.pythonanywhere.com/about/"
+        },
+        {
+          "text": "科技加值：AR 導覽",
+          "source_url": "https://41443142.pythonanywhere.com/about/"
+        },
+        {
+          "text": "利用 AR 擴增實境技術，提供沉浸式的場域故事導覽服務。",
+          "source_url": "https://41443142.pythonanywhere.com/about/"
+        },
+        {
+          "text": "整合 AIoT 與智慧養殖數據，打造完整的數位推廣平台。",
+          "source_url": "https://41443142.pythonanywhere.com/about/"
+        },
+        {
+          "text": "USR 亮點介紹",
+          "source_url": "https://41443142.pythonanywhere.com/about/"
+        },
+        {
+          "text": "若有關於活動或 USR 計畫的疑問，歡迎聯繫我們。",
+          "source_url": "https://41443142.pythonanywhere.com/contact/"
+        }
+      ],
+      "crawled_pages": [
+        {
+          "url": "https://41443142.pythonanywhere.com/",
+          "status": 200,
+          "content_type": "text/html; charset=utf-8",
+          "error": ""
+        },
+        {
+          "url": "https://41443142.pythonanywhere.com/events/",
+          "status": 200,
+          "content_type": "text/html; charset=utf-8",
+          "error": ""
+        },
+        {
+          "url": "https://41443142.pythonanywhere.com/event/",
+          "status": 404,
+          "content_type": "text/html; charset=utf-8",
+          "error": ""
+        },
+        {
+          "url": "https://41443142.pythonanywhere.com/stories/",
+          "status": 404,
+          "content_type": "text/html; charset=utf-8",
+          "error": ""
+        },
+        {
+          "url": "https://41443142.pythonanywhere.com/story/",
+          "status": 404,
+          "content_type": "text/html; charset=utf-8",
+          "error": ""
+        },
+        {
+          "url": "https://41443142.pythonanywhere.com/usr/",
+          "status": 404,
+          "content_type": "text/html; charset=utf-8",
+          "error": ""
+        },
+        {
+          "url": "https://41443142.pythonanywhere.com/about/",
+          "status": 200,
+          "content_type": "text/html; charset=utf-8",
+          "error": ""
+        },
+        {
+          "url": "https://41443142.pythonanywhere.com/contact/",
+          "status": 200,
+          "content_type": "text/html; charset=utf-8",
+          "error": ""
+        }
+      ]
+    },
+    {
+      "rank": 11,
+      "slug": "post-11",
+      "article_title": "風雲客棧",
+      "student_id": "41143158",
+      "author": "賴建廷",
+      "article_url": "https://voteweb.pythonanywhere.com/articles_list/post-11/",
+      "site_url": "https://41143158.pythonanywhere.com/",
+      "site_host": "41143158.pythonanywhere.com",
+      "is_pythonanywhere": true,
+      "likes_count": 1,
+      "views": 18,
+      "root_status": 200,
+      "ui_signals": [
+        "bootstrap_ui",
+        "card_layout",
+        "contact_form",
+        "hero_section",
+        "search_ui"
+      ],
+      "ui_signal_sources": [
+        "https://41143158.pythonanywhere.com/",
+        "https://41143158.pythonanywhere.com/events/",
+        "https://41143158.pythonanywhere.com/about/",
+        "https://41143158.pythonanywhere.com/contact/"
+      ],
+      "usr_activity_snippets": [
+        {
+          "text": "首頁 | 風雲客棧 水井村",
+          "source_url": "https://41143158.pythonanywhere.com/"
+        },
+        {
+          "text": "🏮 風雲客棧",
+          "source_url": "https://41143158.pythonanywhere.com/"
+        },
+        {
+          "text": "傳承在地故事，發揚鄉村文化，讓每一位旅人都能感受水井村的溫度與故事。",
+          "source_url": "https://41143158.pythonanywhere.com/"
+        },
+        {
+          "text": "記錄水井村的歷史文化，傳承珍貴的在地記憶與民俗故事。",
+          "source_url": "https://41143158.pythonanywhere.com/"
+        },
+        {
+          "text": "推廣各類節慶活動與文化體驗，歡迎各地旅人共襄盛舉。",
+          "source_url": "https://41143158.pythonanywhere.com/"
+        },
+        {
+          "text": "USR 成果",
+          "source_url": "https://41143158.pythonanywhere.com/"
+        },
+        {
+          "text": "展示大學社會責任計畫成果，落實在地共好的永續目標。",
+          "source_url": "https://41143158.pythonanywhere.com/"
+        },
+        {
+          "text": "中秋月餅製作體驗",
+          "source_url": "https://41143158.pythonanywhere.com/"
+        },
+        {
+          "text": "活動資訊 | 風雲客棧",
+          "source_url": "https://41143158.pythonanywhere.com/events/"
+        },
+        {
+          "text": "水井村精彩活動一覽",
+          "source_url": "https://41143158.pythonanywhere.com/events/"
+        },
+        {
+          "text": "風雲客棧示範廚房",
+          "source_url": "https://41143158.pythonanywhere.com/events/"
+        },
+        {
+          "text": "中秋佳節將至，來水井村一起動手做月餅！選用天然食材，製作傳統廣式月餅與台式鳳梨酥，送禮自用兩相宜。",
+          "source_url": "https://41143158.pythonanywhere.com/events/"
+        },
+        {
+          "text": "跟著水井村的阿嬤學習傳統家常菜！本次課程將教授三道道地的在地料理，使用當季新鮮食材，帶您感受農村飲食文化的溫度。",
+          "source_url": "https://41143158.pythonanywhere.com/events/"
+        },
+        {
+          "text": "水井村田野步道",
+          "source_url": "https://41143158.pythonanywhere.com/events/"
+        },
+        {
+          "text": "關於我們 | 風雲客棧",
+          "source_url": "https://41143158.pythonanywhere.com/about/"
+        },
+        {
+          "text": "關於風雲客棧",
+          "source_url": "https://41143158.pythonanywhere.com/about/"
+        },
+        {
+          "text": "水井村的文化守護者",
+          "source_url": "https://41143158.pythonanywhere.com/about/"
+        },
+        {
+          "text": "風雲客棧坐落於台灣雲林縣水井村，是一個融合在地文化與數位科技的平台。我們致力於保存與推廣水井村珍貴的歷史文化資產，讓更多人認識這片土地的故事。",
+          "source_url": "https://41143158.pythonanywhere.com/about/"
+        },
+        {
+          "text": "透過數位平台，我們將傳統文化與現代科技結合，讓在地故事跨越地理限制，傳遞到世界各個角落。",
+          "source_url": "https://41143158.pythonanywhere.com/about/"
+        },
+        {
+          "text": "記錄與傳承在地文化故事",
+          "source_url": "https://41143158.pythonanywhere.com/about/"
+        }
+      ],
+      "crawled_pages": [
+        {
+          "url": "https://41143158.pythonanywhere.com/",
+          "status": 200,
+          "content_type": "text/html; charset=utf-8",
+          "error": ""
+        },
+        {
+          "url": "https://41143158.pythonanywhere.com/events/",
+          "status": 200,
+          "content_type": "text/html; charset=utf-8",
+          "error": ""
+        },
+        {
+          "url": "https://41143158.pythonanywhere.com/event/",
+          "status": 404,
+          "content_type": "text/html; charset=utf-8",
+          "error": ""
+        },
+        {
+          "url": "https://41143158.pythonanywhere.com/stories/",
+          "status": 404,
+          "content_type": "text/html; charset=utf-8",
+          "error": ""
+        },
+        {
+          "url": "https://41143158.pythonanywhere.com/story/",
+          "status": 404,
+          "content_type": "text/html; charset=utf-8",
+          "error": ""
+        },
+        {
+          "url": "https://41143158.pythonanywhere.com/usr/",
+          "status": 404,
+          "content_type": "text/html; charset=utf-8",
+          "error": ""
+        },
+        {
+          "url": "https://41143158.pythonanywhere.com/about/",
+          "status": 200,
+          "content_type": "text/html; charset=utf-8",
+          "error": ""
+        },
+        {
+          "url": "https://41143158.pythonanywhere.com/contact/",
+          "status": 200,
+          "content_type": "text/html; charset=utf-8",
+          "error": ""
+        }
+      ]
+    },
+    {
+      "rank": 12,
+      "slug": "post-8",
+      "article_title": "風雲客棧",
+      "student_id": "41443130",
+      "author": "徐士翔",
+      "article_url": "https://voteweb.pythonanywhere.com/articles_list/post-8/",
+      "site_url": "https://sam52333.pythonanywhere.com/",
+      "site_host": "sam52333.pythonanywhere.com",
+      "is_pythonanywhere": true,
+      "likes_count": 0,
+      "views": 15,
+      "root_status": 200,
+      "ui_signals": [
+        "bootstrap_ui",
+        "card_layout",
+        "contact_form"
+      ],
+      "ui_signal_sources": [
+        "https://sam52333.pythonanywhere.com/",
+        "https://sam52333.pythonanywhere.com/events/",
+        "https://sam52333.pythonanywhere.com/about/",
+        "https://sam52333.pythonanywhere.com/contact/"
+      ],
+      "usr_activity_snippets": [
+        {
+          "text": "水井村風雲客棧",
+          "source_url": "https://sam52333.pythonanywhere.com/"
+        },
+        {
+          "text": "歡迎來到水井村「風雲客棧」",
+          "source_url": "https://sam52333.pythonanywhere.com/"
+        },
+        {
+          "text": "結合地方故事、USR 成果與 AIoT 智慧技術的數位平台。",
+          "source_url": "https://sam52333.pythonanywhere.com/"
+        },
+        {
+          "text": "查看最新活動",
+          "source_url": "https://sam52333.pythonanywhere.com/"
+        },
+        {
+          "text": "最新活動資訊",
+          "source_url": "https://sam52333.pythonanywhere.com/events/"
+        },
+        {
+          "text": "風雲客棧數位導覽活動",
+          "source_url": "https://sam52333.pythonanywhere.com/events/"
+        },
+        {
+          "text": "水井村 AIoT 智慧養殖成果展",
+          "source_url": "https://sam52333.pythonanywhere.com/events/"
+        },
+        {
+          "text": "水井村 AIoT 智慧養殖體驗營",
+          "source_url": "https://sam52333.pythonanywhere.com/events/"
+        },
+        {
+          "text": "關於水井村 USR 成果",
+          "source_url": "https://sam52333.pythonanywhere.com/about/"
+        },
+        {
+          "text": "本計畫致力於雲林水井村的智慧轉型：",
+          "source_url": "https://sam52333.pythonanywhere.com/about/"
+        },
+        {
+          "text": "AIoT 水質監測系統",
+          "source_url": "https://sam52333.pythonanywhere.com/about/"
+        },
+        {
+          "text": "在地故事傳承",
+          "source_url": "https://sam52333.pythonanywhere.com/about/"
+        },
+        {
+          "text": "如果您對水井村「風雲客棧」或 USR 計畫有任何建議，歡迎與我們聯繫：",
+          "source_url": "https://sam52333.pythonanywhere.com/contact/"
+        },
+        {
+          "text": "雲林縣水井村某某路 123 號",
+          "source_url": "https://sam52333.pythonanywhere.com/contact/"
+        },
+        {
+          "text": "風雲客棧",
+          "source_url": "https://voteweb.pythonanywhere.com/articles_list/post-8/"
+        }
+      ],
+      "crawled_pages": [
+        {
+          "url": "https://sam52333.pythonanywhere.com/",
+          "status": 200,
+          "content_type": "text/html; charset=utf-8",
+          "error": ""
+        },
+        {
+          "url": "https://sam52333.pythonanywhere.com/events/",
+          "status": 200,
+          "content_type": "text/html; charset=utf-8",
+          "error": ""
+        },
+        {
+          "url": "https://sam52333.pythonanywhere.com/event/",
+          "status": 404,
+          "content_type": "text/html; charset=utf-8",
+          "error": ""
+        },
+        {
+          "url": "https://sam52333.pythonanywhere.com/stories/",
+          "status": 404,
+          "content_type": "text/html; charset=utf-8",
+          "error": ""
+        },
+        {
+          "url": "https://sam52333.pythonanywhere.com/story/",
+          "status": 404,
+          "content_type": "text/html; charset=utf-8",
+          "error": ""
+        },
+        {
+          "url": "https://sam52333.pythonanywhere.com/usr/",
+          "status": 404,
+          "content_type": "text/html; charset=utf-8",
+          "error": ""
+        },
+        {
+          "url": "https://sam52333.pythonanywhere.com/about/",
+          "status": 200,
+          "content_type": "text/html; charset=utf-8",
+          "error": ""
+        },
+        {
+          "url": "https://sam52333.pythonanywhere.com/contact/",
+          "status": 200,
+          "content_type": "text/html; charset=utf-8",
+          "error": ""
+        }
+      ]
+    },
+    {
+      "rank": 13,
+      "slug": "post-4",
+      "article_title": "作業",
+      "student_id": "41443148",
+      "author": "廖炫榮",
+      "article_url": "https://voteweb.pythonanywhere.com/articles_list/post-4/",
+      "site_url": "https://41443148.pythonanywhere.com/",
+      "site_host": "41443148.pythonanywhere.com",
+      "is_pythonanywhere": true,
+      "likes_count": 0,
+      "views": 19,
+      "root_status": 200,
+      "ui_signals": [
+        "bootstrap_ui",
+        "card_layout",
+        "hero_section"
+      ],
+      "ui_signal_sources": [
+        "https://41443148.pythonanywhere.com/",
+        "https://41443148.pythonanywhere.com/events/"
+      ],
+      "usr_activity_snippets": [
+        {
+          "text": "水井村「風雲客棧」數位入口平台",
+          "source_url": "https://41443148.pythonanywhere.com/"
+        },
+        {
+          "text": "活動資訊(開發中)",
+          "source_url": "https://41443148.pythonanywhere.com/"
+        },
+        {
+          "text": "USR 特色展示平台",
+          "source_url": "https://41443148.pythonanywhere.com/"
+        },
+        {
+          "text": "風雲客棧數位入口",
+          "source_url": "https://41443148.pythonanywhere.com/"
+        },
+        {
+          "text": "歡迎來到水井村的文化核心。我們致力於整合在地故事、推廣地方活動，並展示虎科大師生與社區共同努力的 USR (大學社會責任) 成果。",
+          "source_url": "https://41443148.pythonanywhere.com/"
+        },
+        {
+          "text": "在這裡，您可以探索古老的歷史，參與充滿活力的體驗課程，並見證智慧生活科技如何賦予老街新的生命。",
+          "source_url": "https://41443148.pythonanywhere.com/"
+        },
+        {
+          "text": "查看最新活動",
+          "source_url": "https://41443148.pythonanywhere.com/"
+        },
+        {
+          "text": "姻緣花不僅是水井村的自然美景，更是我們地方創生的重要象徵。透過 USR 計畫，我們將傳統的不蒜花與姻緣故事結合，打造出獨特的文化地標。",
+          "source_url": "https://41443148.pythonanywhere.com/"
+        },
+        {
+          "text": "最新活動資訊",
+          "source_url": "https://41443148.pythonanywhere.com/events/"
+        },
+        {
+          "text": "姻緣花體驗營",
+          "source_url": "https://41443148.pythonanywhere.com/events/"
+        },
+        {
+          "text": "歡迎來到水井村體驗不蒜花與姻緣花的魅力",
+          "source_url": "https://41443148.pythonanywhere.com/events/"
+        },
+        {
+          "text": "水井村「風雲客棧」數位平台開發計畫 - USR 成果展示",
+          "source_url": "https://41443148.pythonanywhere.com/events/"
+        }
+      ],
+      "crawled_pages": [
+        {
+          "url": "https://41443148.pythonanywhere.com/",
+          "status": 200,
+          "content_type": "text/html; charset=utf-8",
+          "error": ""
+        },
+        {
+          "url": "https://41443148.pythonanywhere.com/events/",
+          "status": 200,
+          "content_type": "text/html; charset=utf-8",
+          "error": ""
+        },
+        {
+          "url": "https://41443148.pythonanywhere.com/event/",
+          "status": 404,
+          "content_type": "text/html; charset=utf-8",
+          "error": ""
+        },
+        {
+          "url": "https://41443148.pythonanywhere.com/stories/",
+          "status": 404,
+          "content_type": "text/html; charset=utf-8",
+          "error": ""
+        },
+        {
+          "url": "https://41443148.pythonanywhere.com/story/",
+          "status": 404,
+          "content_type": "text/html; charset=utf-8",
+          "error": ""
+        },
+        {
+          "url": "https://41443148.pythonanywhere.com/usr/",
+          "status": 404,
+          "content_type": "text/html; charset=utf-8",
+          "error": ""
+        },
+        {
+          "url": "https://41443148.pythonanywhere.com/about/",
+          "status": 404,
+          "content_type": "text/html; charset=utf-8",
+          "error": ""
+        },
+        {
+          "url": "https://41443148.pythonanywhere.com/contact/",
+          "status": 404,
+          "content_type": "text/html; charset=utf-8",
+          "error": ""
+        }
+      ]
+    },
+    {
+      "rank": 14,
+      "slug": "post-2",
+      "article_title": "作業",
+      "student_id": "41443144",
+      "author": "黃學宏",
+      "article_url": "https://voteweb.pythonanywhere.com/articles_list/post-2/",
+      "site_url": "https://forms.gle/Fo4ApwJe9hRV5gy89",
+      "site_host": "forms.gle",
+      "is_pythonanywhere": false,
+      "likes_count": 0,
+      "views": 16,
+      "root_status": 400,
+      "ui_signals": [],
+      "ui_signal_sources": [],
+      "usr_activity_snippets": [],
+      "crawled_pages": [
+        {
+          "url": "https://forms.gle/",
+          "status": 400,
+          "content_type": "text/html; charset=utf-8",
+          "error": ""
+        },
+        {
+          "url": "https://forms.gle/events/",
+          "status": 404,
+          "content_type": "text/html; charset=utf-8",
+          "error": ""
+        },
+        {
+          "url": "https://forms.gle/event/",
+          "status": 404,
+          "content_type": "text/html; charset=utf-8",
+          "error": ""
+        },
+        {
+          "url": "https://forms.gle/stories/",
+          "status": 404,
+          "content_type": "text/html; charset=utf-8",
+          "error": ""
+        },
+        {
+          "url": "https://forms.gle/story/",
+          "status": 404,
+          "content_type": "text/html; charset=utf-8",
+          "error": ""
+        },
+        {
+          "url": "https://forms.gle/usr/",
+          "status": 404,
+          "content_type": "text/html; charset=utf-8",
+          "error": ""
+        },
+        {
+          "url": "https://forms.gle/about/",
+          "status": 404,
+          "content_type": "text/html; charset=utf-8",
+          "error": ""
+        },
+        {
+          "url": "https://forms.gle/contact/",
+          "status": 404,
+          "content_type": "text/html; charset=utf-8",
+          "error": ""
+        }
+      ]
+    },
+    {
+      "rank": 15,
+      "slug": "post-16",
+      "article_title": "風雲客棧",
+      "student_id": "51015142",
+      "author": "范姜登科",
+      "article_url": "https://voteweb.pythonanywhere.com/articles_list/post-16/",
+      "site_url": "https://51015142.pythonanywhere.com/",
+      "site_host": "51015142.pythonanywhere.com",
+      "is_pythonanywhere": true,
+      "likes_count": 0,
+      "views": 10,
+      "root_status": 200,
+      "ui_signals": [
+        "bootstrap_ui",
+        "contact_form",
+        "search_ui"
+      ],
+      "ui_signal_sources": [
+        "https://51015142.pythonanywhere.com/",
+        "https://51015142.pythonanywhere.com/events/",
+        "https://51015142.pythonanywhere.com/usr/",
+        "https://51015142.pythonanywhere.com/about/",
+        "https://51015142.pythonanywhere.com/contact/"
+      ],
+      "usr_activity_snippets": [
+        {
+          "text": "風雲客棧 - 體驗水井村的純樸與美好",
+          "source_url": "https://51015142.pythonanywhere.com/"
+        },
+        {
+          "text": "在地實踐(USR)",
+          "source_url": "https://51015142.pythonanywhere.com/"
+        },
+        {
+          "text": "體驗水井村的",
+          "source_url": "https://51015142.pythonanywhere.com/"
+        },
+        {
+          "text": "科技與傳統交織，虎尾科大 USR 帶您看見不一樣的漁鄉風情。",
+          "source_url": "https://51015142.pythonanywhere.com/"
+        },
+        {
+          "text": "深耕水井，連結未來",
+          "source_url": "https://51015142.pythonanywhere.com/"
+        },
+        {
+          "text": "水井村的每一塊磚石都訴說著過往。我們記錄老一輩的智慧。",
+          "source_url": "https://51015142.pythonanywhere.com/"
+        },
+        {
+          "text": "閱讀水井歷史",
+          "source_url": "https://51015142.pythonanywhere.com/"
+        },
+        {
+          "text": "在地體驗課程",
+          "source_url": "https://51015142.pythonanywhere.com/"
+        },
+        {
+          "text": "尚虎雲入駐風雲客棧",
+          "source_url": "https://51015142.pythonanywhere.com/events/"
+        },
+        {
+          "text": "活動時間與地點：活動將於4 月26 日上午9:00 至下午3:00，在雲林縣口湖鄉水井村風雲客棧（水井路62 號）舉行。",
+          "source_url": "https://51015142.pythonanywhere.com/events/"
+        },
+        {
+          "text": "活動內容：包含「未來規劃許願池」（分享對客棧的期望）以及「水井文化大冒險」（關卡解謎活動）。",
+          "source_url": "https://51015142.pythonanywhere.com/events/"
+        },
+        {
+          "text": "主辦資訊：本活動為「水井村智慧減碳節水三生一體實踐計畫」之一環，由教育部大學社會責任推動中心指導，虎科大電機學院與永續處執行。",
+          "source_url": "https://51015142.pythonanywhere.com/events/"
+        },
+        {
+          "text": "先來一趟省府吧！在青年們開始真正進入地方、建立關係前，先從「我」開始思考：自己的喜好、專長、特質、關心的議題。兩位不同個性與專長的講師，以「觀察」與「採集」為課程核心，分享彼此眼中的省府，各自在地方行動中的歷程與工作路徑，「自己能做什麼、能怎麼做？」，帶著大家練習定位自己的地方角色。",
+          "source_url": "https://51015142.pythonanywhere.com/events/"
+        },
+        {
+          "text": "風雲客棧 Fengyun Inn",
+          "source_url": "https://51015142.pythonanywhere.com/events/"
+        },
+        {
+          "text": "在地實踐 (USR) 成果",
+          "source_url": "https://51015142.pythonanywhere.com/usr/"
+        },
+        {
+          "text": "虎尾科大師生與水井村共創的科技與人文足跡",
+          "source_url": "https://51015142.pythonanywhere.com/usr/"
+        },
+        {
+          "text": "科技體驗與教育",
+          "source_url": "https://51015142.pythonanywhere.com/usr/"
+        },
+        {
+          "text": "透過 OTTO 忍者機器人與 AI 輔助教具的互動教學，我們為在地孩童帶來了第一線的機器人科技體驗，培養他們的程式邏輯、專注力與團隊合作精神。點擊右側圖片觀看實際教學紀錄！",
+          "source_url": "https://51015142.pythonanywhere.com/usr/"
+        },
+        {
+          "text": "AIoT 智慧連結與共好實踐",
+          "source_url": "https://51015142.pythonanywhere.com/usr/"
+        },
+        {
+          "text": "我們與口湖鄉漁民合作，導入新型遠端魚塭自動控制系統與水質監測，推動智慧養殖。同時舉辦淨灘與玉米葉「手作姻緣花」活動，實現 SDGs 永續目標。點擊左側圖片觀看計畫紀錄！",
+          "source_url": "https://51015142.pythonanywhere.com/usr/"
+        }
+      ],
+      "crawled_pages": [
+        {
+          "url": "https://51015142.pythonanywhere.com/",
+          "status": 200,
+          "content_type": "text/html; charset=utf-8",
+          "error": ""
+        },
+        {
+          "url": "https://51015142.pythonanywhere.com/events/",
+          "status": 200,
+          "content_type": "text/html; charset=utf-8",
+          "error": ""
+        },
+        {
+          "url": "https://51015142.pythonanywhere.com/event/",
+          "status": 404,
+          "content_type": "text/html; charset=utf-8",
+          "error": ""
+        },
+        {
+          "url": "https://51015142.pythonanywhere.com/stories/",
+          "status": 404,
+          "content_type": "text/html; charset=utf-8",
+          "error": ""
+        },
+        {
+          "url": "https://51015142.pythonanywhere.com/story/",
+          "status": 404,
+          "content_type": "text/html; charset=utf-8",
+          "error": ""
+        },
+        {
+          "url": "https://51015142.pythonanywhere.com/usr/",
+          "status": 200,
+          "content_type": "text/html; charset=utf-8",
+          "error": ""
+        },
+        {
+          "url": "https://51015142.pythonanywhere.com/about/",
+          "status": 200,
+          "content_type": "text/html; charset=utf-8",
+          "error": ""
+        },
+        {
+          "url": "https://51015142.pythonanywhere.com/contact/",
+          "status": 200,
+          "content_type": "text/html; charset=utf-8",
+          "error": ""
+        }
+      ]
+    },
+    {
+      "rank": 16,
+      "slug": "post-19",
+      "article_title": "風雲客棧",
+      "student_id": "41443145",
+      "author": "黃龔方昱",
+      "article_url": "https://voteweb.pythonanywhere.com/articles_list/post-19/",
+      "site_url": "https://nfu41443145.pythonanywhere.com/",
+      "site_host": "nfu41443145.pythonanywhere.com",
+      "is_pythonanywhere": true,
+      "likes_count": 0,
+      "views": 6,
+      "root_status": 404,
+      "ui_signals": [],
+      "ui_signal_sources": [],
+      "usr_activity_snippets": [],
+      "crawled_pages": [
+        {
+          "url": "https://nfu41443145.pythonanywhere.com/",
+          "status": 404,
+          "content_type": "text/html",
+          "error": ""
+        },
+        {
+          "url": "https://nfu41443145.pythonanywhere.com/events/",
+          "status": 404,
+          "content_type": "text/html",
+          "error": ""
+        },
+        {
+          "url": "https://nfu41443145.pythonanywhere.com/event/",
+          "status": 404,
+          "content_type": "text/html",
+          "error": ""
+        },
+        {
+          "url": "https://nfu41443145.pythonanywhere.com/stories/",
+          "status": 404,
+          "content_type": "text/html",
+          "error": ""
+        },
+        {
+          "url": "https://nfu41443145.pythonanywhere.com/story/",
+          "status": 404,
+          "content_type": "text/html",
+          "error": ""
+        },
+        {
+          "url": "https://nfu41443145.pythonanywhere.com/usr/",
+          "status": 404,
+          "content_type": "text/html",
+          "error": ""
+        },
+        {
+          "url": "https://nfu41443145.pythonanywhere.com/about/",
+          "status": 404,
+          "content_type": "text/html",
+          "error": ""
+        },
+        {
+          "url": "https://nfu41443145.pythonanywhere.com/contact/",
+          "status": 404,
+          "content_type": "text/html",
+          "error": ""
+        }
+      ]
+    },
+    {
+      "rank": 17,
+      "slug": "post-22",
+      "article_title": "風雲客棧",
+      "student_id": "51015135",
+      "author": "林彥伯",
+      "article_url": "https://voteweb.pythonanywhere.com/articles_list/post-22/",
+      "site_url": "https://51015135.pythonanywhere.com/",
+      "site_host": "51015135.pythonanywhere.com",
+      "is_pythonanywhere": true,
+      "likes_count": 0,
+      "views": 9,
+      "root_status": 200,
+      "ui_signals": [
+        "bootstrap_ui",
+        "contact_form",
+        "django_admin"
+      ],
+      "ui_signal_sources": [
+        "https://51015135.pythonanywhere.com/",
+        "https://51015135.pythonanywhere.com/events/",
+        "https://51015135.pythonanywhere.com/about/",
+        "https://51015135.pythonanywhere.com/contact/"
+      ],
+      "usr_activity_snippets": [
+        {
+          "text": "水井村風雲客棧",
+          "source_url": "https://51015135.pythonanywhere.com/"
+        },
+        {
+          "text": "探訪水井村的",
+          "source_url": "https://51015135.pythonanywhere.com/"
+        },
+        {
+          "text": "結合數位科技與在地文化，我們在雲林虎尾實踐永續夢想。這裡不僅是客棧，更是連結過去與未來的橋樑。",
+          "source_url": "https://51015135.pythonanywhere.com/"
+        },
+        {
+          "text": "查看最新活動",
+          "source_url": "https://51015135.pythonanywhere.com/"
+        },
+        {
+          "text": "透過數位紀錄，我們將水井村的老故事重新包裝，讓更多人看見這片土地的生命力。",
+          "source_url": "https://51015135.pythonanywhere.com/"
+        },
+        {
+          "text": "運用 Django 與網頁技術，打造直覺的資訊平台，落實虎科大 USR 的數位轉型目標。",
+          "source_url": "https://51015135.pythonanywhere.com/"
+        },
+        {
+          "text": "永續社群連結",
+          "source_url": "https://51015135.pythonanywhere.com/"
+        },
+        {
+          "text": "邀請每一位訪客參與我們的活動，共同營造一個共好、互助的村落脈動空間。",
+          "source_url": "https://51015135.pythonanywhere.com/"
+        },
+        {
+          "text": "探索水井村的各種數位與在地文化活動",
+          "source_url": "https://51015135.pythonanywhere.com/events/"
+        },
+        {
+          "text": "雲林虎尾科技大學 USR 永續實踐成果",
+          "source_url": "https://51015135.pythonanywhere.com/events/"
+        },
+        {
+          "text": "水井村位於雲林縣，這裡擁有豐富的農耕文化與純樸的民風。為了不讓珍貴的在地故事隨著時間流逝，我們建立了「風雲客棧」數位平台，希望成為一個保存記憶的容器。",
+          "source_url": "https://51015135.pythonanywhere.com/about/"
+        },
+        {
+          "text": "虎科大 USR 實踐",
+          "source_url": "https://51015135.pythonanywhere.com/about/"
+        },
+        {
+          "text": "本專案為國立虎尾科技大學 USR（大學社會責任）永續實踐成果。我們透過數位工具開發，協助地方社群進行數位轉型，串連在地產業與觀光資源，實現城鄉共好的目標。",
+          "source_url": "https://51015135.pythonanywhere.com/about/"
+        },
+        {
+          "text": "想深入了解我們的計畫嗎？",
+          "source_url": "https://51015135.pythonanywhere.com/about/"
+        },
+        {
+          "text": "無論是關於水井村的故事分享、USR 計畫的合作提案，或是對網站的建議，我們都非常期待收到您的訊息。",
+          "source_url": "https://51015135.pythonanywhere.com/contact/"
+        },
+        {
+          "text": "「水井村風雲客棧」是一個專為雲林虎尾水井村設計的數位實踐平台，也是虎科大 USR 永續發展的具體成果。網站透過現代化的設計風格，將傳統農村文化與數位科技完美結合。",
+          "source_url": "https://voteweb.pythonanywhere.com/articles_list/post-22/"
+        },
+        {
+          "text": "在功能上，它具備動態的活動資訊系統，能讓你直接從後台管理資料庫，隨時更新村落的最新動態；同時擁有一個完整的智慧聯絡表單，使用者填寫的訊息會經過安全驗證並自動存入後台，方便你隨時查閱與管理。整個網站不僅美觀、能在手機上流暢執行，更透過關於頁面述說了地方創生的動人故事，是一個兼具形象展示與實質互動功能的專業數位平台。",
+          "source_url": "https://voteweb.pythonanywhere.com/articles_list/post-22/"
+        }
+      ],
+      "crawled_pages": [
+        {
+          "url": "https://51015135.pythonanywhere.com/",
+          "status": 200,
+          "content_type": "text/html; charset=utf-8",
+          "error": ""
+        },
+        {
+          "url": "https://51015135.pythonanywhere.com/events/",
+          "status": 200,
+          "content_type": "text/html; charset=utf-8",
+          "error": ""
+        },
+        {
+          "url": "https://51015135.pythonanywhere.com/event/",
+          "status": 404,
+          "content_type": "text/html; charset=utf-8",
+          "error": ""
+        },
+        {
+          "url": "https://51015135.pythonanywhere.com/stories/",
+          "status": 404,
+          "content_type": "text/html; charset=utf-8",
+          "error": ""
+        },
+        {
+          "url": "https://51015135.pythonanywhere.com/story/",
+          "status": 404,
+          "content_type": "text/html; charset=utf-8",
+          "error": ""
+        },
+        {
+          "url": "https://51015135.pythonanywhere.com/usr/",
+          "status": 404,
+          "content_type": "text/html; charset=utf-8",
+          "error": ""
+        },
+        {
+          "url": "https://51015135.pythonanywhere.com/about/",
+          "status": 200,
+          "content_type": "text/html; charset=utf-8",
+          "error": ""
+        },
+        {
+          "url": "https://51015135.pythonanywhere.com/contact/",
+          "status": 200,
+          "content_type": "text/html; charset=utf-8",
+          "error": ""
+        }
+      ]
+    },
+    {
+      "rank": 18,
+      "slug": "post-5",
+      "article_title": "水井村三生共好服務網",
+      "student_id": "41443134",
+      "author": "張語睿",
+      "article_url": "https://voteweb.pythonanywhere.com/articles_list/post-5/",
+      "site_url": "https://113224.pythonanywhere.com/",
+      "site_host": "113224.pythonanywhere.com",
+      "is_pythonanywhere": true,
+      "likes_count": 0,
+      "views": 21,
+      "root_status": 200,
+      "ui_signals": [
+        "bootstrap_ui",
+        "card_layout"
+      ],
+      "ui_signal_sources": [
+        "https://113224.pythonanywhere.com/"
+      ],
+      "usr_activity_snippets": [
+        {
+          "text": "水井村三生共好服務網",
+          "source_url": "https://113224.pythonanywhere.com/"
+        },
+        {
+          "text": "正在展示：水井村夕陽",
+          "source_url": "https://113224.pythonanywhere.com/"
+        },
+        {
+          "text": "三生共好服務項目",
+          "source_url": "https://113224.pythonanywhere.com/"
+        },
+        {
+          "text": "智慧水井農產直銷",
+          "source_url": "https://113224.pythonanywhere.com/"
+        },
+        {
+          "text": "水井村螢火蟲生態地圖",
+          "source_url": "https://113224.pythonanywhere.com/"
+        },
+        {
+          "text": "透過感測技術監測濕地環境，打造螢火蟲復育基地，實現生態永續共好。",
+          "source_url": "https://113224.pythonanywhere.com/"
+        },
+        {
+          "text": "運用數位平台管理社區共餐進度，照顧村內長者健康，營造幸福生活。",
+          "source_url": "https://113224.pythonanywhere.com/"
+        },
+        {
+          "text": "本網站以「數位水井，三生共好」為核心，運用 Django 框架建構",
+          "source_url": "https://voteweb.pythonanywhere.com/articles_list/post-5/"
+        },
+        {
+          "text": "服務村民的平台。透過資料庫模型，將水井村的生產、生態與生活",
+          "source_url": "https://voteweb.pythonanywhere.com/articles_list/post-5/"
+        },
+        {
+          "text": "賦能偏鄉，落實永續家園與智慧農村的共好理想。",
+          "source_url": "https://voteweb.pythonanywhere.com/articles_list/post-5/"
+        }
+      ],
+      "crawled_pages": [
+        {
+          "url": "https://113224.pythonanywhere.com/",
+          "status": 200,
+          "content_type": "text/html; charset=utf-8",
+          "error": ""
+        },
+        {
+          "url": "https://113224.pythonanywhere.com/events/",
+          "status": 404,
+          "content_type": "text/html; charset=utf-8",
+          "error": ""
+        },
+        {
+          "url": "https://113224.pythonanywhere.com/event/",
+          "status": 404,
+          "content_type": "text/html; charset=utf-8",
+          "error": ""
+        },
+        {
+          "url": "https://113224.pythonanywhere.com/stories/",
+          "status": 404,
+          "content_type": "text/html; charset=utf-8",
+          "error": ""
+        },
+        {
+          "url": "https://113224.pythonanywhere.com/story/",
+          "status": 404,
+          "content_type": "text/html; charset=utf-8",
+          "error": ""
+        },
+        {
+          "url": "https://113224.pythonanywhere.com/usr/",
+          "status": 404,
+          "content_type": "text/html; charset=utf-8",
+          "error": ""
+        },
+        {
+          "url": "https://113224.pythonanywhere.com/about/",
+          "status": 404,
+          "content_type": "text/html; charset=utf-8",
+          "error": ""
+        },
+        {
+          "url": "https://113224.pythonanywhere.com/contact/",
+          "status": 404,
+          "content_type": "text/html; charset=utf-8",
+          "error": ""
+        }
+      ]
+    },
+    {
+      "rank": 19,
+      "slug": "dji",
+      "article_title": "DJI",
+      "student_id": "41443129",
+      "author": "孫益康",
+      "article_url": "https://voteweb.pythonanywhere.com/articles_list/dji/",
+      "site_url": "https://www.youtube.com/",
+      "site_host": "www.youtube.com",
+      "is_pythonanywhere": false,
+      "likes_count": 0,
+      "views": 16,
+      "root_status": 200,
+      "ui_signals": [
+        "bootstrap_ui",
+        "chatbot_ui",
+        "contact_form",
+        "glass_effect",
+        "hero_section",
+        "timeline_section"
+      ],
+      "ui_signal_sources": [
+        "https://www.youtube.com/",
+        "https://www.youtube.com/stories/",
+        "https://www.youtube.com/story/",
+        "https://www.youtube.com/usr/",
+        "https://about.youtube/",
+        "https://www.youtube.com/contact/"
+      ],
+      "usr_activity_snippets": [],
+      "crawled_pages": [
+        {
+          "url": "https://www.youtube.com/",
+          "status": 200,
+          "content_type": "text/html; charset=utf-8",
+          "error": ""
+        },
+        {
+          "url": "https://www.youtube.com/events/",
+          "status": 404,
+          "content_type": "text/html; charset=utf-8",
+          "error": ""
+        },
+        {
+          "url": "https://www.youtube.com/event/",
+          "status": 404,
+          "content_type": "text/html; charset=utf-8",
+          "error": ""
+        },
+        {
+          "url": "https://www.youtube.com/stories/",
+          "status": 200,
+          "content_type": "text/html; charset=utf-8",
+          "error": ""
+        },
+        {
+          "url": "https://www.youtube.com/story/",
+          "status": 200,
+          "content_type": "text/html; charset=utf-8",
+          "error": ""
+        },
+        {
+          "url": "https://www.youtube.com/usr/",
+          "status": 200,
+          "content_type": "text/html; charset=utf-8",
+          "error": ""
+        },
+        {
+          "url": "https://about.youtube/",
+          "status": 200,
+          "content_type": "text/html",
+          "error": ""
+        },
+        {
+          "url": "https://www.youtube.com/contact/",
+          "status": 200,
+          "content_type": "text/html; charset=utf-8",
+          "error": ""
+        }
+      ]
+    },
+    {
+      "rank": 20,
+      "slug": "post-21",
+      "article_title": "風雲課棧",
+      "student_id": "41350126",
+      "author": "林聖諺",
+      "article_url": "https://voteweb.pythonanywhere.com/articles_list/post-21/",
+      "site_url": "https://41350126.pythonanywhere.com/",
+      "site_host": "41350126.pythonanywhere.com",
+      "is_pythonanywhere": true,
+      "likes_count": 0,
+      "views": 4,
+      "root_status": 200,
+      "ui_signals": [
+        "bootstrap_ui",
+        "card_layout",
+        "contact_form",
+        "django_admin",
+        "glass_effect",
+        "hero_section",
+        "search_ui"
+      ],
+      "ui_signal_sources": [
+        "https://41350126.pythonanywhere.com/",
+        "https://41350126.pythonanywhere.com/events/",
+        "https://41350126.pythonanywhere.com/about/",
+        "https://41350126.pythonanywhere.com/contact/"
+      ],
+      "usr_activity_snippets": [
+        {
+          "text": "水井村 風雲客棧 | USR 數位平台",
+          "source_url": "https://41350126.pythonanywhere.com/"
+        },
+        {
+          "text": "Shuijing Village ✕ NFU USR",
+          "source_url": "https://41350126.pythonanywhere.com/"
+        },
+        {
+          "text": "結合數位科技與地方創生，我們在水井村打造一個跨越時空的農村敘事平台。",
+          "source_url": "https://41350126.pythonanywhere.com/"
+        },
+        {
+          "text": "2026 遠見 USR 大賞：水井村專案榮獲首獎肯定",
+          "source_url": "https://41350126.pythonanywhere.com/"
+        },
+        {
+          "text": "邀請在地工藝師親自指導，體驗傳統不蒜花藝術的魅力，名額有限，歡迎報名參加。",
+          "source_url": "https://41350126.pythonanywhere.com/"
+        },
+        {
+          "text": "AIoT 系統升級：水井漁場水質監測站正式上線",
+          "source_url": "https://41350126.pythonanywhere.com/"
+        },
+        {
+          "text": "風雲客棧數位平台",
+          "source_url": "https://41350126.pythonanywhere.com/"
+        },
+        {
+          "text": "國立虎尾科技大學水井村 USR 社會實踐計畫，「智慧減碳節水 ‧ 三生一體」社會發展目標。透過智慧科技守護沿海濕地與農業生態，實現永續共榮。",
+          "source_url": "https://41350126.pythonanywhere.com/"
+        },
+        {
+          "text": "本活動以 MATRIX 機器人為核心，結合程式設計與實作體驗，帶領學員從零開始學習機器人控制與邏輯思維。課程內容涵蓋基礎機構組裝、感測器應用與簡易程式撰寫，透過循序漸進的教學方式，讓沒有程式基礎的學員也能輕鬆上手。",
+          "source_url": "https://41350126.pythonanywhere.com/events/"
+        },
+        {
+          "text": "在課程後段，學員將進行機器人任務挑戰與競賽，透過實際操作與問題解決，培養邏輯思考與團隊合作能力。本活動亦結合大學USR精神，期望將科技教育帶入在地社區與偏鄉學校，培育更多具備基礎程式能力與創新思維的學習者。",
+          "source_url": "https://41350126.pythonanywhere.com/events/"
+        },
+        {
+          "text": "不蒜花手作體驗",
+          "source_url": "https://41350126.pythonanywhere.com/events/"
+        },
+        {
+          "text": "雲林縣是台灣蒜頭的最大產地，每十顆蒜頭就有九顆來自雲林，過去播蒜剩下來的蒜皮未被加以利用，不過近年來越來越多人開始反思蒜皮的其他用途，例如：2012年時，位於雲林縣西螺鎮的一位農民以蒜皮製成有機肥料。而今（2025）年，國立虎尾科技大學永續發展暨社會責任處將農業廢棄物華麗變身，以蒜皮製成美感、永續兼具的永生花，並命名為「不蒜花」。",
+          "source_url": "https://41350126.pythonanywhere.com/events/"
+        },
+        {
+          "text": "國立虎尾科技大學助理教授兼永續在地關懷學習組組長陳鳳雀分享，比起玉米籜，蒜皮具透光性、不易遭蟲害的優勢，從乾燥蒜頭取出的蒜皮，較容易製成形態似玫瑰、牡丹的永生花，成品完整、精緻兼具高品質。深入社區教學 盼推循環經濟",
+          "source_url": "https://41350126.pythonanywhere.com/events/"
+        },
+        {
+          "text": "USR 成果典藏 /",
+          "source_url": "https://41350126.pythonanywhere.com/about/"
+        },
+        {
+          "text": "透過數位鏡頭紀錄水井村的蛻變，從傳統工藝到智慧科技的交織紀實。",
+          "source_url": "https://41350126.pythonanywhere.com/about/"
+        },
+        {
+          "text": "點擊閱讀完整故事",
+          "source_url": "https://41350126.pythonanywhere.com/about/"
+        },
+        {
+          "text": "師生表現：USR 現場",
+          "source_url": "https://41350126.pythonanywhere.com/about/"
+        },
+        {
+          "text": "口湖水井村水首三大王",
+          "source_url": "https://41350126.pythonanywhere.com/about/"
+        },
+        {
+          "text": "雲林縣口湖鄉水井村 (風雲客棧)",
+          "source_url": "https://41350126.pythonanywhere.com/contact/"
+        },
+        {
+          "text": "(05) 631-5000 (虎科大 USR 辦公室)",
+          "source_url": "https://41350126.pythonanywhere.com/contact/"
+        }
+      ],
+      "crawled_pages": [
+        {
+          "url": "https://41350126.pythonanywhere.com/",
+          "status": 200,
+          "content_type": "text/html; charset=utf-8",
+          "error": ""
+        },
+        {
+          "url": "https://41350126.pythonanywhere.com/events/",
+          "status": 200,
+          "content_type": "text/html; charset=utf-8",
+          "error": ""
+        },
+        {
+          "url": "https://41350126.pythonanywhere.com/event/",
+          "status": 404,
+          "content_type": "text/html; charset=utf-8",
+          "error": ""
+        },
+        {
+          "url": "https://41350126.pythonanywhere.com/stories/",
+          "status": 404,
+          "content_type": "text/html; charset=utf-8",
+          "error": ""
+        },
+        {
+          "url": "https://41350126.pythonanywhere.com/story/",
+          "status": 404,
+          "content_type": "text/html; charset=utf-8",
+          "error": ""
+        },
+        {
+          "url": "https://41350126.pythonanywhere.com/usr/",
+          "status": 404,
+          "content_type": "text/html; charset=utf-8",
+          "error": ""
+        },
+        {
+          "url": "https://41350126.pythonanywhere.com/about/",
+          "status": 200,
+          "content_type": "text/html; charset=utf-8",
+          "error": ""
+        },
+        {
+          "url": "https://41350126.pythonanywhere.com/contact/",
+          "status": 200,
+          "content_type": "text/html; charset=utf-8",
+          "error": ""
+        }
+      ]
+    },
+    {
+      "rank": 21,
+      "slug": "post-17",
+      "article_title": "風雲客棧",
+      "student_id": "41443113",
+      "author": "李子暘",
+      "article_url": "https://voteweb.pythonanywhere.com/articles_list/post-17/",
+      "site_url": "https://41443113.pythonanywhere.com/",
+      "site_host": "41443113.pythonanywhere.com",
+      "is_pythonanywhere": true,
+      "likes_count": 0,
+      "views": 9,
+      "root_status": 200,
+      "ui_signals": [
+        "bootstrap_ui",
+        "card_layout",
+        "contact_form",
+        "search_ui"
+      ],
+      "ui_signal_sources": [
+        "https://41443113.pythonanywhere.com/",
+        "https://41443113.pythonanywhere.com/events/",
+        "https://41443113.pythonanywhere.com/about/",
+        "https://41443113.pythonanywhere.com/contact/"
+      ],
+      "usr_activity_snippets": [
+        {
+          "text": "導入 **AIoT 監測系統**，即時監控水質與智慧給飼，協助水井村傳統養殖業數位轉型，提升產值。",
+          "source_url": "https://41443113.pythonanywhere.com/"
+        },
+        {
+          "text": "推廣 **不蒜花、姻緣花** 體驗課程，結合在地婦女手工藝，讓傳統文化融入現代生活，創造社區新活力。",
+          "source_url": "https://41443113.pythonanywhere.com/"
+        },
+        {
+          "text": "生態：科技導覽",
+          "source_url": "https://41443113.pythonanywhere.com/"
+        },
+        {
+          "text": "利用 **AR 互動與光雕牆** 展示水井故事，落實低碳旅遊，讓師生與遊客在生態探索中與村落深度對話。",
+          "source_url": "https://41443113.pythonanywhere.com/"
+        },
+        {
+          "text": "國立虎尾科技大學推動永續教育 雲林官邸兒童館親子活動展現科技與在地共融",
+          "source_url": "https://41443113.pythonanywhere.com/"
+        },
+        {
+          "text": "從田間到當代：虎科大攜手職人張婉玉 深化玉米籜永續工藝與故事行銷",
+          "source_url": "https://41443113.pythonanywhere.com/"
+        },
+        {
+          "text": "最新活動資訊",
+          "source_url": "https://41443113.pythonanywhere.com/events/"
+        },
+        {
+          "text": "虎科大USR團隊攜手水井村 2026海洋科學節圓滿落幕",
+          "source_url": "https://41443113.pythonanywhere.com/events/"
+        },
+        {
+          "text": "探索風雲客棧",
+          "source_url": "https://41443113.pythonanywhere.com/about/"
+        },
+        {
+          "text": "一個連結科技、文化與溫度的水井村基地",
+          "source_url": "https://41443113.pythonanywhere.com/about/"
+        },
+        {
+          "text": "水井村風雲客棧是虎科大 USR 團隊在雲林深耕的結晶。我們將原本閒置的空間重新活化，透過師生與在地居民的共創，讓這裡不僅是村民交流的客廳，更是智慧農業與數位工藝的實踐基地。",
+          "source_url": "https://41443113.pythonanywhere.com/about/"
+        },
+        {
+          "text": "在這裡，你可以看見最先進的 AIoT 監測系統，也能在角落發現手工製作的精緻不蒜花，這正是科技與傳統並存的最佳證明。",
+          "source_url": "https://41443113.pythonanywhere.com/about/"
+        },
+        {
+          "text": "生活：社區共融",
+          "source_url": "https://41443113.pythonanywhere.com/about/"
+        },
+        {
+          "text": "透過舉辦工作坊與共食活動，縮減世代數位落差，讓科技真正走入村民的生活。",
+          "source_url": "https://41443113.pythonanywhere.com/about/"
+        },
+        {
+          "text": "有任何關於水井村、風雲客棧或智慧農業的問題嗎？歡迎與我們聯繫！",
+          "source_url": "https://41443113.pythonanywhere.com/contact/"
+        },
+        {
+          "text": "雲林縣水林鄉水井村 (風雲客棧實踐基地)",
+          "source_url": "https://41443113.pythonanywhere.com/contact/"
+        }
+      ],
+      "crawled_pages": [
+        {
+          "url": "https://41443113.pythonanywhere.com/",
+          "status": 200,
+          "content_type": "text/html; charset=utf-8",
+          "error": ""
+        },
+        {
+          "url": "https://41443113.pythonanywhere.com/events/",
+          "status": 200,
+          "content_type": "text/html; charset=utf-8",
+          "error": ""
+        },
+        {
+          "url": "https://41443113.pythonanywhere.com/event/",
+          "status": 404,
+          "content_type": "text/html; charset=utf-8",
+          "error": ""
+        },
+        {
+          "url": "https://41443113.pythonanywhere.com/stories/",
+          "status": 404,
+          "content_type": "text/html; charset=utf-8",
+          "error": ""
+        },
+        {
+          "url": "https://41443113.pythonanywhere.com/story/",
+          "status": 404,
+          "content_type": "text/html; charset=utf-8",
+          "error": ""
+        },
+        {
+          "url": "https://41443113.pythonanywhere.com/usr/",
+          "status": 404,
+          "content_type": "text/html; charset=utf-8",
+          "error": ""
+        },
+        {
+          "url": "https://41443113.pythonanywhere.com/about/",
+          "status": 200,
+          "content_type": "text/html; charset=utf-8",
+          "error": ""
+        },
+        {
+          "url": "https://41443113.pythonanywhere.com/contact/",
+          "status": 200,
+          "content_type": "text/html; charset=utf-8",
+          "error": ""
+        }
+      ]
+    },
+    {
+      "rank": 22,
+      "slug": "y",
+      "article_title": "Y",
+      "student_id": "41443126",
+      "author": "施銘泰",
+      "article_url": "https://voteweb.pythonanywhere.com/articles_list/y/",
+      "site_url": "https://john-weighn.github.io/johnweighn-page/",
+      "site_host": "john-weighn.github.io",
+      "is_pythonanywhere": false,
+      "likes_count": 0,
+      "views": 8,
+      "root_status": 404,
+      "ui_signals": [],
+      "ui_signal_sources": [],
+      "usr_activity_snippets": [],
+      "crawled_pages": [
+        {
+          "url": "https://john-weighn.github.io/",
+          "status": 404,
+          "content_type": "text/html; charset=utf-8",
+          "error": ""
+        },
+        {
+          "url": "https://john-weighn.github.io/events/",
+          "status": 404,
+          "content_type": "text/html; charset=utf-8",
+          "error": ""
+        },
+        {
+          "url": "https://john-weighn.github.io/event/",
+          "status": 404,
+          "content_type": "text/html; charset=utf-8",
+          "error": ""
+        },
+        {
+          "url": "https://john-weighn.github.io/stories/",
+          "status": 404,
+          "content_type": "text/html; charset=utf-8",
+          "error": ""
+        },
+        {
+          "url": "https://john-weighn.github.io/story/",
+          "status": 404,
+          "content_type": "text/html; charset=utf-8",
+          "error": ""
+        },
+        {
+          "url": "https://john-weighn.github.io/usr/",
+          "status": 404,
+          "content_type": "text/html; charset=utf-8",
+          "error": ""
+        },
+        {
+          "url": "https://john-weighn.github.io/about/",
+          "status": 404,
+          "content_type": "text/html; charset=utf-8",
+          "error": ""
+        },
+        {
+          "url": "https://john-weighn.github.io/contact/",
+          "status": 404,
+          "content_type": "text/html; charset=utf-8",
+          "error": ""
+        }
+      ]
+    },
+    {
+      "rank": 23,
+      "slug": "post-24",
+      "article_title": "水井村「風雲客棧」",
+      "student_id": "41243260",
+      "author": "蕭文成",
+      "article_url": "https://voteweb.pythonanywhere.com/articles_list/post-24/",
+      "site_url": "https://41243260.pythonanywhere.com/",
+      "site_host": "41243260.pythonanywhere.com",
+      "is_pythonanywhere": true,
+      "likes_count": 0,
+      "views": 5,
+      "root_status": 200,
+      "ui_signals": [
+        "bootstrap_ui",
+        "card_layout",
+        "contact_form",
+        "django_admin",
+        "hero_section",
+        "search_ui",
+        "timeline_section"
+      ],
+      "ui_signal_sources": [
+        "https://41243260.pythonanywhere.com/",
+        "https://41243260.pythonanywhere.com/events/",
+        "https://41243260.pythonanywhere.com/story/",
+        "https://41243260.pythonanywhere.com/usr/",
+        "https://41243260.pythonanywhere.com/about/",
+        "https://41243260.pythonanywhere.com/contact/"
+      ],
+      "usr_activity_snippets": [
+        {
+          "text": "風雲客棧 | 水井村數位入口平台 - 首頁",
+          "source_url": "https://41243260.pythonanywhere.com/"
+        },
+        {
+          "text": "水井村數位入口平台",
+          "source_url": "https://41243260.pythonanywhere.com/"
+        },
+        {
+          "text": "關於風雲客棧",
+          "source_url": "https://41243260.pythonanywhere.com/"
+        },
+        {
+          "text": "USR 成果",
+          "source_url": "https://41243260.pythonanywhere.com/"
+        },
+        {
+          "text": "AIoT 科技",
+          "source_url": "https://41243260.pythonanywhere.com/"
+        },
+        {
+          "text": "水井村數位入口平台 — 科技．文化．在地",
+          "source_url": "https://41243260.pythonanywhere.com/"
+        },
+        {
+          "text": "水井村 USR 計畫",
+          "source_url": "https://41243260.pythonanywhere.com/"
+        },
+        {
+          "text": "虎科大師生攜手在地，打造智慧永續社區",
+          "source_url": "https://41243260.pythonanywhere.com/"
+        },
+        {
+          "text": "活動資訊 | 風雲客棧",
+          "source_url": "https://41243260.pythonanywhere.com/events/"
+        },
+        {
+          "text": "風雲客棧最新活動一覽",
+          "source_url": "https://41243260.pythonanywhere.com/events/"
+        },
+        {
+          "text": "AIoT 展示",
+          "source_url": "https://41243260.pythonanywhere.com/events/"
+        },
+        {
+          "text": "Matrix 機器人競技工作坊",
+          "source_url": "https://41243260.pythonanywhere.com/events/"
+        },
+        {
+          "text": "水井故事 | 風雲客棧",
+          "source_url": "https://41243260.pythonanywhere.com/story/"
+        },
+        {
+          "text": "聆聽在地人的努力與堅持，看見水井村的生命力",
+          "source_url": "https://41243260.pythonanywhere.com/story/"
+        },
+        {
+          "text": "水井村的居民世代務農，面對農業轉型的挑戰，他們選擇與虎科大攜手，",
+          "source_url": "https://41243260.pythonanywhere.com/story/"
+        },
+        {
+          "text": "這裡的每一個故事，都是真實的汗水與希望。從第一代農民的智慧傳承，",
+          "source_url": "https://41243260.pythonanywhere.com/story/"
+        },
+        {
+          "text": "USR 成果展示 | 風雲客棧",
+          "source_url": "https://41243260.pythonanywhere.com/usr/"
+        },
+        {
+          "text": "USR 成果展示",
+          "source_url": "https://41243260.pythonanywhere.com/usr/"
+        },
+        {
+          "text": "國立虎尾科技大學「大學社會責任」計畫成果",
+          "source_url": "https://41243260.pythonanywhere.com/usr/"
+        },
+        {
+          "text": "什麼是 USR？",
+          "source_url": "https://41243260.pythonanywhere.com/usr/"
+        }
+      ],
+      "crawled_pages": [
+        {
+          "url": "https://41243260.pythonanywhere.com/",
+          "status": 200,
+          "content_type": "text/html; charset=utf-8",
+          "error": ""
+        },
+        {
+          "url": "https://41243260.pythonanywhere.com/events/",
+          "status": 200,
+          "content_type": "text/html; charset=utf-8",
+          "error": ""
+        },
+        {
+          "url": "https://41243260.pythonanywhere.com/event/",
+          "status": 404,
+          "content_type": "text/html; charset=utf-8",
+          "error": ""
+        },
+        {
+          "url": "https://41243260.pythonanywhere.com/stories/",
+          "status": 404,
+          "content_type": "text/html; charset=utf-8",
+          "error": ""
+        },
+        {
+          "url": "https://41243260.pythonanywhere.com/story/",
+          "status": 200,
+          "content_type": "text/html; charset=utf-8",
+          "error": ""
+        },
+        {
+          "url": "https://41243260.pythonanywhere.com/usr/",
+          "status": 200,
+          "content_type": "text/html; charset=utf-8",
+          "error": ""
+        },
+        {
+          "url": "https://41243260.pythonanywhere.com/about/",
+          "status": 200,
+          "content_type": "text/html; charset=utf-8",
+          "error": ""
+        },
+        {
+          "url": "https://41243260.pythonanywhere.com/contact/",
+          "status": 200,
+          "content_type": "text/html; charset=utf-8",
+          "error": ""
+        }
+      ]
+    },
+    {
+      "rank": 24,
+      "slug": "51015122",
+      "article_title": "51015122",
+      "student_id": "51015122",
+      "author": "林恩駿",
+      "article_url": "https://voteweb.pythonanywhere.com/articles_list/51015122/",
+      "site_url": "https://voteweb.pythonanywhere.com/articles/",
+      "site_host": "voteweb.pythonanywhere.com",
+      "is_pythonanywhere": true,
+      "likes_count": 0,
+      "views": 10,
+      "root_status": 200,
+      "ui_signals": [
+        "bootstrap_ui",
+        "card_layout",
+        "contact_form"
+      ],
+      "ui_signal_sources": [
+        "https://voteweb.pythonanywhere.com/"
+      ],
+      "usr_activity_snippets": [],
+      "crawled_pages": [
+        {
+          "url": "https://voteweb.pythonanywhere.com/",
+          "status": 200,
+          "content_type": "text/html; charset=utf-8",
+          "error": ""
+        },
+        {
+          "url": "https://voteweb.pythonanywhere.com/events/",
+          "status": 404,
+          "content_type": "text/html; charset=utf-8",
+          "error": ""
+        },
+        {
+          "url": "https://voteweb.pythonanywhere.com/event/",
+          "status": 404,
+          "content_type": "text/html; charset=utf-8",
+          "error": ""
+        },
+        {
+          "url": "https://voteweb.pythonanywhere.com/stories/",
+          "status": 404,
+          "content_type": "text/html; charset=utf-8",
+          "error": ""
+        },
+        {
+          "url": "https://voteweb.pythonanywhere.com/story/",
+          "status": 404,
+          "content_type": "text/html; charset=utf-8",
+          "error": ""
+        },
+        {
+          "url": "https://voteweb.pythonanywhere.com/usr/",
+          "status": 404,
+          "content_type": "text/html; charset=utf-8",
+          "error": ""
+        },
+        {
+          "url": "https://voteweb.pythonanywhere.com/about/",
+          "status": 404,
+          "content_type": "text/html; charset=utf-8",
+          "error": ""
+        },
+        {
+          "url": "https://voteweb.pythonanywhere.com/contact/",
+          "status": 404,
+          "content_type": "text/html; charset=utf-8",
+          "error": ""
+        }
+      ]
+    },
+    {
+      "rank": 25,
+      "slug": "django-2",
+      "article_title": "Django",
+      "student_id": "41443132",
+      "author": "張立澄",
+      "article_url": "https://voteweb.pythonanywhere.com/articles_list/django-2/",
+      "site_url": "https://41443132.pythonanywhere.com/",
+      "site_host": "41443132.pythonanywhere.com",
+      "is_pythonanywhere": true,
+      "likes_count": 0,
+      "views": 16,
+      "root_status": 404,
+      "ui_signals": [],
+      "ui_signal_sources": [],
+      "usr_activity_snippets": [],
+      "crawled_pages": [
+        {
+          "url": "https://41443132.pythonanywhere.com/",
+          "status": 404,
+          "content_type": "text/html",
+          "error": ""
+        },
+        {
+          "url": "https://41443132.pythonanywhere.com/events/",
+          "status": 404,
+          "content_type": "text/html",
+          "error": ""
+        },
+        {
+          "url": "https://41443132.pythonanywhere.com/event/",
+          "status": 404,
+          "content_type": "text/html",
+          "error": ""
+        },
+        {
+          "url": "https://41443132.pythonanywhere.com/stories/",
+          "status": 404,
+          "content_type": "text/html",
+          "error": ""
+        },
+        {
+          "url": "https://41443132.pythonanywhere.com/story/",
+          "status": 404,
+          "content_type": "text/html",
+          "error": ""
+        },
+        {
+          "url": "https://41443132.pythonanywhere.com/usr/",
+          "status": 404,
+          "content_type": "text/html",
+          "error": ""
+        },
+        {
+          "url": "https://41443132.pythonanywhere.com/about/",
+          "status": 404,
+          "content_type": "text/html",
+          "error": ""
+        },
+        {
+          "url": "https://41443132.pythonanywhere.com/contact/",
+          "status": 404,
+          "content_type": "text/html",
+          "error": ""
+        }
+      ]
+    },
+    {
+      "rank": 26,
+      "slug": "41347114",
+      "article_title": "41347114",
+      "student_id": "41347114",
+      "author": "黃聖容",
+      "article_url": "https://voteweb.pythonanywhere.com/articles_list/41347114/",
+      "site_url": "https://fahong.pythonanywhere.com",
+      "site_host": "fahong.pythonanywhere.com",
+      "is_pythonanywhere": true,
+      "likes_count": 0,
+      "views": 11,
+      "root_status": 200,
+      "ui_signals": [
+        "bootstrap_ui",
+        "contact_form",
+        "django_admin"
+      ],
+      "ui_signal_sources": [
+        "https://fahong.pythonanywhere.com/"
+      ],
+      "usr_activity_snippets": [],
+      "crawled_pages": [
+        {
+          "url": "https://fahong.pythonanywhere.com/",
+          "status": 200,
+          "content_type": "text/html; charset=utf-8",
+          "error": ""
+        },
+        {
+          "url": "https://fahong.pythonanywhere.com/events/",
+          "status": 404,
+          "content_type": "text/html",
+          "error": ""
+        },
+        {
+          "url": "https://fahong.pythonanywhere.com/event/",
+          "status": 404,
+          "content_type": "text/html",
+          "error": ""
+        },
+        {
+          "url": "https://fahong.pythonanywhere.com/stories/",
+          "status": 404,
+          "content_type": "text/html",
+          "error": ""
+        },
+        {
+          "url": "https://fahong.pythonanywhere.com/story/",
+          "status": 404,
+          "content_type": "text/html",
+          "error": ""
+        },
+        {
+          "url": "https://fahong.pythonanywhere.com/usr/",
+          "status": 404,
+          "content_type": "text/html",
+          "error": ""
+        },
+        {
+          "url": "https://fahong.pythonanywhere.com/about/",
+          "status": 404,
+          "content_type": "text/html",
+          "error": ""
+        },
+        {
+          "url": "https://fahong.pythonanywhere.com/contact/",
+          "status": 404,
+          "content_type": "text/html",
+          "error": ""
+        }
+      ]
+    },
+    {
+      "rank": 27,
+      "slug": "post",
+      "article_title": "作業四",
+      "student_id": "41243162",
+      "author": "林協誌",
+      "article_url": "https://voteweb.pythonanywhere.com/articles_list/post/",
+      "site_url": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSgaOjIpQu1DxjSQsFcRzMVAvMvHr7wEGPuPQ&s",
+      "site_host": "encrypted-tbn0.gstatic.com",
+      "is_pythonanywhere": false,
+      "likes_count": 0,
+      "views": 35,
+      "root_status": 404,
+      "ui_signals": [],
+      "ui_signal_sources": [],
+      "usr_activity_snippets": [],
+      "crawled_pages": [
+        {
+          "url": "https://encrypted-tbn0.gstatic.com/",
+          "status": 404,
+          "content_type": "image/gif",
+          "error": ""
+        },
+        {
+          "url": "https://encrypted-tbn0.gstatic.com/events/",
+          "status": 404,
+          "content_type": "image/gif",
+          "error": ""
+        },
+        {
+          "url": "https://encrypted-tbn0.gstatic.com/event/",
+          "status": 404,
+          "content_type": "image/gif",
+          "error": ""
+        },
+        {
+          "url": "https://encrypted-tbn0.gstatic.com/stories/",
+          "status": 404,
+          "content_type": "image/gif",
+          "error": ""
+        },
+        {
+          "url": "https://encrypted-tbn0.gstatic.com/story/",
+          "status": 404,
+          "content_type": "image/gif",
+          "error": ""
+        },
+        {
+          "url": "https://encrypted-tbn0.gstatic.com/usr/",
+          "status": 404,
+          "content_type": "image/gif",
+          "error": ""
+        },
+        {
+          "url": "https://encrypted-tbn0.gstatic.com/about/",
+          "status": 404,
+          "content_type": "image/gif",
+          "error": ""
+        },
+        {
+          "url": "https://encrypted-tbn0.gstatic.com/contact/",
+          "status": 404,
+          "content_type": "image/gif",
+          "error": ""
+        }
+      ]
+    },
+    {
+      "rank": 28,
+      "slug": "post-15",
+      "article_title": "風雲客棧",
+      "student_id": "41243168",
+      "author": "陳有臨",
+      "article_url": "https://voteweb.pythonanywhere.com/articles_list/post-15/",
+      "site_url": "https://41243168.pythonanywhere.com/",
+      "site_host": "41243168.pythonanywhere.com",
+      "is_pythonanywhere": true,
+      "likes_count": 0,
+      "views": 13,
+      "root_status": 200,
+      "ui_signals": [
+        "bootstrap_ui",
+        "card_layout",
+        "contact_form",
+        "django_admin",
+        "glass_effect",
+        "search_ui"
+      ],
+      "ui_signal_sources": [
+        "https://41243168.pythonanywhere.com/",
+        "https://41243168.pythonanywhere.com/events/",
+        "https://41243168.pythonanywhere.com/stories/",
+        "https://41243168.pythonanywhere.com/about/",
+        "https://41243168.pythonanywhere.com/contact/"
+      ],
+      "usr_activity_snippets": [
+        {
+          "text": "水井村風雲客棧",
+          "source_url": "https://41243168.pythonanywhere.com/"
+        },
+        {
+          "text": "關於風雲客棧",
+          "source_url": "https://41243168.pythonanywhere.com/"
+        },
+        {
+          "text": "AIoT科技",
+          "source_url": "https://41243168.pythonanywhere.com/"
+        },
+        {
+          "text": "三生共好服務",
+          "source_url": "https://41243168.pythonanywhere.com/"
+        },
+        {
+          "text": "故事牆：在地與師長的努力",
+          "source_url": "https://41243168.pythonanywhere.com/"
+        },
+        {
+          "text": "閱讀更多故事",
+          "source_url": "https://41243168.pythonanywhere.com/"
+        },
+        {
+          "text": "許永和院長帶領的 USR 團隊不僅在地方服務上有成，其研究成果亦獲得多項國內外創新獎項肯定。 學生團隊在「海洋科學節」及各大發明展中展示的智慧控制系統，展現了虎科大師生理論與實務並重的優點。他們的努力不僅改善了水井村，也讓世界看見台灣智慧農業的實力。",
+          "source_url": "https://41243168.pythonanywhere.com/"
+        },
+        {
+          "text": "USR 努力過程",
+          "source_url": "https://41243168.pythonanywhere.com/"
+        },
+        {
+          "text": "活動資訊 - 水井村風雲客棧",
+          "source_url": "https://41243168.pythonanywhere.com/events/"
+        },
+        {
+          "text": "在這裡探索水井村的所有精彩活動。不論是生態導覽、農村體驗還是工作坊，都能在這裡找到最新訊息。",
+          "source_url": "https://41243168.pythonanywhere.com/events/"
+        },
+        {
+          "text": "水井村歷史古道導覽",
+          "source_url": "https://41243168.pythonanywhere.com/events/"
+        },
+        {
+          "text": "由在地文史工作者帶領，探尋水井村不為人知的故事與百年古道的幽靜。",
+          "source_url": "https://41243168.pythonanywhere.com/events/"
+        },
+        {
+          "text": "水井村最美的春天就在這裡！歡迎攝影愛好者捕捉花海美景，豐富獎品等你拿。",
+          "source_url": "https://41243168.pythonanywhere.com/events/"
+        },
+        {
+          "text": "故事牆 - 風雲客棧數位入口平台",
+          "source_url": "https://41243168.pythonanywhere.com/stories/"
+        },
+        {
+          "text": "在地人的奮鬥、USR團隊的努力，每一則故事都值得被記住。",
+          "source_url": "https://41243168.pythonanywhere.com/stories/"
+        },
+        {
+          "text": "虎科大 USR 計畫：深耕在地，鏈結國際",
+          "source_url": "https://41243168.pythonanywhere.com/stories/"
+        },
+        {
+          "text": "關於風雲客棧 - 水井村風雲客棧",
+          "source_url": "https://41243168.pythonanywhere.com/about/"
+        },
+        {
+          "text": "水井村風雲客棧座落於純樸的鄉村之中，我們致力於推廣「三生共好」：生態保育、生產永續、生活藝術。",
+          "source_url": "https://41243168.pythonanywhere.com/about/"
+        },
+        {
+          "text": "保護水井村的自然景觀，維護多樣化的生態系統，讓每一位訪客都能感受到大自然的原始魅力。",
+          "source_url": "https://41243168.pythonanywhere.com/about/"
+        },
+        {
+          "text": "重拾緩慢而深刻的生活步調，體驗充滿溫度的人際互動與豐富的文化底蘊。",
+          "source_url": "https://41243168.pythonanywhere.com/about/"
+        }
+      ],
+      "crawled_pages": [
+        {
+          "url": "https://41243168.pythonanywhere.com/",
+          "status": 200,
+          "content_type": "text/html; charset=utf-8",
+          "error": ""
+        },
+        {
+          "url": "https://41243168.pythonanywhere.com/events/",
+          "status": 200,
+          "content_type": "text/html; charset=utf-8",
+          "error": ""
+        },
+        {
+          "url": "https://41243168.pythonanywhere.com/event/",
+          "status": 404,
+          "content_type": "text/html; charset=utf-8",
+          "error": ""
+        },
+        {
+          "url": "https://41243168.pythonanywhere.com/stories/",
+          "status": 200,
+          "content_type": "text/html; charset=utf-8",
+          "error": ""
+        },
+        {
+          "url": "https://41243168.pythonanywhere.com/story/",
+          "status": 404,
+          "content_type": "text/html; charset=utf-8",
+          "error": ""
+        },
+        {
+          "url": "https://41243168.pythonanywhere.com/usr/",
+          "status": 404,
+          "content_type": "text/html; charset=utf-8",
+          "error": ""
+        },
+        {
+          "url": "https://41243168.pythonanywhere.com/about/",
+          "status": 200,
+          "content_type": "text/html; charset=utf-8",
+          "error": ""
+        },
+        {
+          "url": "https://41243168.pythonanywhere.com/contact/",
+          "status": 200,
+          "content_type": "text/html; charset=utf-8",
+          "error": ""
+        }
+      ]
+    },
+    {
+      "rank": 29,
+      "slug": "post-3",
+      "article_title": "風雲客棧",
+      "student_id": "41443123",
+      "author": "邱顯博",
+      "article_url": "https://voteweb.pythonanywhere.com/articles_list/post-3/",
+      "site_url": "http://a41443123.pythonanywhere.com",
+      "site_host": "a41443123.pythonanywhere.com",
+      "is_pythonanywhere": true,
+      "likes_count": 0,
+      "views": 11,
+      "root_status": 404,
+      "ui_signals": [],
+      "ui_signal_sources": [],
+      "usr_activity_snippets": [
+        {
+          "text": "本網站以「水井數位共生圈」為核心，將生產（智慧產銷）、",
+          "source_url": "https://voteweb.pythonanywhere.com/articles_list/post-3/"
+        },
+        {
+          "text": "片模組化呈現各類服務項目，實踐「三生共好」理想。此設計",
+          "source_url": "https://voteweb.pythonanywhere.com/articles_list/post-3/"
+        },
+        {
+          "text": "不僅縮短農村數位落差，更落實永續發展願景，確保村落發展",
+          "source_url": "https://voteweb.pythonanywhere.com/articles_list/post-3/"
+        }
+      ],
+      "crawled_pages": [
+        {
+          "url": "http://a41443123.pythonanywhere.com/",
+          "status": 404,
+          "content_type": "text/html",
+          "error": ""
+        },
+        {
+          "url": "http://a41443123.pythonanywhere.com/events/",
+          "status": 404,
+          "content_type": "text/html",
+          "error": ""
+        },
+        {
+          "url": "http://a41443123.pythonanywhere.com/event/",
+          "status": 404,
+          "content_type": "text/html",
+          "error": ""
+        },
+        {
+          "url": "http://a41443123.pythonanywhere.com/stories/",
+          "status": 404,
+          "content_type": "text/html",
+          "error": ""
+        },
+        {
+          "url": "http://a41443123.pythonanywhere.com/story/",
+          "status": 404,
+          "content_type": "text/html",
+          "error": ""
+        },
+        {
+          "url": "http://a41443123.pythonanywhere.com/usr/",
+          "status": 404,
+          "content_type": "text/html",
+          "error": ""
+        },
+        {
+          "url": "http://a41443123.pythonanywhere.com/about/",
+          "status": 404,
+          "content_type": "text/html",
+          "error": ""
+        },
+        {
+          "url": "http://a41443123.pythonanywhere.com/contact/",
+          "status": 404,
+          "content_type": "text/html",
+          "error": ""
+        }
+      ]
+    },
+    {
+      "rank": 30,
+      "slug": "django",
+      "article_title": "Django設計網站",
+      "student_id": "41443121",
+      "author": "林聖軒",
+      "article_url": "https://voteweb.pythonanywhere.com/articles_list/django/",
+      "site_url": "https://41443121.pythonanywhere.com/",
+      "site_host": "41443121.pythonanywhere.com",
+      "is_pythonanywhere": true,
+      "likes_count": 0,
+      "views": 20,
+      "root_status": 200,
+      "ui_signals": [
+        "bootstrap_ui",
+        "card_layout",
+        "contact_form"
+      ],
+      "ui_signal_sources": [
+        "https://41443121.pythonanywhere.com/",
+        "https://41443121.pythonanywhere.com/events/"
+      ],
+      "usr_activity_snippets": [
+        {
+          "text": "風雲客棧數位平台",
+          "source_url": "https://41443121.pythonanywhere.com/"
+        },
+        {
+          "text": "風雲客棧數位入口平台",
+          "source_url": "https://41443121.pythonanywhere.com/"
+        },
+        {
+          "text": "虎科大 USR：帶領水井社區走向智慧未來",
+          "source_url": "https://41443121.pythonanywhere.com/"
+        },
+        {
+          "text": "觀看活動影片",
+          "source_url": "https://41443121.pythonanywhere.com/"
+        },
+        {
+          "text": "🌿 地方故事",
+          "source_url": "https://41443121.pythonanywhere.com/"
+        },
+        {
+          "text": "了解水井人的努力過程與不蒜花的姻緣故事。",
+          "source_url": "https://41443121.pythonanywhere.com/"
+        },
+        {
+          "text": "🤖 AIoT 連結",
+          "source_url": "https://41443121.pythonanywhere.com/"
+        },
+        {
+          "text": "✨ AR/互動導覽",
+          "source_url": "https://41443121.pythonanywhere.com/"
+        }
+      ],
+      "crawled_pages": [
+        {
+          "url": "https://41443121.pythonanywhere.com/",
+          "status": 200,
+          "content_type": "text/html; charset=utf-8",
+          "error": ""
+        },
+        {
+          "url": "https://41443121.pythonanywhere.com/events/",
+          "status": 200,
+          "content_type": "text/html; charset=utf-8",
+          "error": ""
+        },
+        {
+          "url": "https://41443121.pythonanywhere.com/event/",
+          "status": 404,
+          "content_type": "text/html; charset=utf-8",
+          "error": ""
+        },
+        {
+          "url": "https://41443121.pythonanywhere.com/stories/",
+          "status": 404,
+          "content_type": "text/html; charset=utf-8",
+          "error": ""
+        },
+        {
+          "url": "https://41443121.pythonanywhere.com/story/",
+          "status": 404,
+          "content_type": "text/html; charset=utf-8",
+          "error": ""
+        },
+        {
+          "url": "https://41443121.pythonanywhere.com/usr/",
+          "status": 404,
+          "content_type": "text/html; charset=utf-8",
+          "error": ""
+        },
+        {
+          "url": "https://41443121.pythonanywhere.com/about/",
+          "status": 500,
+          "content_type": "text/html; charset=utf-8",
+          "error": ""
+        },
+        {
+          "url": "https://41443121.pythonanywhere.com/contact/",
+          "status": 500,
+          "content_type": "text/html; charset=utf-8",
+          "error": ""
+        }
+      ]
+    }
+  ]
+}
