@@ -1,0 +1,302 @@
+{% extends "core/base.html" %}
+
+{% block title %}AIOT Water Assistant{% endblock %}
+
+{% block extra_css %}
+{% load static %}
+<link href="{% static 'css/aiot_assistant.css' %}" rel="stylesheet">
+{% endblock %}
+
+{% block content %}
+<section class="aiot-hero">
+  <div class="container">
+    <div class="aiot-hero__copy">
+      <span class="aiot-eyebrow">AIOT Water Quality Assistant</span>
+      <h1>AIOT 水質助手</h1>
+      <p>整合魚塭感測資料、警示判讀與多輪對話記憶，讓使用者能持續追問同一段水質情境。</p>
+    </div>
+  </div>
+</section>
+
+<section class="aiot-shell">
+  <div class="container">
+    <div class="aiot-layout">
+      <aside class="aiot-sidebar">
+        <div class="aiot-panel">
+          <h2>即時總覽</h2>
+          <div class="aiot-metrics" id="dashboard-metrics">
+            <div class="aiot-metric">
+              <span>平均溫度</span>
+              <strong id="metric-temp">{% if dashboard.metrics.temperature_c is not None %}{{ dashboard.metrics.temperature_c }} C{% else %}--{% endif %}</strong>
+            </div>
+            <div class="aiot-metric">
+              <span>平均 pH</span>
+              <strong id="metric-ph">{% if dashboard.metrics.ph is not None %}{{ dashboard.metrics.ph }}{% else %}--{% endif %}</strong>
+            </div>
+            <div class="aiot-metric">
+              <span>平均溶氧</span>
+              <strong id="metric-do">{% if dashboard.metrics.dissolved_oxygen_mg_l is not None %}{{ dashboard.metrics.dissolved_oxygen_mg_l }} mg/L{% else %}--{% endif %}</strong>
+            </div>
+            <div class="aiot-metric aiot-metric--alert">
+              <span>警示數量</span>
+              <strong id="metric-alert-count">{{ dashboard.metrics.alert_count }}</strong>
+            </div>
+          </div>
+        </div>
+
+        <div class="aiot-panel">
+          <h2>模型切換</h2>
+          <div class="aiot-models" id="model-selector">
+            {% for option in model_options %}
+            <label class="aiot-model-card{% if option.key == current_model %} is-active{% endif %}" data-model-option="{{ option.key }}">
+              <input type="radio" name="model" value="{{ option.key }}" {% if option.key == current_model %}checked{% endif %}>
+              <div>
+                <strong>{{ option.label }}</strong>
+                <p>{{ option.description }}</p>
+                <small>Provider: {{ option.provider }}</small>
+              </div>
+            </label>
+            {% endfor %}
+          </div>
+          <div class="aiot-model-actions">
+            <p id="model-status">目前模型：{{ current_model_meta.label }}</p>
+            <button type="button" id="apply-model" class="btn btn-outline-brand">套用模型</button>
+          </div>
+        </div>
+
+        <div class="aiot-panel">
+          <h2>魚塭列表</h2>
+          <ul class="aiot-pond-list" id="pond-list">
+            {% for pond in dashboard.ponds %}
+            <li class="aiot-pond-item">
+              <div class="aiot-pond-head">
+                <strong>{{ pond.name }}</strong>
+                <span class="aiot-badge {% if pond.status == 'Alert' %}aiot-badge--alert{% endif %}">{{ pond.status }}</span>
+              </div>
+              <p>{{ pond.species }}{% if pond.description %} / {{ pond.description }}{% endif %}</p>
+              {% if pond.dissolved_oxygen_mg_l %}
+              <small>DO {{ pond.dissolved_oxygen_mg_l }} mg/L, pH {{ pond.ph }}, Temp {{ pond.temperature_c }} C</small>
+              {% else %}
+              <small>尚無量測資料</small>
+              {% endif %}
+            </li>
+            {% empty %}
+            <li class="aiot-pond-item">尚未建立魚塭資料。</li>
+            {% endfor %}
+          </ul>
+        </div>
+      </aside>
+
+      <div class="aiot-chat">
+        <div class="aiot-chat__head">
+          <div>
+            <h2>AI 對話面板</h2>
+            <p>支援多輪追問。你可以先問某個魚塭的數據，再接著問「那要怎麼處理」。</p>
+          </div>
+          <div class="aiot-chat__tools">
+            <span id="top-status" class="aiot-status">{{ current_model_meta.label }}</span>
+            <button type="button" id="clear-history" class="btn btn-outline-brand btn-sm">清除記憶</button>
+          </div>
+        </div>
+
+        <div class="aiot-chat__log" id="log">
+          {% if chat_history %}
+            {% for item in chat_history %}
+            <div class="aiot-msg {% if item.role == 'user' %}aiot-msg--user{% else %}aiot-msg--bot{% endif %}">
+              <div class="aiot-msg__who">{% if item.role == "user" %}你{% else %}AI 助手{% endif %}</div>
+              <div class="aiot-msg__body">{{ item.content }}</div>
+            </div>
+            {% endfor %}
+          {% else %}
+          <div class="aiot-msg aiot-msg--bot">
+            <div class="aiot-msg__who">AI 助手</div>
+            <div class="aiot-msg__body">可以直接問我「1 號池最新溶氧是多少」或「哪一個魚塭最需要先處理」。</div>
+          </div>
+          {% endif %}
+        </div>
+
+        <div class="aiot-quick-actions">
+          <button type="button" class="aiot-quick" data-question="請列出目前所有魚塭。">列出魚塭</button>
+          <button type="button" class="aiot-quick" data-question="1 號池最新水質數據是什麼？">1 號池最新水質</button>
+          <button type="button" class="aiot-quick" data-question="哪些魚塭目前有警示？">警示魚塭</button>
+          <button type="button" class="aiot-quick" data-question="請分析最近 7 天的溶氧狀況。">近 7 天溶氧</button>
+        </div>
+
+        <form id="form" class="aiot-composer">
+          <input type="text" id="input" placeholder="輸入問題，例如：2 號池最近 7 天的水質趨勢" autocomplete="off">
+          <button id="send" type="submit" class="btn btn-brand">送出</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  (function () {
+    const csrf = document.querySelector('meta[name="csrf-token"]')?.content || "";
+    const log = document.getElementById("log");
+    const form = document.getElementById("form");
+    const input = document.getElementById("input");
+    const sendBtn = document.getElementById("send");
+    const applyModelBtn = document.getElementById("apply-model");
+    const clearHistoryBtn = document.getElementById("clear-history");
+    const modelStatus = document.getElementById("model-status");
+    const topStatus = document.getElementById("top-status");
+    const modelInputs = Array.from(document.querySelectorAll('input[name="model"]'));
+
+    function getSelectedModel() {
+      const selected = document.querySelector('input[name="model"]:checked');
+      return selected ? selected.value : null;
+    }
+
+    function syncModelCardState() {
+      for (const inputNode of modelInputs) {
+        const option = inputNode.closest("[data-model-option]");
+        if (!option) continue;
+        option.classList.toggle("is-active", inputNode.checked);
+      }
+    }
+
+    function addMsg(who, body, kind) {
+      const wrapper = document.createElement("div");
+      wrapper.className = "aiot-msg " + (kind === "user" ? "aiot-msg--user" : kind === "error" ? "aiot-msg--error" : "aiot-msg--bot");
+      wrapper.innerHTML = '<div class="aiot-msg__who"></div><div class="aiot-msg__body"></div>';
+      wrapper.querySelector(".aiot-msg__who").textContent = who;
+      wrapper.querySelector(".aiot-msg__body").textContent = body;
+      log.appendChild(wrapper);
+      log.scrollTop = log.scrollHeight;
+    }
+
+    async function refreshDashboard() {
+      try {
+        const resp = await fetch("{% url 'chat:dashboard-api' %}");
+        const data = await resp.json();
+        document.getElementById("metric-temp").textContent = data.metrics.temperature_c != null ? `${data.metrics.temperature_c} C` : "--";
+        document.getElementById("metric-ph").textContent = data.metrics.ph != null ? `${data.metrics.ph}` : "--";
+        document.getElementById("metric-do").textContent = data.metrics.dissolved_oxygen_mg_l != null ? `${data.metrics.dissolved_oxygen_mg_l} mg/L` : "--";
+        document.getElementById("metric-alert-count").textContent = data.metrics.alert_count ?? 0;
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    async function applyModelSelection() {
+      const model = getSelectedModel();
+      if (!model) {
+        modelStatus.textContent = "請先選擇模型。";
+        return;
+      }
+
+      applyModelBtn.disabled = true;
+      modelStatus.textContent = `正在切換到 ${model}...`;
+
+      try {
+        const resp = await fetch("{% url 'chat:set-model-api' %}", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-CSRFToken": csrf
+          },
+          body: JSON.stringify({ model })
+        });
+        const data = await resp.json();
+        if (!resp.ok) {
+          modelStatus.textContent = data.error || "模型切換失敗。";
+          return;
+        }
+
+        const label = data.model?.label || model;
+        modelStatus.textContent = `目前模型：${label}`;
+        topStatus.textContent = label;
+      } catch (err) {
+        modelStatus.textContent = `模型切換失敗：${err.message}`;
+      } finally {
+        applyModelBtn.disabled = false;
+      }
+    }
+
+    async function clearHistory() {
+      clearHistoryBtn.disabled = true;
+      try {
+        const resp = await fetch("{% url 'chat:clear-history-api' %}", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-CSRFToken": csrf
+          },
+          body: "{}"
+        });
+        const data = await resp.json();
+        if (!resp.ok || !data.ok) {
+          addMsg("系統", data.error || "清除歷史失敗。", "error");
+          return;
+        }
+
+        log.innerHTML = "";
+        addMsg("AI 助手", "歷史記憶已清除，新的對話會重新開始。", "bot");
+      } catch (err) {
+        addMsg("系統", `清除歷史失敗：${err.message}`, "error");
+      } finally {
+        clearHistoryBtn.disabled = false;
+      }
+    }
+
+    form.addEventListener("submit", async function (event) {
+      event.preventDefault();
+      const message = input.value.trim();
+      if (!message) return;
+
+      const selectedModel = getSelectedModel();
+      addMsg("你", message, "user");
+      input.value = "";
+      sendBtn.disabled = true;
+
+      try {
+        const resp = await fetch("{% url 'chat:chat-api' %}", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-CSRFToken": csrf
+          },
+          body: JSON.stringify({ message, model: selectedModel })
+        });
+        const data = await resp.json();
+        if (!resp.ok) {
+          addMsg("系統", data.error || "請求失敗。", "error");
+          return;
+        }
+
+        addMsg("AI 助手", data.reply || "沒有收到模型回覆。", "bot");
+        if (data.model?.label) {
+          modelStatus.textContent = `目前模型：${data.model.label}`;
+          topStatus.textContent = data.model.label;
+        }
+        refreshDashboard();
+      } catch (err) {
+        addMsg("系統", `連線失敗：${err.message}`, "error");
+      } finally {
+        sendBtn.disabled = false;
+        input.focus();
+      }
+    });
+
+    document.querySelector(".aiot-quick-actions")?.addEventListener("click", function (event) {
+      const button = event.target.closest(".aiot-quick");
+      if (!button) return;
+      input.value = button.dataset.question || "";
+      form.requestSubmit();
+    });
+
+    for (const inputNode of modelInputs) {
+      inputNode.addEventListener("change", syncModelCardState);
+    }
+
+    applyModelBtn.addEventListener("click", applyModelSelection);
+    clearHistoryBtn?.addEventListener("click", clearHistory);
+    syncModelCardState();
+    log.scrollTop = log.scrollHeight;
+  })();
+</script>
+{% endblock %}

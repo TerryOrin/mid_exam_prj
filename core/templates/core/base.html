@@ -5,7 +5,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="csrf-token" content="{{ csrf_token }}">
-  <title>{% block title %}風雲客棧{% endblock %}｜水井村數位平台</title>
+  <title>{% block title %}風雲水鄉{% endblock %} | 國立虎尾科技大學</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700;800&family=Noto+Serif+TC:wght@500;700;900&display=swap" rel="stylesheet">
@@ -18,7 +18,7 @@
   <nav class="navbar navbar-expand-lg navbar-dark site-nav">
     <div class="container">
       <a class="navbar-brand" href="{% url 'home' %}">
-        <i class="bi bi-house-door-fill me-1"></i>風雲客棧
+        <i class="bi bi-house-door-fill me-1"></i>風雲水鄉
       </a>
       <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNav">
         <span class="navbar-toggler-icon"></span>
@@ -26,10 +26,11 @@
       <div class="collapse navbar-collapse" id="mainNav">
         <ul class="navbar-nav ms-auto align-items-lg-center gap-lg-1">
           <li class="nav-item"><a class="nav-link" href="{% url 'home' %}">首頁</a></li>
-          <li class="nav-item"><a class="nav-link" href="{% url 'about' %}">關於客棧</a></li>
+          <li class="nav-item"><a class="nav-link" href="{% url 'about' %}">關於計畫</a></li>
           <li class="nav-item"><a class="nav-link" href="{% url 'events_list' %}">活動資訊</a></li>
-          <li class="nav-item"><a class="nav-link" href="{% url 'stories' %}">水井故事</a></li>
+          <li class="nav-item"><a class="nav-link" href="{% url 'stories' %}">水文化故事</a></li>
           <li class="nav-item"><a class="nav-link" href="{% url 'usr' %}">USR 成果</a></li>
+          <li class="nav-item"><a class="nav-link" href="{% url 'chat:page' %}">AIOT 水質助手</a></li>
           <li class="nav-item"><a class="nav-link" href="{% url 'contact' %}">聯絡我們</a></li>
         </ul>
       </div>
@@ -44,18 +45,19 @@
     <div class="container">
       <div class="row g-4">
         <div class="col-lg-4">
-          <h5 class="fw-bold">風雲客棧</h5>
+          <h5 class="fw-bold">風雲水鄉</h5>
           <p class="footer-muted mb-0">
-            水井村數位入口平台，整合在地故事、USR 成果與活動資訊，
-            讓社區內容可以持續更新與擴散。
+            以水文化、地方創生、USR 與 AIOT 技術為主軸，整理雲林沿海養殖與地方故事，
+            建立兼具展示、教學與互動服務的整合型網站。
           </p>
         </div>
         <div class="col-lg-4">
           <h5 class="fw-bold">快速連結</h5>
           <ul class="list-unstyled footer-muted mb-0">
             <li><a href="{% url 'events_list' %}">活動資訊</a></li>
-            <li><a href="{% url 'stories' %}">水井故事</a></li>
+            <li><a href="{% url 'stories' %}">水文化故事</a></li>
             <li><a href="{% url 'usr' %}">USR 成果</a></li>
+            <li><a href="{% url 'chat:page' %}">AIOT 水質助手</a></li>
             <li><a href="{% url 'contact' %}">聯絡我們</a></li>
           </ul>
         </div>
@@ -69,14 +71,12 @@
         </div>
       </div>
       <hr class="border-secondary-subtle my-4">
-      <p class="footer-muted text-center mb-0">
-        © 2026 國立虎尾科技大學 USR 計畫｜風雲客棧數位平台
-      </p>
+      <p class="footer-muted text-center mb-0">© 2026 國立虎尾科技大學 USR 計畫。</p>
     </div>
   </footer>
 
   <div class="chat-launcher">
-    <button class="chat-btn" id="chatOpenBtn" aria-label="開啟 AI 客棧助理" aria-expanded="false">
+    <button class="chat-btn" id="chatOpenBtn" aria-label="開啟 AI 導覽助手" aria-expanded="false">
       <i class="bi bi-chat-dots-fill"></i>
     </button>
   </div>
@@ -85,20 +85,20 @@
 
   <div class="chat-panel" id="chatPanel">
     <div class="chat-head">
-      <strong>AI 客棧助理</strong>
+      <strong>AI 導覽助手</strong>
       <button class="btn btn-sm btn-light py-0" id="chatCloseBtn">關閉</button>
     </div>
     <div class="chat-log" id="chatLog">
-      <div class="chat-msg bot">可詢問活動時間、故事重點、USR/AIoT 成果。我會優先提供站內可點擊連結。</div>
+      <div class="chat-msg bot">可以詢問活動、故事、USR 成果，或直接讓我帶你前往相關頁面。</div>
     </div>
     <div class="chat-quick" id="chatQuick">
-      <button type="button" class="chat-quick__item" data-question="請列出近期活動，附上可點擊連結">近期活動＋連結</button>
-      <button type="button" class="chat-quick__item" data-question="請整理三則水井故事重點，附上詳情頁連結">水井故事重點</button>
-      <button type="button" class="chat-quick__item" data-question="USR 成果有哪些？請附可閱讀詳情的連結">USR 成果查詢</button>
-      <button type="button" class="chat-quick__item" data-question="AIoT 相關成果在哪裡看？請直接給我站內連結">AIoT 快速入口</button>
+      <button type="button" class="chat-quick__item" data-question="最近有哪些活動可以參加？">近期活動</button>
+      <button type="button" class="chat-quick__item" data-question="有哪些水文化故事值得先看？">推薦故事</button>
+      <button type="button" class="chat-quick__item" data-question="USR 成果有哪些重點？">USR 重點</button>
+      <button type="button" class="chat-quick__item" data-href="{% url 'chat:page' %}">AIOT 助手</button>
     </div>
     <div class="chat-input">
-      <input type="text" id="chatInput" placeholder="例：下週活動有哪些？附連結">
+      <input type="text" id="chatInput" placeholder="輸入你的問題">
       <button class="btn btn-brand btn-sm" id="chatSendBtn">送出</button>
     </div>
   </div>
@@ -130,7 +130,7 @@
       if (!text) return;
       input.value = "";
       appendMsg("user", text);
-      appendMsg("bot", "正在查詢中…");
+      appendMsg("bot", "整理資料中...");
       const waiting = log.lastElementChild;
       try {
         const res = await fetch("{% url 'chatbot_api' %}", {
@@ -147,9 +147,9 @@
         });
         const data = await res.json();
         waiting.remove();
-        const replyText = data.reply || "目前無法取得回應。";
+        const replyText = data.reply || "目前沒有可顯示的回覆。";
         if (data.redirect_url) {
-          appendMsg("bot", `${replyText}\n\n已為你開啟相關頁面…`);
+          appendMsg("bot", `${replyText}\n\n正在為你切換頁面...`);
           setTimeout(() => {
             window.location.href = data.redirect_url;
           }, 500);
@@ -158,7 +158,7 @@
         appendMsg("bot", replyText);
       } catch (err) {
         waiting.remove();
-        appendMsg("bot", "連線發生問題，請稍後再試。");
+        appendMsg("bot", "目前無法連線到導覽助手，請稍後再試。");
       }
     }
 
@@ -168,7 +168,7 @@
       document.body.classList.toggle("chat-open", isOpen);
       if (openBtn) {
         openBtn.setAttribute("aria-expanded", String(isOpen));
-        openBtn.setAttribute("aria-label", isOpen ? "關閉 AI 客棧助理" : "開啟 AI 客棧助理");
+        openBtn.setAttribute("aria-label", isOpen ? "關閉 AI 導覽助手" : "開啟 AI 導覽助手");
       }
       if (openIcon) {
         openIcon.className = isOpen ? "bi bi-x-lg" : "bi bi-chat-dots-fill";
@@ -183,24 +183,24 @@
       setPanelState(!isOpen);
     }
 
-    openBtn?.addEventListener("click", () => {
-      togglePanel();
-    });
-    backdrop?.addEventListener("click", () => {
-      setPanelState(false);
-    });
+    openBtn?.addEventListener("click", togglePanel);
+    backdrop?.addEventListener("click", () => setPanelState(false));
     closeBtn?.addEventListener("click", () => setPanelState(false));
     sendBtn?.addEventListener("click", send);
-    input?.addEventListener("keydown", (e) => {
-      if (e.key === "Enter") send();
+    input?.addEventListener("keydown", (event) => {
+      if (event.key === "Enter") send();
     });
-    quick?.addEventListener("click", (e) => {
-      const btn = e.target.closest(".chat-quick__item");
+    quick?.addEventListener("click", (event) => {
+      const btn = event.target.closest(".chat-quick__item");
       if (!btn) return;
+      if (btn.dataset.href) {
+        window.location.href = btn.dataset.href;
+        return;
+      }
       send(btn.dataset.question || "");
     });
-    document.addEventListener("keydown", (e) => {
-      if (e.key === "Escape") setPanelState(false);
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "Escape") setPanelState(false);
     });
   })();
   </script>

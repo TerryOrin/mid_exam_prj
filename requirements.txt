@@ -3,3 +3,4 @@ Pillow
 google-genai
 python-dotenv
 django-jazzmin
+openai>=1.30

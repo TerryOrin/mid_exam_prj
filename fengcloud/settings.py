@@ -32,6 +32,8 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "core",
+    "water",
+    "chat",
 ]
 
 JAZZMIN_SETTINGS = {

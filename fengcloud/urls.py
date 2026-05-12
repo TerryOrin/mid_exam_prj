@@ -5,6 +5,7 @@ from django.conf.urls.static import static
 
 urlpatterns = [
     path("admin/", admin.site.urls),
+    path("aiot-water-assistant/", include("chat.urls", namespace="chat")),
     path("", include("core.urls")),
 ]
 
