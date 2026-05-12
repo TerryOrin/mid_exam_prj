@@ -18,7 +18,7 @@ venv/
 env/
 
 # Django generated files
-media/
+#media/
 staticfiles/
 
 # Editor and OS files
