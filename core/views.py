@@ -122,14 +122,17 @@ def ar_guide_view(request):
     ar_stops = []
     for stop in raw_stops:
         image_path = Path(settings.BASE_DIR, "static", stop["image"])
-        aspect_ratio = 0.5625
+        aspect_ratio = 0.72
+        video_height_is_fallback = True
         if image_path.exists():
             with PILImage.open(image_path) as image:
                 aspect_ratio = round(image.height / image.width, 4)
+            video_height_is_fallback = False
         ar_stops.append(
             {
                 **stop,
                 "video_height": aspect_ratio,
+                "video_height_is_fallback": video_height_is_fallback,
                 "video_filename": Path(stop["video"]).name,
             }
         )

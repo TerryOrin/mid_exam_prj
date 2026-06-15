@@ -1155,6 +1155,243 @@ a:hover {
   font-size: 1.75rem;
 }
 
+.ar-aframe-section {
+  position: relative;
+  min-height: 100vh;
+  background: #07110f;
+  color: #fff;
+  overflow: hidden;
+}
+
+.app-shell {
+  position: relative;
+  min-height: 100vh;
+  isolation: isolate;
+}
+
+.ar-aframe-scene,
+.app-shell > video {
+  position: fixed !important;
+  inset: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+}
+
+.ar-aframe-scene {
+  z-index: 2;
+}
+
+.app-shell > video {
+  z-index: 1;
+  object-fit: cover;
+}
+
+.status-panel {
+  position: fixed;
+  top: 5rem;
+  left: 1rem;
+  z-index: 70;
+  width: min(440px, calc(100vw - 2rem));
+  padding: 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 8px;
+  background: rgba(7, 17, 15, 0.72);
+  box-shadow: 0 18px 48px rgba(0, 0, 0, 0.22);
+  backdrop-filter: blur(14px);
+}
+
+.status-panel__top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.6rem;
+  margin-bottom: 0.75rem;
+}
+
+.status-panel .ar-section-kicker {
+  margin: 0 0 0.55rem;
+  background: rgba(135, 255, 218, 0.14);
+  color: rgba(225, 255, 246, 0.95);
+}
+
+.status-panel h1 {
+  margin: 0 0 0.5rem;
+  font-size: 1.35rem;
+  font-weight: 800;
+}
+
+.status-panel p {
+  margin: 0 0 0.8rem;
+  color: rgba(255, 255, 255, 0.82);
+}
+
+.status-panel .ar-status-row {
+  margin: 0.45rem 0 0;
+  padding-top: 0.45rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.14);
+}
+
+.status-panel .ar-status-label {
+  color: rgba(255, 255, 255, 0.68);
+}
+
+.status-panel .btn {
+  margin-top: 0.85rem;
+  border-radius: 8px;
+}
+
+.camera-treatment {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  pointer-events: none;
+  display: grid;
+  place-items: center;
+}
+
+.focus-frame {
+  position: relative;
+  width: min(70vw, 480px);
+  aspect-ratio: 1.42;
+  border-radius: 8px;
+}
+
+.focus-frame span {
+  position: absolute;
+  width: 54px;
+  height: 54px;
+  border-color: rgba(255, 255, 255, 0.92);
+  border-style: solid;
+  border-width: 0;
+}
+
+.focus-frame span:nth-child(1) {
+  top: 0;
+  left: 0;
+  border-top-width: 4px;
+  border-left-width: 4px;
+}
+
+.focus-frame span:nth-child(2) {
+  top: 0;
+  right: 0;
+  border-top-width: 4px;
+  border-right-width: 4px;
+}
+
+.focus-frame span:nth-child(3) {
+  right: 0;
+  bottom: 0;
+  border-right-width: 4px;
+  border-bottom-width: 4px;
+}
+
+.focus-frame span:nth-child(4) {
+  bottom: 0;
+  left: 0;
+  border-bottom-width: 4px;
+  border-left-width: 4px;
+}
+
+.focus-frame i {
+  position: absolute;
+  left: 8%;
+  right: 8%;
+  top: 18%;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, rgba(135, 255, 218, 0.92), transparent);
+  box-shadow: 0 0 18px rgba(135, 255, 218, 0.85);
+  animation: arScan 3.2s linear infinite;
+}
+
+.found-feedback {
+  position: fixed;
+  left: 50%;
+  bottom: 2rem;
+  z-index: 65;
+  transform: translateX(-50%) translateY(16px);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.18s ease, transform 0.18s ease;
+}
+
+.found-feedback span {
+  display: inline-flex;
+  align-items: center;
+  min-height: 40px;
+  padding: 0.4rem 0.9rem;
+  border-radius: 999px;
+  color: #06231a;
+  font-weight: 800;
+  background: rgba(135, 255, 218, 0.92);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.22);
+}
+
+.fallback-stage {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+  text-align: center;
+  pointer-events: none;
+  transition: opacity 0.18s ease, visibility 0.18s ease;
+}
+
+.fallback-stage__panel {
+  width: min(480px, calc(100vw - 2rem));
+  padding: 1.2rem;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 8px;
+  background: rgba(7, 17, 15, 0.72);
+  backdrop-filter: blur(14px);
+}
+
+.fallback-stage__panel i {
+  display: inline-flex;
+  margin-bottom: 0.6rem;
+  color: rgba(135, 255, 218, 0.96);
+  font-size: 2rem;
+}
+
+.fallback-stage__panel h2 {
+  margin: 0 0 0.4rem;
+  font-size: 1.25rem;
+}
+
+.fallback-stage__panel p {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.82);
+}
+
+.ar-aframe-section[data-state="ready"] .fallback-stage,
+.ar-aframe-section[data-state="found"] .fallback-stage {
+  opacity: 0;
+  pointer-events: none;
+  visibility: hidden;
+}
+
+.ar-aframe-section[data-state="found"] .found-feedback {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+.ar-aframe-section[data-state="found"] .focus-frame {
+  opacity: 0.32;
+}
+
+.ar-aframe-section[data-state="error"] .camera-treatment,
+.ar-aframe-section[data-state="permission-denied"] .camera-treatment {
+  display: none;
+}
+
+.ar-target-reference {
+  position: relative;
+  z-index: 40;
+  background: var(--bg);
+}
+
 @keyframes arPulse {
   0% {
     transform: scale(0.76);
@@ -1462,6 +1699,27 @@ body.chat-open {
 
   .ar-camera-stage {
     min-height: 360px;
+  }
+
+  .status-panel {
+    top: auto;
+    right: 0.75rem;
+    bottom: 0.75rem;
+    left: 0.75rem;
+    width: auto;
+    padding: 0.85rem;
+  }
+
+  .status-panel h1 {
+    font-size: 1.12rem;
+  }
+
+  .focus-frame {
+    width: min(82vw, 420px);
+  }
+
+  .found-feedback {
+    bottom: 12rem;
   }
 
   .chat-launcher {
