@@ -1,3 +1,7 @@
+from pathlib import Path
+
+from PIL import Image as PILImage
+from django.conf import settings
 from django.shortcuts import render, get_object_or_404
 from django.core.paginator import Paginator
 from django.db.models import Q, Case, When, Value, IntegerField
@@ -79,6 +83,65 @@ def home_view(request):
 
 def about_view(request):
     return render(request, "core/about.html")
+
+
+def ar_guide_view(request):
+    raw_stops = [
+        {
+            "eyebrow": "AR Stop 01",
+            "title": "風雲水井歷史介紹",
+            "description": "辨識風雲水井的圖卡後，影片會直接貼合在圖片表面播放，呈現古井故事與場域背景。",
+            "image": "img/about/about-fengyun.jpg",
+            "badge": "風雲水井",
+            "mission": "將鏡頭對準風雲水井圖卡，確認影片能穩定覆蓋在原圖位置上。",
+            "video": "video/ar_video1.mp4",
+            "target_index": 0,
+        },
+        {
+            "eyebrow": "AR Stop 02",
+            "title": "水車運作展示",
+            "description": "辨識水車圖卡後，影片會依照圖片比例覆蓋，示範灌溉與引水運作方式。",
+            "image": "img/about/about-waterwheel.jpg",
+            "badge": "水車設施",
+            "mission": "移動鏡頭時確認影片仍鎖定在水車圖卡上，不要漂浮或錯位。",
+            "video": "video/ar_video2.mp4",
+            "target_index": 1,
+        },
+        {
+            "eyebrow": "AR Stop 03",
+            "title": "生態池 AIOT 解說",
+            "description": "辨識生態池圖卡後，影片會固定在圖片上，補充 AIOT 水質監測與養殖應用。",
+            "image": "img/about/about-pond.jpg",
+            "badge": "AIOT 水質",
+            "mission": "對準生態池圖卡後檢查影片是否完整覆蓋，並保持追蹤穩定。",
+            "video": "video/ar_video3.mp4",
+            "target_index": 2,
+        },
+    ]
+
+    ar_stops = []
+    for stop in raw_stops:
+        image_path = Path(settings.BASE_DIR, "static", stop["image"])
+        aspect_ratio = 0.5625
+        if image_path.exists():
+            with PILImage.open(image_path) as image:
+                aspect_ratio = round(image.height / image.width, 4)
+        ar_stops.append(
+            {
+                **stop,
+                "video_height": aspect_ratio,
+                "video_filename": Path(stop["video"]).name,
+            }
+        )
+
+    mind_file_relpath = "ar/targets/shuijing_targets.mind"
+    mind_file_path = Path(settings.BASE_DIR, "static", mind_file_relpath)
+    context = {
+        "ar_stops": ar_stops,
+        "mind_file_relpath": mind_file_relpath,
+        "mind_file_exists": mind_file_path.exists(),
+    }
+    return render(request, "core/ar_guide.html", context)
 
 
 def events_list_view(request):
@@ -336,6 +399,7 @@ def _build_chat_context_payload(request, user_message="", page_path="", page_tit
         "活動資訊": _absolute_link(request, reverse("events_list")),
         "水井故事": _absolute_link(request, reverse("stories")),
         "USR成果": _absolute_link(request, reverse("usr")),
+        "AR導覽": _absolute_link(request, reverse("ar_guide")),
         "聯絡我們": _absolute_link(request, reverse("contact")),
     }
 

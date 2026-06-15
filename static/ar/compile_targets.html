@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>MindAR Target Compiler</title>
+    <style>
+      body {
+        margin: 0;
+        font-family: "Noto Sans TC", sans-serif;
+        background: #101714;
+        color: #f4f8f6;
+      }
+
+      main {
+        max-width: 880px;
+        margin: 0 auto;
+        padding: 40px 20px 80px;
+      }
+
+      h1 {
+        margin: 0 0 12px;
+        font-size: 2rem;
+      }
+
+      p {
+        line-height: 1.7;
+      }
+
+      .card {
+        margin-top: 20px;
+        padding: 20px;
+        border-radius: 18px;
+        background: rgba(255, 255, 255, 0.06);
+        border: 1px solid rgba(255, 255, 255, 0.12);
+      }
+
+      .targets {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 16px;
+      }
+
+      .targets img {
+        width: 100%;
+        border-radius: 14px;
+        display: block;
+      }
+
+      #status {
+        font-weight: 700;
+      }
+
+      #progress {
+        color: #9ec4b3;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>MindAR Target Compiler</h1>
+      <p>這個頁面會把 3 張 target 圖片編譯成 `shuijing_targets.mind`。完成後會把 base64 結果放到 `window.compiledBase64`。</p>
+
+      <div class="card">
+        <p id="status">準備中</p>
+        <p id="progress">0%</p>
+      </div>
+
+      <textarea id="compiled-output" hidden></textarea>
+
+      <div class="card targets">
+        <img id="target-1" src="/static/img/about/about-fengyun.jpg" alt="Target 1">
+        <img id="target-2" src="/static/img/about/about-waterwheel.jpg" alt="Target 2">
+        <img id="target-3" src="/static/img/about/about-pond.jpg" alt="Target 3">
+      </div>
+    </main>
+
+    <script type="module">
+      import { Compiler } from "/static/ar/mindar-image.prod.js";
+      window.compiledBase64 = "";
+      window.compileStatus = "pending";
+
+      async function compileTargets() {
+        const status = document.getElementById("status");
+        const progress = document.getElementById("progress");
+        const images = [
+          document.getElementById("target-1"),
+          document.getElementById("target-2"),
+          document.getElementById("target-3"),
+        ];
+
+        try {
+          status.textContent = "載入圖片";
+          await Promise.all(
+            images.map(function (image) {
+              if (image.complete) return Promise.resolve();
+              return new Promise(function (resolve, reject) {
+                image.addEventListener("load", resolve, { once: true });
+                image.addEventListener("error", reject, { once: true });
+              });
+            })
+          );
+
+          status.textContent = "開始編譯";
+          const compiler = new Compiler();
+          await compiler.compileImageTargets(images, function (percent) {
+            progress.textContent = percent.toFixed(1) + "%";
+          });
+
+          const exported = compiler.exportData();
+          const bytes = exported instanceof Uint8Array ? exported : new Uint8Array(exported);
+          let binary = "";
+          for (let index = 0; index < bytes.length; index += 1) {
+            binary += String.fromCharCode(bytes[index]);
+          }
+
+          window.compiledBase64 = btoa(binary);
+          window.compileStatus = "complete";
+          document.getElementById("compiled-output").value = window.compiledBase64;
+          status.textContent = "COMPLETE";
+          progress.textContent = bytes.length + " bytes";
+        } catch (error) {
+          window.compileStatus = "error";
+          status.textContent = "ERROR";
+          progress.textContent = String(error);
+          console.error(error);
+        }
+      }
+
+      compileTargets();
+    </script>
+  </body>
+</html>

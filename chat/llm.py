@@ -14,8 +14,7 @@ If measurements look risky, say why and suggest immediate checks or mitigation s
 
 MAX_TOOL_LOOPS = 5
 GEMINI_OPENAI_BASE_URL = "https://generativelanguage.googleapis.com/v1beta/openai/"
-OLLAMA_DEFAULT_BASE_URL = "https://api.openai.com/v1"
-OLLAMA_DEFAULT_API_KEY = "ollama-no-key-needed"
+DEEPSEEK_OPENAI_BASE_URL = "https://api.deepseek.com"
 
 
 @dataclass(frozen=True)
@@ -27,11 +26,11 @@ class ModelConfig:
 
 
 MODEL_CATALOG: dict[str, ModelConfig] = {
-    "gpt-4o-mini": ModelConfig(
-        key="gpt-4o-mini",
-        label="GPT-4o Mini",
-        description="Fast general assistant for routine water-quality questions.",
-        provider="openai",
+    "deepseek-v4-flash": ModelConfig(
+        key="deepseek-v4-flash",
+        label="DeepSeek V4 Flash",
+        description="Fast DeepSeek option with reasoning enabled for quick analysis.",
+        provider="deepseek",
     ),
     "gemini-2.5-flash-lite": ModelConfig(
         key="gemini-2.5-flash-lite",
@@ -45,12 +44,6 @@ MODEL_CATALOG: dict[str, ModelConfig] = {
         description="Stronger Gemini option for more detailed explanations.",
         provider="gemini",
     ),
-    "llama3": ModelConfig(
-        key="llama3",
-        label="Ollama Llama 3",
-        description="Local or OpenAI-compatible deployment for private environments.",
-        provider="ollama",
-    ),
 }
 
 
@@ -59,19 +52,30 @@ def _is_placeholder_key(value: str) -> bool:
     return "your-key" in lowered or "your_api_key" in lowered or "sk-your-" in lowered
 
 
+def _get_deepseek_api_key() -> str:
+    return ((os.environ.get("DS_API_KEY") or os.environ.get("DEEPSEEK_API_KEY") or "")).strip()
+
+
 def get_default_model_name() -> str:
     configured_model = (os.environ.get("LLM_MODEL") or "").strip()
     if configured_model in MODEL_CATALOG:
         return configured_model
 
-    provider = os.environ.get("LLM_PROVIDER", "openai").strip().lower()
-    if provider == "openai" and (os.environ.get("GEMINI_API_KEY") or "").strip():
-        provider = "gemini"
+    provider = os.environ.get("LLM_PROVIDER", "deepseek").strip().lower()
     if provider == "gemini":
         return "gemini-2.5-flash-lite"
-    if provider == "ollama":
-        return "llama3"
-    return "gpt-4o-mini"
+    if provider == "deepseek":
+        return "deepseek-v4-flash"
+
+    deepseek_api_key = _get_deepseek_api_key()
+    if deepseek_api_key and not _is_placeholder_key(deepseek_api_key):
+        return "deepseek-v4-flash"
+
+    gemini_api_key = (os.environ.get("GEMINI_API_KEY") or "").strip()
+    if gemini_api_key and not _is_placeholder_key(gemini_api_key):
+        return "gemini-2.5-flash-lite"
+
+    return "deepseek-v4-flash"
 
 
 def get_available_models() -> list[dict[str, str]]:
@@ -105,16 +109,13 @@ def _client(model: ModelConfig):
             raise RuntimeError("Missing GEMINI_API_KEY.")
         return OpenAI(api_key=api_key, base_url=GEMINI_OPENAI_BASE_URL)
 
-    if model.provider == "ollama":
-        return OpenAI(
-            api_key=os.environ.get("LLM_API_KEY", OLLAMA_DEFAULT_API_KEY),
-            base_url=os.environ.get("LLM_BASE_URL", OLLAMA_DEFAULT_BASE_URL),
-        )
+    if model.provider == "deepseek":
+        api_key = _get_deepseek_api_key()
+        if not api_key or _is_placeholder_key(api_key):
+            raise RuntimeError("Missing DS_API_KEY or DEEPSEEK_API_KEY.")
+        return OpenAI(api_key=api_key, base_url=DEEPSEEK_OPENAI_BASE_URL)
 
-    api_key = (os.environ.get("OPENAI_API_KEY") or "").strip()
-    if not api_key or _is_placeholder_key(api_key):
-        raise RuntimeError("Missing OPENAI_API_KEY.")
-    return OpenAI(api_key=api_key)
+    raise RuntimeError(f"Unsupported provider: {model.provider}")
 
 
 def _message_text(msg) -> str:
@@ -136,6 +137,18 @@ def _message_text(msg) -> str:
     return ""
 
 
+def _completion_request_kwargs(model: ModelConfig, messages: list[dict]) -> dict:
+    kwargs = {
+        "model": model.key,
+        "messages": messages,
+        "tools": tools.TOOL_SCHEMAS,
+    }
+    if model.provider == "deepseek":
+        kwargs["reasoning_effort"] = "high"
+        kwargs["extra_body"] = {"thinking": {"type": "enabled"}}
+    return kwargs
+
+
 def chat(user_message: str, history: list[dict] | None = None, model_name: str | None = None) -> str:
     messages: list[dict] = [{"role": "system", "content": SYSTEM_PROMPT}]
     if history:
@@ -146,11 +159,7 @@ def chat(user_message: str, history: list[dict] | None = None, model_name: str |
     client = _client(model)
 
     for _ in range(MAX_TOOL_LOOPS):
-        response = client.chat.completions.create(
-            model=model.key,
-            messages=messages,
-            tools=tools.TOOL_SCHEMAS,
-        )
+        response = client.chat.completions.create(**_completion_request_kwargs(model, messages))
         msg = response.choices[0].message
 
         if not msg.tool_calls:

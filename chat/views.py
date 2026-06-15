@@ -75,6 +75,7 @@ def _dashboard_payload() -> dict:
                     "species": pond.species,
                     "description": pond.description,
                     "status": "No data",
+                    "has_measurements": False,
                 }
             )
             continue
@@ -89,24 +90,30 @@ def _dashboard_payload() -> dict:
                 "species": pond.species,
                 "description": pond.description,
                 "status": "Alert" if alerts else "Normal",
+                "has_measurements": True,
                 "measured_at": latest.measured_at.isoformat(),
                 "temperature_c": latest.temperature,
                 "ph": latest.ph,
                 "dissolved_oxygen_mg_l": latest.dissolved_oxygen,
+                "ammonia_mg_l": latest.ammonia,
+                "nitrite_mg_l": latest.nitrite,
                 "alerts": alerts,
             }
         )
 
     def _avg(attr: str) -> float | None:
-        if not readings:
+        values = [getattr(reading, attr) for reading in readings if getattr(reading, attr) is not None]
+        if not values:
             return None
-        return round(sum(getattr(reading, attr) for reading in readings) / len(readings), 2)
+        return round(sum(values) / len(values), 2)
 
     return {
         "metrics": {
             "temperature_c": _avg("temperature"),
             "ph": _avg("ph"),
             "dissolved_oxygen_mg_l": _avg("dissolved_oxygen"),
+            "ammonia_mg_l": _avg("ammonia"),
+            "nitrite_mg_l": _avg("nitrite"),
             "alert_count": alert_count,
         },
         "ponds": pond_summaries,

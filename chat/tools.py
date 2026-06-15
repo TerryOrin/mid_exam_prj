@@ -31,6 +31,8 @@ def get_latest_water_quality(pond_name: str) -> dict:
         "temperature_c": latest.temperature,
         "ph": latest.ph,
         "dissolved_oxygen_mg_l": latest.dissolved_oxygen,
+        "ammonia_mg_l": latest.ammonia,
+        "nitrite_mg_l": latest.nitrite,
         "salinity_ppt": latest.salinity,
     }
 
@@ -66,6 +68,8 @@ def get_water_quality_history(pond_name: str, days: int = 7) -> dict:
                 "temperature_c": reading.temperature,
                 "ph": reading.ph,
                 "dissolved_oxygen_mg_l": reading.dissolved_oxygen,
+                "ammonia_mg_l": reading.ammonia,
+                "nitrite_mg_l": reading.nitrite,
                 "salinity_ppt": reading.salinity,
             }
             for reading in readings
@@ -89,6 +93,10 @@ def check_thresholds(pond_name: str) -> dict:
         alerts.append("pH is outside the 7.0 to 9.0 range.")
     if latest.temperature > 32:
         alerts.append("Temperature is above 32C.")
+    if latest.ammonia is not None and latest.ammonia > 0.2:
+        alerts.append("Ammonia (NH3) is above 0.2 mg/L.")
+    if latest.nitrite is not None and latest.nitrite > 0.5:
+        alerts.append("Nitrite (NO2-) is above 0.5 mg/L.")
 
     return {"ok": not alerts, "alerts": alerts}
 

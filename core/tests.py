@@ -12,19 +12,19 @@ from .models import Event, StoryPost
 class ChatbotApiTests(TestCase):
     def setUp(self):
         Event.objects.create(
-            title="水井村春季導覽",
+            title="春季導覽活動",
             slug="spring-tour",
-            short_description="走讀水井村人文與水文化",
-            description="包含老街導覽、社區故事分享與互動體驗。",
+            short_description="介紹校園水文化與導覽路線。",
+            description="透過實地走訪，說明 AR 導覽與水文化故事內容。",
             date=timezone.now() + timedelta(days=5),
-            location="水井村活動中心",
+            location="風雲廣場",
             is_featured=True,
         )
         StoryPost.objects.create(
-            title="USR 團隊進駐紀錄",
+            title="USR 團隊紀錄",
             slug="usr-team-record",
-            summary="師生協力推動在地數位轉譯。",
-            content="本篇整理 USR 團隊在水井村的行動成果與後續規劃。",
+            summary="記錄 USR 團隊的在地實作與活動成果。",
+            content="這篇文章整理了 USR 團隊在校園與地方場域的合作內容。",
             category="usr",
             is_featured=True,
         )
@@ -38,11 +38,11 @@ class ChatbotApiTests(TestCase):
 
     @override_settings(GEMINI_API_KEY="")
     def test_chatbot_falls_back_to_local_data_when_api_key_missing(self):
-        response = self._post_chat("最近有什麼活動？")
+        response = self._post_chat("有哪些活動可以參加？")
         self.assertEqual(response.status_code, 200)
         payload = response.json()
-        self.assertIn("水井村春季導覽", payload["reply"])
-        self.assertIn("USR 團隊進駐紀錄", payload["reply"])
+        self.assertIn("春季導覽活動", payload["reply"])
+        self.assertIn("USR 團隊紀錄", payload["reply"])
         self.assertTrue(payload["redirect_url"].endswith("/events/"))
 
     @override_settings(GEMINI_API_KEY="fake-key")
@@ -50,11 +50,10 @@ class ChatbotApiTests(TestCase):
     def test_chatbot_falls_back_to_local_data_when_gemini_fails(self, mock_client):
         mock_client.return_value.models.generate_content.side_effect = RuntimeError("quota")
 
-        response = self._post_chat("水井村活動")
+        response = self._post_chat("風雲廣場活動")
         self.assertEqual(response.status_code, 200)
         payload = response.json()
-        self.assertIn("站內可查到的資訊", payload["reply"])
-        self.assertIn("水井村春季導覽", payload["reply"])
+        self.assertIn("春季導覽活動", payload["reply"])
 
     @override_settings(GEMINI_API_KEY="fake-key", GEMINI_MODEL="gemini-2.5-flash-lite")
     @patch("google.genai.Client")
@@ -76,7 +75,18 @@ class ChatbotApiTests(TestCase):
 
     @override_settings(GEMINI_API_KEY="")
     def test_chatbot_redirects_to_story_detail_when_query_hits_story(self):
-        response = self._post_chat("請打開 USR 團隊進駐紀錄詳情")
+        response = self._post_chat("帶我看 USR 團隊紀錄")
         self.assertEqual(response.status_code, 200)
         payload = response.json()
         self.assertTrue(payload["redirect_url"].endswith("/stories/usr-team-record/"))
+
+
+class ArGuidePageTests(TestCase):
+    def test_ar_guide_page_renders(self):
+        response = self.client.get(reverse("ar_guide"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Image Tracking AR")
+        self.assertContains(response, "圖片辨識影片覆蓋導覽")
+        self.assertContains(response, "ar_video1.mp4")
+        self.assertContains(response, "風雲水井歷史介紹")

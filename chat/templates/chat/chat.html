@@ -37,6 +37,14 @@
               <span>平均溶氧</span>
               <strong id="metric-do">{% if dashboard.metrics.dissolved_oxygen_mg_l is not None %}{{ dashboard.metrics.dissolved_oxygen_mg_l }} mg/L{% else %}--{% endif %}</strong>
             </div>
+            <div class="aiot-metric">
+              <span>Ammonia (NH3)</span>
+              <strong id="metric-ammonia">{% if dashboard.metrics.ammonia_mg_l is not None %}{{ dashboard.metrics.ammonia_mg_l }} mg/L{% else %}--{% endif %}</strong>
+            </div>
+            <div class="aiot-metric">
+              <span>Nitrite (NO2-)</span>
+              <strong id="metric-nitrite">{% if dashboard.metrics.nitrite_mg_l is not None %}{{ dashboard.metrics.nitrite_mg_l }} mg/L{% else %}--{% endif %}</strong>
+            </div>
             <div class="aiot-metric aiot-metric--alert">
               <span>警示數量</span>
               <strong id="metric-alert-count">{{ dashboard.metrics.alert_count }}</strong>
@@ -74,8 +82,8 @@
                 <span class="aiot-badge {% if pond.status == 'Alert' %}aiot-badge--alert{% endif %}">{{ pond.status }}</span>
               </div>
               <p>{{ pond.species }}{% if pond.description %} / {{ pond.description }}{% endif %}</p>
-              {% if pond.dissolved_oxygen_mg_l %}
-              <small>DO {{ pond.dissolved_oxygen_mg_l }} mg/L, pH {{ pond.ph }}, Temp {{ pond.temperature_c }} C</small>
+              {% if pond.has_measurements %}
+              <small>DO {{ pond.dissolved_oxygen_mg_l }} mg/L, pH {{ pond.ph }}, Temp {{ pond.temperature_c }} C, NH3 {% if pond.ammonia_mg_l is not None %}{{ pond.ammonia_mg_l }}{% else %}--{% endif %} mg/L, NO2 {% if pond.nitrite_mg_l is not None %}{{ pond.nitrite_mg_l }}{% else %}--{% endif %} mg/L</small>
               {% else %}
               <small>尚無量測資料</small>
               {% endif %}
@@ -176,6 +184,8 @@
         document.getElementById("metric-temp").textContent = data.metrics.temperature_c != null ? `${data.metrics.temperature_c} C` : "--";
         document.getElementById("metric-ph").textContent = data.metrics.ph != null ? `${data.metrics.ph}` : "--";
         document.getElementById("metric-do").textContent = data.metrics.dissolved_oxygen_mg_l != null ? `${data.metrics.dissolved_oxygen_mg_l} mg/L` : "--";
+        document.getElementById("metric-ammonia").textContent = data.metrics.ammonia_mg_l != null ? `${data.metrics.ammonia_mg_l} mg/L` : "--";
+        document.getElementById("metric-nitrite").textContent = data.metrics.nitrite_mg_l != null ? `${data.metrics.nitrite_mg_l} mg/L` : "--";
         document.getElementById("metric-alert-count").textContent = data.metrics.alert_count ?? 0;
       } catch (err) {
         console.error(err);

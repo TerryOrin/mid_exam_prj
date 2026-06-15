@@ -43,6 +43,8 @@ class Command(BaseCommand):
                 for slot in range(READINGS_PER_DAY):
                     measured_at = day.replace(hour=6 + slot * 4)
                     low_do = pond.name == "1 號池" and day_offset < 2
+                    high_ammonia = pond.name == "2 號池" and day_offset < 3
+                    high_nitrite = pond.name == "3 號池" and day_offset < 2
                     SensorReading.objects.create(
                         pond=pond,
                         measured_at=measured_at,
@@ -51,6 +53,14 @@ class Command(BaseCommand):
                         dissolved_oxygen=round(
                             rng.uniform(2.8, 3.9) if low_do else rng.uniform(5.4, 7.6),
                             1,
+                        ),
+                        ammonia=round(
+                            rng.uniform(0.25, 0.42) if high_ammonia else rng.uniform(0.02, 0.12),
+                            2,
+                        ),
+                        nitrite=round(
+                            rng.uniform(0.6, 0.95) if high_nitrite else rng.uniform(0.03, 0.3),
+                            2,
                         ),
                         salinity=round(rng.uniform(18.0, 30.0), 1),
                     )

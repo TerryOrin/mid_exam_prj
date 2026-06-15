@@ -16,6 +16,8 @@ class SensorReading(models.Model):
     temperature = models.FloatField(help_text="Temperature in Celsius")
     ph = models.FloatField(help_text="pH value")
     dissolved_oxygen = models.FloatField(help_text="Dissolved oxygen in mg/L")
+    ammonia = models.FloatField(help_text="Ammonia (NH3) in mg/L", null=True, blank=True)
+    nitrite = models.FloatField(help_text="Nitrite (NO2-) in mg/L", null=True, blank=True)
     salinity = models.FloatField(help_text="Salinity in ppt", null=True, blank=True)
 
     class Meta:

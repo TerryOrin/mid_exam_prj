@@ -1,0 +1,175 @@
+{% extends "core/base.html" %}
+{% load static %}
+
+{% block title %}AR 導覽{% endblock %}
+
+{% block extra_head %}
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://cdn.jsdelivr.net/npm/three@0.136.0/build/three.module.js",
+    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.136.0/examples/jsm/"
+  }
+}
+</script>
+{% endblock %}
+
+{% block content %}
+<section class="page-hero ar-page-hero">
+  <div class="container">
+    <span class="badge-soft badge-soft--accent"><i class="bi bi-badge-ar-fill"></i> Image Tracking AR</span>
+    <h1><i class="bi bi-images me-2"></i>圖片辨識影片覆蓋導覽</h1>
+    <p>這一頁改為 MindAR 的 Image Tracking AR。辨識指定圖卡後，影片會依照圖片比例精準覆蓋在原始位置上，不再使用舊的 3D 模型展示。</p>
+  </div>
+</section>
+
+<section class="section-block pt-0">
+  <div class="container">
+    <div class="ar-guide-grid ar-guide-grid--tracking">
+      <article class="surface-card ar-guide-panel ar-guide-panel--intro">
+        <div class="ar-panel-copy">
+          <span class="ar-section-kicker">使用方式</span>
+          <h2 class="section-title">把鏡頭對準 target 圖卡</h2>
+          <p class="section-subtitle">
+            啟用相機後，請把畫面對準下方任一張 target 圖片。辨識成功時，對應影片會直接覆蓋在圖面上，並在追蹤遺失時自動停止。
+          </p>
+        </div>
+
+        <div class="ar-status-card">
+          <div class="ar-status-row">
+            <span class="ar-status-label">系統狀態</span>
+            <strong id="ar-status-label">{% if mind_file_exists %}等待辨識{% else %}缺少 target 檔{% endif %}</strong>
+          </div>
+          <p id="ar-status-copy" class="text-meta mb-0">
+            {% if mind_file_exists %}
+            允許相機權限後，請對準任一 target 圖卡，系統會自動播放對應的 AR 影片。
+            {% else %}
+            找不到 `shuijing_targets.mind`，目前無法啟動 Image Tracking AR。
+            {% endif %}
+          </p>
+          <div class="ar-action-row mt-3">
+            <button type="button" id="ar-retry-button" class="btn btn-outline-brand btn-sm">重新啟動 AR</button>
+          </div>
+        </div>
+
+        <ol class="ar-step-list">
+          <li>先允許瀏覽器使用相機。</li>
+          <li>把鏡頭對準下方任一張 target 圖卡。</li>
+          <li>辨識成功後，影片會貼齊圖片位置播放；移開鏡頭後影片會停止。</li>
+        </ol>
+
+        <div class="ar-device-pills">
+          <span>MindAR</span>
+          <span>Three.js</span>
+          <span>Image Tracking</span>
+        </div>
+
+        {% if not mind_file_exists %}
+        <div class="ar-warning-box">
+          <strong>缺少 Image Tracking target 檔案</strong>
+          <p>請先生成 [shuijing_targets.mind](/D:/__PROGRAM__/web/mid_exam_prj/static/ar/targets/shuijing_targets.mind)，否則 AR 場景只會顯示提示，不會啟動辨識。</p>
+        </div>
+        {% endif %}
+      </article>
+
+      <article class="surface-card ar-guide-panel ar-guide-panel--experience">
+        <div class="ar-viewer-head">
+          <div>
+            <span class="ar-section-kicker">AR 視窗</span>
+            <h2 class="section-title mb-1">影片覆蓋追蹤體驗</h2>
+            <p class="section-subtitle mb-0">每個 targetIndex 綁定一支影片，辨識到圖卡時會播放對應內容並即時更新畫面狀態。</p>
+          </div>
+        </div>
+
+        <div
+          id="ar-image-tracking-app"
+          class="ar-tracking-app"
+          data-mind-file-exists="{% if mind_file_exists %}true{% else %}false{% endif %}"
+          data-mind-file-src="{% static mind_file_relpath %}">
+          {% if mind_file_exists %}
+          <div class="ar-scene-shell">
+            <div id="mindar-container" class="ar-mindar-container"></div>
+
+            <div class="ar-video-assets" hidden>
+              {% for stop in ar_stops %}
+              <video
+                id="ar-video-{{ forloop.counter }}"
+                class="ar-source-video"
+                data-target-index="{{ stop.target_index }}"
+                data-target-title="{{ stop.title }}"
+                data-target-badge="{{ stop.badge }}"
+                data-target-copy="{{ stop.mission }}"
+                data-target-filename="{{ stop.video_filename }}"
+                data-video-height="{{ stop.video_height }}"
+                src="{% static stop.video %}"
+                preload="auto"
+                loop
+                muted
+                playsinline
+                webkit-playsinline
+                crossorigin="anonymous"></video>
+              {% endfor %}
+            </div>
+
+            <div class="ar-overlay-ui">
+              <div class="ar-overlay-ui__top">
+                <span class="ar-overlay-badge" id="ar-active-badge">等待辨識</span>
+                <span class="ar-overlay-status" id="ar-active-video">尚未播放影片</span>
+              </div>
+              <div class="ar-overlay-ui__scanframe" aria-hidden="true">
+                <span></span><span></span><span></span><span></span>
+                <i></i>
+              </div>
+              <div class="ar-overlay-ui__bottom">
+                <p class="ar-overlay-ui__eyebrow">目前 target</p>
+                <h3 id="ar-active-title">請對準圖卡</h3>
+                <p id="ar-active-copy">辨識到 target 後，影片會直接貼附在圖片位置上播放，並在 targetLost 時自動停止。</p>
+              </div>
+            </div>
+          </div>
+          {% else %}
+          <div class="ar-scene-fallback">
+            <div class="ar-scene-fallback__icon"><i class="bi bi-exclamation-triangle"></i></div>
+            <h3>Image Tracking 尚未就緒</h3>
+            <p>缺少 `shuijing_targets.mind`，請先生成 target 檔後再重新載入頁面。</p>
+          </div>
+          {% endif %}
+        </div>
+      </article>
+    </div>
+  </div>
+</section>
+
+<section class="section-block pt-0">
+  <div class="container">
+    <div class="d-flex justify-content-between align-items-end mb-3 flex-wrap gap-2">
+      <div>
+        <span class="ar-section-kicker">Target 圖卡</span>
+        <h2 class="section-title mb-1">三張圖片對應三支影片</h2>
+        <p class="section-subtitle mb-0">targetIndex 0 / 1 / 2 分別對應 `ar_video1.mp4`、`ar_video2.mp4`、`ar_video3.mp4`。</p>
+      </div>
+    </div>
+
+    <div class="ar-stop-grid">
+      {% for stop in ar_stops %}
+      <article class="ar-stop-card is-active" data-stop-card>
+        <div class="ar-stop-media">
+          <img src="{% static stop.image %}" alt="{{ stop.title }}">
+        </div>
+        <div class="ar-stop-body">
+          <span class="badge-soft badge-soft--brand">{{ stop.badge }}</span>
+          <p class="ar-stop-eyebrow">{{ stop.eyebrow }}</p>
+          <h3>{{ stop.title }}</h3>
+          <p>{{ stop.description }}</p>
+          <small>targetIndex {{ stop.target_index }} -> {{ stop.video_filename }}</small>
+        </div>
+      </article>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script type="module" src="{% static 'js/ar-image-tracking.js' %}?v=2"></script>
+{% endblock %}

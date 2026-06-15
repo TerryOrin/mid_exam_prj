@@ -410,6 +410,756 @@ a:hover {
   box-shadow: 0 0 0 0.2rem rgba(61, 139, 106, 0.14);
 }
 
+/* AR guide */
+.ar-page-hero {
+  background:
+    radial-gradient(circle at top right, rgba(255, 255, 255, 0.14), transparent 28%),
+    linear-gradient(120deg, #173229, #245949 52%, #1b6f86);
+}
+
+.ar-guide-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+  gap: 1rem;
+  margin-top: -1.6rem;
+  align-items: start;
+}
+
+.ar-guide-panel {
+  padding: 1.25rem;
+}
+
+.ar-guide-panel--intro,
+.ar-guide-panel--experience {
+  display: grid;
+  gap: 1rem;
+}
+
+.ar-section-kicker {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 0.28rem 0.68rem;
+  background: rgba(46, 107, 83, 0.12);
+  color: var(--brand-900);
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.ar-status-card {
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: linear-gradient(180deg, #fbfffd, #f3f8f6);
+  padding: 0.95rem 1rem;
+}
+
+.ar-status-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.35rem;
+}
+
+.ar-status-label {
+  color: var(--muted);
+  font-size: 0.86rem;
+}
+
+.ar-action-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.ar-action-row .btn {
+  min-height: 48px;
+}
+
+.ar-step-list {
+  margin: 0;
+  padding-left: 1.1rem;
+  color: var(--muted);
+}
+
+.ar-step-list li + li {
+  margin-top: 0.45rem;
+}
+
+.ar-device-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+}
+
+.ar-device-pills span {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 0.38rem 0.75rem;
+  background: var(--surface-soft);
+  border: 1px solid var(--line);
+  color: var(--brand-900);
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.ar-mission-card {
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  padding: 1rem;
+  background:
+    radial-gradient(circle at top right, rgba(46, 107, 83, 0.08), transparent 28%),
+    linear-gradient(180deg, #fbfffd 0%, #f4f8f5 100%);
+}
+
+.ar-mission-card__head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 0.7rem;
+}
+
+.ar-mission-card h3 {
+  margin: 0;
+  font-size: 1.18rem;
+  font-weight: 800;
+}
+
+.ar-mission-card p {
+  margin: 0.45rem 0 0;
+  color: var(--muted);
+}
+
+.ar-mission-inline {
+  display: grid;
+  gap: 0.2rem;
+  margin-top: 0.8rem;
+}
+
+.ar-mission-inline span,
+.ar-mission-progress small {
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+
+.ar-mission-progress {
+  display: grid;
+  gap: 0.35rem;
+  margin-top: 0.9rem;
+}
+
+.ar-mission-progress__bar {
+  width: 100%;
+  height: 10px;
+  border-radius: 999px;
+  overflow: hidden;
+  background: rgba(46, 107, 83, 0.12);
+}
+
+.ar-mission-progress__bar span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #2f6d53, #55b287);
+}
+
+.ar-viewer-head {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.ar-viewport-stack {
+  display: grid;
+  gap: 1rem;
+}
+
+.ar-model-shell,
+.ar-camera-shell {
+  border: 1px solid var(--line);
+  border-radius: 22px;
+  padding: 0.9rem;
+  background: linear-gradient(180deg, #ffffff 0%, #f7faf8 100%);
+}
+
+#ar-guide-viewer {
+  width: 100%;
+  min-height: 560px;
+  border-radius: 22px;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at top, rgba(255, 255, 255, 0.52), transparent 35%),
+    linear-gradient(180deg, #eef6f2 0%, #dfe8e1 100%);
+}
+
+.ar-hotspot {
+  border: 0;
+  border-radius: 999px;
+  padding: 0.38rem 0.72rem;
+  background: rgba(20, 38, 31, 0.88);
+  color: #fff;
+  font-size: 0.78rem;
+  font-weight: 700;
+  box-shadow: var(--shadow-sm);
+}
+
+.ar-camera-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 0.8rem;
+}
+
+.ar-camera-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+}
+
+.ar-camera-stage {
+  position: relative;
+  min-height: 420px;
+  border-radius: 20px;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at top, rgba(255, 255, 255, 0.25), transparent 25%),
+    linear-gradient(160deg, #18231f 0%, #203d35 52%, #164b5d 100%);
+}
+
+#camera-feed,
+.ar-camera-placeholder {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+#camera-feed {
+  object-fit: cover;
+  opacity: 0;
+  transition: opacity 0.24s ease;
+}
+
+.ar-camera-stage.is-live #camera-feed {
+  opacity: 1;
+}
+
+.ar-camera-placeholder img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  filter: saturate(0.95) contrast(1.02);
+}
+
+.ar-camera-placeholder::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(180deg, rgba(10, 18, 16, 0.14), rgba(10, 18, 16, 0.32)),
+    radial-gradient(circle at center, rgba(255, 255, 255, 0.08), transparent 42%);
+}
+
+.ar-camera-placeholder__copy {
+  position: absolute;
+  left: 1rem;
+  right: 1rem;
+  bottom: 1rem;
+  z-index: 2;
+  display: grid;
+  gap: 0.25rem;
+  padding: 1rem;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.88);
+  box-shadow: var(--shadow-md);
+}
+
+.ar-camera-placeholder__copy strong {
+  font-size: 1rem;
+}
+
+.ar-camera-placeholder__copy p {
+  margin: 0;
+  color: var(--muted);
+}
+
+.ar-overlay-grid {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+}
+
+.ar-overlay-top {
+  position: absolute;
+  top: 1rem;
+  left: 1rem;
+  right: 1rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.ar-overlay-badge,
+.ar-overlay-status {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 0.4rem 0.75rem;
+  color: #fff;
+  font-size: 0.78rem;
+  font-weight: 700;
+  backdrop-filter: blur(10px);
+  background: rgba(10, 26, 22, 0.58);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+}
+
+.ar-overlay-panel {
+  position: absolute;
+  left: 1rem;
+  right: 1rem;
+  bottom: 1rem;
+  display: grid;
+  gap: 0.35rem;
+  padding: 1rem;
+  border-radius: 20px;
+  background: rgba(8, 20, 18, 0.54);
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  backdrop-filter: blur(10px);
+}
+
+.ar-overlay-eyebrow {
+  margin: 0;
+  opacity: 0.76;
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.ar-overlay-panel h3,
+.ar-overlay-panel p {
+  margin: 0;
+}
+
+.ar-overlay-panel h3 {
+  font-size: 1.18rem;
+  font-weight: 800;
+}
+
+.ar-overlay-task {
+  display: grid;
+  gap: 0.15rem;
+  margin-top: 0.25rem;
+}
+
+.ar-overlay-task span {
+  opacity: 0.7;
+  font-size: 0.78rem;
+}
+
+.ar-overlay-reticle {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 126px;
+  height: 126px;
+  transform: translate(-50%, -50%);
+}
+
+.ar-overlay-reticle__ring,
+.ar-overlay-reticle__pulse {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+}
+
+.ar-overlay-reticle__ring {
+  border: 2px solid rgba(255, 255, 255, 0.86);
+}
+
+.ar-overlay-reticle__pulse {
+  border: 1px solid rgba(121, 255, 215, 0.9);
+  animation: arPulse 2s ease-out infinite;
+}
+
+.ar-overlay-corners {
+  position: absolute;
+  inset: 12% 10%;
+}
+
+.ar-overlay-corners span {
+  position: absolute;
+  width: 42px;
+  height: 42px;
+  border-color: rgba(255, 255, 255, 0.8);
+  border-style: solid;
+  border-width: 0;
+}
+
+.ar-overlay-corners span:nth-child(1) {
+  top: 0;
+  left: 0;
+  border-top-width: 3px;
+  border-left-width: 3px;
+}
+
+.ar-overlay-corners span:nth-child(2) {
+  top: 0;
+  right: 0;
+  border-top-width: 3px;
+  border-right-width: 3px;
+}
+
+.ar-overlay-corners span:nth-child(3) {
+  right: 0;
+  bottom: 0;
+  border-right-width: 3px;
+  border-bottom-width: 3px;
+}
+
+.ar-overlay-corners span:nth-child(4) {
+  bottom: 0;
+  left: 0;
+  border-bottom-width: 3px;
+  border-left-width: 3px;
+}
+
+.ar-overlay-scanline {
+  position: absolute;
+  left: 8%;
+  right: 8%;
+  top: 18%;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, rgba(98, 255, 206, 0.85), transparent);
+  box-shadow: 0 0 18px rgba(98, 255, 206, 0.85);
+  animation: arScan 4s linear infinite;
+}
+
+.ar-viewer-note {
+  display: flex;
+  align-items: start;
+  gap: 0.55rem;
+  color: var(--muted);
+  font-size: 0.92rem;
+}
+
+.ar-stop-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.ar-stop-card {
+  position: relative;
+  padding: 0;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+  text-align: left;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.ar-stop-card:hover,
+.ar-stop-card.is-active {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-md);
+  border-color: rgba(46, 107, 83, 0.4);
+}
+
+.ar-stop-card__focus {
+  position: absolute;
+  top: 0.9rem;
+  right: 0.9rem;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: rgba(61, 139, 106, 0.16);
+  box-shadow: 0 0 0 0 rgba(61, 139, 106, 0.35);
+}
+
+.ar-stop-card.is-active .ar-stop-card__focus {
+  background: rgba(61, 139, 106, 0.86);
+  animation: arPulseDot 1.8s infinite;
+}
+
+.ar-stop-media {
+  height: 220px;
+  background: linear-gradient(140deg, var(--brand-700), var(--brand-500));
+}
+
+.ar-stop-media img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.ar-stop-body {
+  padding: 1rem;
+}
+
+.ar-stop-eyebrow {
+  margin: 0.7rem 0 0.25rem;
+  color: var(--accent-700);
+  font-size: 0.8rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.ar-stop-body h3 {
+  margin: 0;
+  font-size: 1.08rem;
+  font-weight: 800;
+}
+
+.ar-stop-body p:last-child {
+  margin: 0.45rem 0 0;
+  color: var(--muted);
+}
+
+.ar-stop-body small {
+  display: block;
+  margin-top: 0.7rem;
+  color: var(--accent-700);
+  font-weight: 700;
+}
+
+.ar-guide-grid--tracking {
+  align-items: stretch;
+}
+
+.ar-tracking-app {
+  display: grid;
+}
+
+.ar-scene-shell {
+  position: relative;
+  min-height: 620px;
+  border: 1px solid rgba(23, 50, 41, 0.14);
+  border-radius: 22px;
+  overflow: hidden;
+  background:
+    linear-gradient(160deg, rgba(8, 18, 16, 0.94), rgba(15, 54, 43, 0.82)),
+    radial-gradient(circle at top, rgba(255, 255, 255, 0.14), transparent 35%);
+}
+
+.ar-mindar-container {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+
+.ar-mindar-container canvas,
+.ar-mindar-container video {
+  position: absolute;
+  inset: 0;
+}
+
+.ar-scene {
+  position: absolute !important;
+  inset: 0;
+  width: 100% !important;
+  height: 100% !important;
+}
+
+.ar-scene video {
+  object-fit: cover;
+}
+
+.ar-overlay-ui {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  pointer-events: none;
+}
+
+.ar-overlay-ui__top {
+  position: absolute;
+  top: 1rem;
+  left: 1rem;
+  right: 1rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.ar-overlay-ui__scanframe {
+  position: absolute;
+  inset: 14% 12%;
+  border-radius: 28px;
+  overflow: hidden;
+}
+
+.ar-overlay-ui__scanframe span {
+  position: absolute;
+  width: 52px;
+  height: 52px;
+  border-color: rgba(255, 255, 255, 0.9);
+  border-style: solid;
+  border-width: 0;
+}
+
+.ar-overlay-ui__scanframe span:nth-child(1) {
+  top: 0;
+  left: 0;
+  border-top-width: 4px;
+  border-left-width: 4px;
+}
+
+.ar-overlay-ui__scanframe span:nth-child(2) {
+  top: 0;
+  right: 0;
+  border-top-width: 4px;
+  border-right-width: 4px;
+}
+
+.ar-overlay-ui__scanframe span:nth-child(3) {
+  right: 0;
+  bottom: 0;
+  border-right-width: 4px;
+  border-bottom-width: 4px;
+}
+
+.ar-overlay-ui__scanframe span:nth-child(4) {
+  bottom: 0;
+  left: 0;
+  border-bottom-width: 4px;
+  border-left-width: 4px;
+}
+
+.ar-overlay-ui__scanframe i {
+  position: absolute;
+  left: 8%;
+  right: 8%;
+  top: 18%;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, rgba(135, 255, 218, 0.92), transparent);
+  box-shadow: 0 0 18px rgba(135, 255, 218, 0.85);
+  animation: arScan 3.2s linear infinite;
+}
+
+.ar-overlay-ui__bottom {
+  position: absolute;
+  left: 1rem;
+  right: 1rem;
+  bottom: 1rem;
+  padding: 1rem 1.05rem;
+  border-radius: 20px;
+  background: rgba(8, 20, 18, 0.62);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  color: #fff;
+  backdrop-filter: blur(10px);
+}
+
+.ar-overlay-ui__eyebrow {
+  margin: 0 0 0.2rem;
+  font-size: 0.8rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  opacity: 0.72;
+}
+
+.ar-overlay-ui__bottom h3,
+.ar-overlay-ui__bottom p {
+  margin: 0;
+}
+
+.ar-overlay-ui__bottom h3 {
+  font-size: 1.15rem;
+  font-weight: 800;
+}
+
+.ar-overlay-ui__bottom p:last-child {
+  margin-top: 0.35rem;
+}
+
+.ar-warning-box {
+  padding: 0.95rem 1rem;
+  border-radius: 16px;
+  border: 1px solid rgba(179, 91, 30, 0.22);
+  background: rgba(253, 232, 216, 0.72);
+}
+
+.ar-warning-box p {
+  margin: 0.35rem 0 0;
+  color: var(--text);
+}
+
+.ar-scene-fallback {
+  min-height: 420px;
+  display: grid;
+  place-items: center;
+  text-align: center;
+  padding: 2rem;
+  border: 1px dashed rgba(23, 50, 41, 0.22);
+  border-radius: 22px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(243, 248, 246, 0.92));
+}
+
+.ar-scene-fallback__icon {
+  width: 70px;
+  height: 70px;
+  display: grid;
+  place-items: center;
+  margin: 0 auto 0.9rem;
+  border-radius: 50%;
+  background: rgba(179, 91, 30, 0.14);
+  color: var(--accent-700);
+  font-size: 1.75rem;
+}
+
+@keyframes arPulse {
+  0% {
+    transform: scale(0.76);
+    opacity: 0.95;
+  }
+  70% {
+    transform: scale(1.24);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1.24);
+    opacity: 0;
+  }
+}
+
+@keyframes arPulseDot {
+  0% {
+    box-shadow: 0 0 0 0 rgba(61, 139, 106, 0.42);
+  }
+  70% {
+    box-shadow: 0 0 0 16px rgba(61, 139, 106, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(61, 139, 106, 0);
+  }
+}
+
+@keyframes arScan {
+  0% {
+    top: 18%;
+  }
+  50% {
+    top: 78%;
+  }
+  100% {
+    top: 18%;
+  }
+}
+
 /* Footer */
 .site-footer {
   background: #14261f;
@@ -629,7 +1379,8 @@ body.chat-open {
   .news-grid,
   .story-grid,
   .usr-grid,
-  .insight-grid {
+  .insight-grid,
+  .ar-stop-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
@@ -646,12 +1397,37 @@ body.chat-open {
   .news-grid,
   .story-grid,
   .usr-grid,
-  .insight-grid {
+  .insight-grid,
+  .ar-stop-grid {
     grid-template-columns: 1fr;
   }
 
   .section-block {
     padding: 2.6rem 0;
+  }
+
+  .ar-guide-grid {
+    grid-template-columns: 1fr;
+    margin-top: -1.1rem;
+  }
+
+  .ar-scene-shell {
+    min-height: 460px;
+  }
+
+  #ar-guide-viewer {
+    min-height: 420px;
+  }
+
+  .ar-camera-head,
+  .ar-mission-card__head,
+  .ar-overlay-top {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .ar-camera-stage {
+    min-height: 360px;
   }
 
   .chat-launcher {
