@@ -1,6 +1,10 @@
 import * as THREE from "three";
 import { MindARThree } from "mindar-image-three";
 
+const useOfficialDebugTarget = false;
+const MIND_FILE_CORRUPT_MESSAGE =
+  "圖片辨識檔 shuijing_targets.mind 可能損毀或編譯不完整，請重新用 MindAR Image Targets Compiler 產生 .mind 檔。";
+
 function pauseAndReset(video) {
   if (!video) return;
   video.pause();
@@ -47,6 +51,54 @@ function cleanupFailedVideo(instance) {
     instance.video.remove();
   }
   instance.video = null;
+}
+
+async function debugMindFile(url) {
+  const response = await fetch(url, { cache: "no-store" });
+  const contentType = response.headers.get("content-type") || "";
+  const contentLength = response.headers.get("content-length") || "";
+  const arrayBuffer = await response.arrayBuffer();
+  const bytes = new Uint8Array(arrayBuffer);
+  const first32Bytes = Array.from(bytes.slice(0, 32))
+    .map((byte) => byte.toString(16).padStart(2, "0"))
+    .join(" ");
+  const firstText = new TextDecoder("utf-8").decode(bytes.slice(0, 80));
+
+  console.log("[MindAR target debug] status:", response.status);
+  console.log("[MindAR target debug] content-type:", contentType);
+  console.log("[MindAR target debug] content-length:", contentLength);
+  console.log("[MindAR target debug] arrayBuffer byteLength:", arrayBuffer.byteLength);
+  console.log("[MindAR target debug] first 32 bytes:", first32Bytes);
+  console.log("[MindAR target debug] firstText 前 80 字:", firstText);
+
+  return {
+    url,
+    status: response.status,
+    contentType,
+    contentLength,
+    byteLength: arrayBuffer.byteLength,
+    first32Bytes,
+    firstText,
+  };
+}
+
+function isMindFileIncomplete(diagnostics) {
+  if (!diagnostics) return true;
+  const firstText = diagnostics.firstText.trimStart().toLowerCase();
+  return (
+    diagnostics.status !== 200 ||
+    diagnostics.byteLength < 1024 ||
+    firstText.startsWith("<!doctype html>") ||
+    firstText.startsWith("<html")
+  );
+}
+
+function isMindARInsufficientDataError(error) {
+  return (
+    error &&
+    (error instanceof RangeError || error.name === "RangeError") &&
+    /insufficient data/i.test(error.message || "")
+  );
 }
 
 async function resolveCameraDevice() {
@@ -107,16 +159,38 @@ async function initAR() {
 
   const hasMindFile = app.dataset.mindFileExists === "true";
   const mindFileSrc = app.dataset.mindFileSrc || "";
+  const finalMindFileSrc = useOfficialDebugTarget
+    ? "https://cdn.jsdelivr.net/gh/hiukim/mind-ar-js@1.2.5/examples/image-tracking/assets/band-example/band.mind"
+    : mindFileSrc;
+  const targetSourceName = useOfficialDebugTarget ? "官方 debug target" : "自訂水井 target";
+  const targetSourceDescription = useOfficialDebugTarget
+    ? "官方 debug target：只測 targetIndex 0/1"
+    : "自訂水井 target：入口、水車、魚塭";
+  const targetConfigs = useOfficialDebugTarget
+    ? [
+        { targetIndex: 0, videoSelector: "#ar-video-1" },
+        { targetIndex: 1, videoSelector: "#ar-video-2" },
+      ]
+    : [
+        { targetIndex: 0, videoSelector: "#ar-video-1" },
+        { targetIndex: 1, videoSelector: "#ar-video-2" },
+        { targetIndex: 2, videoSelector: "#ar-video-3" },
+      ];
   const container = document.getElementById("mindar-container");
 
   console.log("📋 AR Config:", {
     hasMindFile,
     mindFileSrc,
+    finalMindFileSrc,
+    targetSourceName,
+    targetConfigs,
     containerExists: !!container,
   });
 
   const statusLabel = document.getElementById("ar-status-label");
   const statusCopy = document.getElementById("ar-status-copy");
+  const targetSourceLabel = document.getElementById("ar-target-source-label");
+  const targetSourceUrl = document.getElementById("ar-target-source-url");
   const retryButton = document.getElementById("ar-retry-button");
   const activeBadge = document.getElementById("ar-active-badge");
   const activeVideo = document.getElementById("ar-active-video");
@@ -126,6 +200,9 @@ async function initAR() {
   const sourceVideos = Array.from(document.querySelectorAll(".ar-source-video"));
 
   console.log("📹 Source videos found:", sourceVideos.length);
+
+  updateText(targetSourceLabel, targetSourceDescription);
+  updateText(targetSourceUrl, finalMindFileSrc || "未設定 target 檔案");
 
   const resetOverlay = function () {
     updateText(activeBadge, "等待辨識");
@@ -147,6 +224,16 @@ async function initAR() {
     updateText(activeCopy, "若相機權限被拒絕、瀏覽器不支援 WebGL，或 target 檔有誤，Image Tracking AR 會無法開始。");
   };
 
+  const setMindFileFailureState = function () {
+    sourceVideos.forEach(pauseAndReset);
+    updateText(statusLabel, "target 檔損毀或不完整");
+    updateText(statusCopy, MIND_FILE_CORRUPT_MESSAGE);
+    updateText(activeBadge, "Target 檔錯誤");
+    updateText(activeVideo, targetSourceName);
+    updateText(activeTitle, "target 檔損毀或不完整");
+    updateText(activeCopy, MIND_FILE_CORRUPT_MESSAGE);
+  };
+
   const resetTrackingState = function () {
     sourceVideos.forEach(pauseAndReset);
     updateText(statusLabel, "等待辨識");
@@ -154,25 +241,26 @@ async function initAR() {
     resetOverlay();
   };
 
-  if (!hasMindFile || !mindFileSrc || !container) {
+  if (!container || (!useOfficialDebugTarget && (!hasMindFile || !mindFileSrc))) {
     console.error("❌ Missing required files/containers:", { hasMindFile, mindFileSrc, container: !!container });
     updateText(statusLabel, "缺少 target 檔");
     updateText(statusCopy, "請先生成 shuijing_targets.mind，之後重新整理頁面再啟動辨識。");
     return;
   }
 
-  // 驗證 target 檔案是否可訪問
-  console.log("🔍 Checking target file accessibility...");
+  // 完整讀取 target 檔，避免檔案存在但 MindAR 解析時才發現 incomplete input。
+  console.log("🔍 Debugging target file...");
   try {
-    const headResponse = await fetch(mindFileSrc, { method: "HEAD" });
-    if (!headResponse.ok) {
-      throw new Error(`HTTP ${headResponse.status}`);
+    const mindFileDiagnostics = await debugMindFile(finalMindFileSrc);
+    if (isMindFileIncomplete(mindFileDiagnostics)) {
+      console.error("❌ MindAR target file appears incomplete:", mindFileDiagnostics);
+      setMindFileFailureState();
+      return;
     }
-    console.log("✅ Target file is accessible");
+    console.log("✅ Target file passed basic diagnostics");
   } catch (error) {
-    console.error("❌ Target file not accessible:", error);
-    updateText(statusLabel, "Target 檔案無法存取");
-    updateText(statusCopy, `無法加載 target 檔案 (${mindFileSrc})，請確認文件存在。`);
+    console.error("❌ Target file debug failed:", error);
+    setMindFileFailureState();
     return;
   }
 
@@ -211,7 +299,7 @@ async function initAR() {
   }
 
   console.log("🚀 Initializing MindARThree with:", {
-    imageTargetSrc: mindFileSrc,
+    imageTargetSrc: finalMindFileSrc,
     deviceId: preferredCamera.deviceId,
   });
 
@@ -219,7 +307,7 @@ async function initAR() {
   try {
     mindarThree = new MindARThree({
       container,
-      imageTargetSrc: mindFileSrc,
+      imageTargetSrc: finalMindFileSrc,
       maxTrack: 1,
       filterMinCF: 0.001,
       filterBeta: 1000,
@@ -240,8 +328,14 @@ async function initAR() {
 
   const { renderer, scene, camera } = mindarThree;
 
-  sourceVideos.forEach(function (video) {
-    const targetIndex = Number(video.dataset.targetIndex);
+  targetConfigs.forEach(function (config) {
+    const video = document.querySelector(config.videoSelector);
+    if (!video) {
+      console.warn("⚠️ AR video not found for target config, skipping anchor:", config);
+      return;
+    }
+
+    const targetIndex = config.targetIndex;
     const aspectRatio = Number(video.dataset.videoHeight || "0.5625");
     const anchor = mindarThree.addAnchor(targetIndex);
     const plane = createVideoPlane(video, aspectRatio);
@@ -328,6 +422,10 @@ async function initAR() {
   } catch (error) {
     console.error("❌ MindAR start failed:", error);
     cleanupFailedVideo(mindarThree);
+    if (isMindARInsufficientDataError(error)) {
+      setMindFileFailureState();
+      return;
+    }
     setFailureState(describeCameraError(error));
     return;
   }

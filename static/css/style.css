@@ -468,6 +468,28 @@ a:hover {
   font-size: 0.86rem;
 }
 
+.ar-target-source-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.75rem;
+  margin-top: 0.8rem;
+  padding-top: 0.8rem;
+  border-top: 1px solid var(--line);
+}
+
+.ar-target-source-row strong {
+  font-size: 0.92rem;
+  text-align: right;
+}
+
+.ar-target-source-url {
+  margin-top: 0.3rem;
+  color: var(--muted);
+  font-size: 0.78rem;
+  overflow-wrap: anywhere;
+}
+
 .ar-action-row {
   display: flex;
   flex-wrap: wrap;

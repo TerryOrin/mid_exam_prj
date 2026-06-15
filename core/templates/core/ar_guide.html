@@ -48,6 +48,11 @@
             找不到 `shuijing_targets.mind`，目前無法啟動 Image Tracking AR。
             {% endif %}
           </p>
+          <div class="ar-target-source-row">
+            <span class="ar-status-label">Target 來源</span>
+            <strong id="ar-target-source-label">自訂水井 target</strong>
+          </div>
+          <p id="ar-target-source-url" class="ar-target-source-url mb-0">{% static mind_file_relpath %}</p>
           <div class="ar-action-row mt-3">
             <button type="button" id="ar-retry-button" class="btn btn-outline-brand btn-sm">重新啟動 AR</button>
           </div>
@@ -172,5 +177,5 @@
 {% endblock %}
 
 {% block extra_js %}
-<script type="module" src="{% static 'js/ar-image-tracking.js' %}?v=5"></script>
+<script type="module" src="{% static 'js/ar-image-tracking.js' %}?v=7"></script>
 {% endblock %}
