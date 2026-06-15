@@ -19,6 +19,7 @@ function initARAframeGuide() {
   if (!app) return;
 
   const hasMindFile = app.dataset.mindFileExists === "true";
+  const isMindFileReady = app.dataset.mindFileReady === "true";
   const scene = document.getElementById("ar-aframe-scene");
   const statusLabel = document.getElementById("ar-status-label");
   const statusCopy = document.getElementById("ar-status-copy");
@@ -54,14 +55,23 @@ function initARAframeGuide() {
     window.location.reload();
   });
 
-  if (!hasMindFile) {
+  if (!hasMindFile || !isMindFileReady) {
     videos.forEach(pauseAndReset);
+    const missingMessage =
+      "尚未建立圖片辨識檔 shuijing_targets.mind，請先用 MindAR Image Targets Compiler 建立 target 檔。";
+    const invalidMessage =
+      statusCopy?.textContent.trim() ||
+      "圖片辨識檔 shuijing_targets.mind 可能損毀或編譯不完整，請重新用 MindAR Image Targets Compiler 產生 .mind 檔。";
     setState(
       "error",
-      "缺少 target 檔",
-      "尚未建立圖片辨識檔 shuijing_targets.mind，請先用 MindAR Image Targets Compiler 建立 target 檔。"
+      hasMindFile ? "target 檔損毀或不完整" : "缺少 target 檔",
+      hasMindFile ? invalidMessage : missingMessage
     );
-    resetActiveTarget();
+    updateText(activeBadge, hasMindFile ? "Target 檔錯誤" : "缺少 target");
+    updateText(activeVideo, "未播放");
+    updateText(activeTitle, hasMindFile ? "target 檔損毀或不完整" : "Image Tracking 尚未就緒");
+    updateText(activeCopy, hasMindFile ? invalidMessage : missingMessage);
+    updateText(foundFeedback, "無法啟動");
     return;
   }
 

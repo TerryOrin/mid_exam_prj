@@ -11,6 +11,7 @@ from django.views.decorators.http import require_POST
 from django.utils import timezone
 import json
 import logging
+import msgpack
 import re
 
 from .models import HeroSlide, Event, StoryPost
@@ -139,10 +140,44 @@ def ar_guide_view(request):
 
     mind_file_relpath = "ar/targets/shuijing_targets.mind"
     mind_file_path = Path(settings.BASE_DIR, "static", mind_file_relpath)
+    mind_file_exists = mind_file_path.exists()
+    mind_file_valid = False
+    mind_file_error = ""
+    mind_file_targets = []
+
+    if mind_file_exists:
+        try:
+            mind_data = msgpack.unpackb(mind_file_path.read_bytes(), raw=False, strict_map_key=False)
+            data_list = mind_data.get("dataList") or []
+            mind_file_targets = [
+                {
+                    "index": index,
+                    "width": item.get("targetImage", {}).get("width"),
+                    "height": item.get("targetImage", {}).get("height"),
+                }
+                for index, item in enumerate(data_list)
+            ]
+            if mind_data.get("v") != 2:
+                mind_file_error = "圖片辨識檔版本不符合 MindAR 1.2.5，請重新編譯。"
+            elif len(data_list) < 3:
+                mind_file_error = "圖片辨識檔內的 target 數量不足 3 張，請依入口、水車、魚塭順序重新編譯。"
+            else:
+                mind_file_valid = True
+        except Exception as exc:
+            logger.warning("Invalid MindAR target file: %s", exc)
+            mind_file_error = (
+                "圖片辨識檔 shuijing_targets.mind 可能損毀或編譯不完整，"
+                "請重新用 MindAR Image Targets Compiler 產生 .mind 檔。"
+            )
+
     context = {
         "ar_stops": ar_stops,
         "mind_file_relpath": mind_file_relpath,
-        "mind_file_exists": mind_file_path.exists(),
+        "mind_file_exists": mind_file_exists,
+        "mind_file_valid": mind_file_valid,
+        "mind_file_ready": mind_file_exists and mind_file_valid,
+        "mind_file_error": mind_file_error,
+        "mind_file_targets": mind_file_targets,
     }
     return render(request, "core/ar_guide.html", context)
 

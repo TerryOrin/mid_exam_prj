@@ -12,10 +12,11 @@
 <section
   id="ar-image-tracking-app"
   class="ar-aframe-section"
-  data-state="{% if mind_file_exists %}booting{% else %}error{% endif %}"
-  data-mind-file-exists="{% if mind_file_exists %}true{% else %}false{% endif %}">
+  data-state="{% if mind_file_ready %}booting{% else %}error{% endif %}"
+  data-mind-file-exists="{% if mind_file_exists %}true{% else %}false{% endif %}"
+  data-mind-file-ready="{% if mind_file_ready %}true{% else %}false{% endif %}">
   <div class="app-shell">
-    {% if mind_file_exists %}
+    {% if mind_file_ready %}
     <a-scene
       id="ar-aframe-scene"
       class="ar-aframe-scene"
@@ -69,15 +70,19 @@
       <p class="ar-section-kicker">A-Frame Image Tracking AR</p>
       <h1>圖片辨識影片覆蓋導覽</h1>
       <p id="ar-status-copy">
-        {% if mind_file_exists %}
+        {% if mind_file_ready %}
         正在啟動 A-Frame 與 MindAR，請允許瀏覽器使用相機。
+        {% elif mind_file_exists %}
+        {{ mind_file_error }}
         {% else %}
         尚未建立圖片辨識檔 shuijing_targets.mind，請先用 MindAR Image Targets Compiler 建立 target 檔。
         {% endif %}
       </p>
       <div class="ar-status-row">
         <span class="ar-status-label">系統狀態</span>
-        <strong id="ar-status-label">{% if mind_file_exists %}AR 載入中{% else %}缺少 target 檔{% endif %}</strong>
+        <strong id="ar-status-label">
+          {% if mind_file_ready %}AR 載入中{% elif mind_file_exists %}target 檔損毀或不完整{% else %}缺少 target 檔{% endif %}
+        </strong>
       </div>
       <div class="ar-status-row">
         <span class="ar-status-label">Target 來源</span>
@@ -100,10 +105,14 @@
     <div class="fallback-stage">
       <div class="fallback-stage__panel">
         <i class="bi bi-badge-ar-fill"></i>
-        <h2 id="ar-active-title">{% if mind_file_exists %}請對準圖卡{% else %}Image Tracking 尚未就緒{% endif %}</h2>
+        <h2 id="ar-active-title">
+          {% if mind_file_ready %}請對準圖卡{% elif mind_file_exists %}target 檔損毀或不完整{% else %}Image Tracking 尚未就緒{% endif %}
+        </h2>
         <p id="ar-active-copy">
-          {% if mind_file_exists %}
+          {% if mind_file_ready %}
           辨識到 target 後，影片會直接貼附在圖片位置上播放。
+          {% elif mind_file_exists %}
+          {{ mind_file_error }}
           {% else %}
           尚未建立圖片辨識檔 shuijing_targets.mind，請先用 MindAR Image Targets Compiler 建立 target 檔。
           {% endif %}
