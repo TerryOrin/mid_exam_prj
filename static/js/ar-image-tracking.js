@@ -1,5 +1,5 @@
 import * as THREE from "three";
-import { MindARThree } from "/static/ar/mindar-image-three.prod.js";
+import { MindARThree } from "mindar-image-three";
 
 function pauseAndReset(video) {
   if (!video) return;
@@ -13,7 +13,10 @@ function updateText(node, text) {
 
 function createVideoPlane(video, aspectRatio) {
   const texture = new THREE.VideoTexture(video);
-  texture.encoding = THREE.sRGBEncoding;
+  // Three.js r152+ 改用 ColorSpace API；r160 已移除 sRGBEncoding
+  if (THREE.SRGBColorSpace !== undefined) {
+    texture.colorSpace = THREE.SRGBColorSpace;
+  }
   texture.minFilter = THREE.LinearFilter;
   texture.magFilter = THREE.LinearFilter;
   texture.format = THREE.RGBAFormat;
@@ -49,7 +52,7 @@ function cleanupFailedVideo(instance) {
 async function resolveCameraDevice() {
   const stream = await navigator.mediaDevices.getUserMedia({
     audio: false,
-    video: true,
+    video: { facingMode: { ideal: "environment" } },
   });
   const track = stream.getVideoTracks()[0];
   const settings = track ? track.getSettings() : {};
@@ -91,13 +94,26 @@ function describeCameraError(error) {
   return error.message || "無法啟動相機或 MindAR。請確認瀏覽器權限、HTTPS 或本機測試環境後重試。";
 }
 
-document.addEventListener("DOMContentLoaded", async function () {
+// ES module 本身就是 deferred，不需要用 DOMContentLoaded 包裹
+// 但保留它以確保 DOM 已完全解析
+async function initAR() {
+  console.log("🎬 AR Script Starting...");
+
   const app = document.getElementById("ar-image-tracking-app");
-  if (!app) return;
+  if (!app) {
+    console.error("❌ #ar-image-tracking-app not found!");
+    return;
+  }
 
   const hasMindFile = app.dataset.mindFileExists === "true";
   const mindFileSrc = app.dataset.mindFileSrc || "";
   const container = document.getElementById("mindar-container");
+
+  console.log("📋 AR Config:", {
+    hasMindFile,
+    mindFileSrc,
+    containerExists: !!container,
+  });
 
   const statusLabel = document.getElementById("ar-status-label");
   const statusCopy = document.getElementById("ar-status-copy");
@@ -108,6 +124,8 @@ document.addEventListener("DOMContentLoaded", async function () {
   const activeCopy = document.getElementById("ar-active-copy");
 
   const sourceVideos = Array.from(document.querySelectorAll(".ar-source-video"));
+
+  console.log("📹 Source videos found:", sourceVideos.length);
 
   const resetOverlay = function () {
     updateText(activeBadge, "等待辨識");
@@ -137,12 +155,29 @@ document.addEventListener("DOMContentLoaded", async function () {
   };
 
   if (!hasMindFile || !mindFileSrc || !container) {
+    console.error("❌ Missing required files/containers:", { hasMindFile, mindFileSrc, container: !!container });
     updateText(statusLabel, "缺少 target 檔");
     updateText(statusCopy, "請先生成 shuijing_targets.mind，之後重新整理頁面再啟動辨識。");
     return;
   }
 
+  // 驗證 target 檔案是否可訪問
+  console.log("🔍 Checking target file accessibility...");
+  try {
+    const headResponse = await fetch(mindFileSrc, { method: "HEAD" });
+    if (!headResponse.ok) {
+      throw new Error(`HTTP ${headResponse.status}`);
+    }
+    console.log("✅ Target file is accessible");
+  } catch (error) {
+    console.error("❌ Target file not accessible:", error);
+    updateText(statusLabel, "Target 檔案無法存取");
+    updateText(statusCopy, `無法加載 target 檔案 (${mindFileSrc})，請確認文件存在。`);
+    return;
+  }
+
   if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+    console.error("❌ getUserMedia not supported");
     setFailureState("目前瀏覽器環境不支援相機存取。請改用支援 getUserMedia 的瀏覽器。");
     return;
   }
@@ -166,41 +201,61 @@ document.addEventListener("DOMContentLoaded", async function () {
 
   let preferredCamera = { deviceId: "" };
   try {
+    console.log("🎥 Resolving camera device...");
     preferredCamera = await resolveCameraDevice();
+    console.log("✅ Camera device resolved:", preferredCamera);
   } catch (error) {
-    console.error("Camera preflight failed", error);
+    console.error("❌ Camera preflight failed", error);
     setFailureState(describeCameraError(error));
     return;
   }
 
-  const mindarThree = new MindARThree({
-    container,
+  console.log("🚀 Initializing MindARThree with:", {
     imageTargetSrc: mindFileSrc,
-    maxTrack: 1,
-    filterMinCF: 0.001,
-    filterBeta: 1000,
-    warmupTolerance: 3,
-    missTolerance: 5,
-    userDeviceId: preferredCamera.deviceId || null,
+    deviceId: preferredCamera.deviceId,
   });
+
+  let mindarThree;
+  try {
+    mindarThree = new MindARThree({
+      container,
+      imageTargetSrc: mindFileSrc,
+      maxTrack: 1,
+      filterMinCF: 0.001,
+      filterBeta: 1000,
+      warmupTolerance: 3,
+      missTolerance: 5,
+      // shouldFaceUser 屬於建構子選項，不是事後設定的屬性
+      // 設為 false 表示優先使用後鏡頭（適合手機；電腦預設前鏡頭）
+      shouldFaceUser: false,
+      uiScanning: false,
+      uiLoading: false,
+    });
+    console.log("✅ MindARThree instance created");
+  } catch (error) {
+    console.error("❌ MindARThree creation failed", error);
+    setFailureState("MindAR 初始化失敗：" + error.message);
+    return;
+  }
 
   const { renderer, scene, camera } = mindarThree;
 
   sourceVideos.forEach(function (video) {
     const targetIndex = Number(video.dataset.targetIndex);
-    const aspectRatio = Number(video.dataset.videoHeight || "0.75");
+    const aspectRatio = Number(video.dataset.videoHeight || "0.5625");
     const anchor = mindarThree.addAnchor(targetIndex);
     const plane = createVideoPlane(video, aspectRatio);
     anchor.group.add(plane);
 
     anchor.onTargetFound = function () {
+      console.log("🎯 Target found:", targetIndex);
       sourceVideos.forEach(function (otherVideo) {
         if (otherVideo !== video) pauseAndReset(otherVideo);
       });
 
       pauseAndReset(video);
       video.play().catch(function (error) {
-        console.warn("MindAR video play failed", error);
+        console.warn("⚠️ Video play failed", error);
       });
 
       updateText(statusLabel, "辨識成功");
@@ -215,6 +270,7 @@ document.addEventListener("DOMContentLoaded", async function () {
     };
 
     anchor.onTargetLost = function () {
+      console.log("❌ Target lost:", targetIndex);
       pauseAndReset(video);
       updateText(statusLabel, "等待辨識");
       updateText(statusCopy, "target 已離開畫面，請重新對準圖卡。");
@@ -223,14 +279,54 @@ document.addEventListener("DOMContentLoaded", async function () {
   });
 
   try {
-    mindarThree.shouldFaceUser = true;
+    console.log("🎬 Starting MindAR...");
     await mindarThree.start();
+    console.log("✅ MindAR started successfully");
+
+    // MindAR 建立的相機 video 預設 z-index: -2
+    // 把 video 調到 z-index:1，canvas(WebGL) 調到 2，CSS canvas 調到 2
+    // 這樣: 背景(#000) < video(相機) < canvas(AR 渲染層，alpha透明) < UI overlay(z-index:4)
+    if (mindarThree.video) {
+      console.log("📹 Camera video element:", {
+        width: mindarThree.video.videoWidth,
+        height: mindarThree.video.videoHeight,
+        srcObject: !!mindarThree.video.srcObject,
+        zIndex: mindarThree.video.style.zIndex,
+        position: mindarThree.video.style.position,
+        styleTop: mindarThree.video.style.top,
+        styleLeft: mindarThree.video.style.left,
+        styleWidth: mindarThree.video.style.width,
+        styleHeight: mindarThree.video.style.height,
+      });
+      mindarThree.video.style.zIndex = "1";
+    }
+
+    // 讓 WebGL canvas 在 video 之上
+    if (renderer && renderer.domElement) {
+      renderer.domElement.style.zIndex = "2";
+      renderer.domElement.style.position = "absolute";
+      renderer.domElement.style.top = "0";
+      renderer.domElement.style.left = "0";
+    }
+
+    // CSS renderer (用於 CSS3D 物件) 也要在 video 之上
+    if (mindarThree.cssRenderer && mindarThree.cssRenderer.domElement) {
+      mindarThree.cssRenderer.domElement.style.zIndex = "3";
+    }
+
+    console.log("📦 Container children after start:", container.childNodes.length, container.innerHTML.substring(0, 300));
+
+    // 強制 resize 確保 container 尺寸正確（start 後 container 才有真實尺寸）
+    if (typeof mindarThree.resize === "function") {
+      mindarThree.resize();
+    }
+
     resetTrackingState();
     renderer.setAnimationLoop(function () {
       renderer.render(scene, camera);
     });
   } catch (error) {
-    console.error("MindAR start failed", error);
+    console.error("❌ MindAR start failed:", error);
     cleanupFailedVideo(mindarThree);
     setFailureState(describeCameraError(error));
     return;
@@ -245,4 +341,9 @@ document.addEventListener("DOMContentLoaded", async function () {
     },
     { passive: true }
   );
+}
+
+// 直接呼叫（ES module 已經是 deferred，DOM 一定已解析完畢）
+initAR().catch(function (error) {
+  console.error("❌ Unhandled AR init error:", error);
 });

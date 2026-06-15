@@ -950,22 +950,34 @@ a:hover {
   border: 1px solid rgba(23, 50, 41, 0.14);
   border-radius: 22px;
   overflow: hidden;
-  background:
-    linear-gradient(160deg, rgba(8, 18, 16, 0.94), rgba(15, 54, 43, 0.82)),
-    radial-gradient(circle at top, rgba(255, 255, 255, 0.14), transparent 35%);
+  /* 背景必須是深色純色，不能用半透明漸層
+     MindAR 的 camera video 用 z-index:-2，所以这個背景是引導背景 */
+  background: #0a1512;
 }
 
 .ar-mindar-container {
   position: absolute;
   inset: 0;
   overflow: hidden;
+  /* 純黑背景，这樣 MindAR 建立的 video (z-index:-2)
+     會將相機畫面顯示在 canvas 透明處 */
+  background: #000;
 }
 
-.ar-mindar-container canvas,
+/* MindAR 建立的相機預覽 video
+   JS 會動態設定 top/left/width/height，不要用 CSS 的 inset 覆蓋
+   object-fit: cover 讓影像充滿區域 */
 .ar-mindar-container video {
-  position: absolute;
-  inset: 0;
+  object-fit: cover;
 }
+
+/* WebGL canvas 層 - 由 MindAR 設定大小 */
+.ar-mindar-container canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
 
 .ar-scene {
   position: absolute !important;
