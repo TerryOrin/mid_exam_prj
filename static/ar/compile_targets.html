@@ -79,6 +79,17 @@
       import { Compiler } from "/static/ar/mindar-image.prod.js";
       window.compiledBase64 = "";
       window.compileStatus = "pending";
+      const maxTargetSide = 400;
+
+      function createScaledTarget(image) {
+        const scale = Math.min(1, maxTargetSide / Math.max(image.naturalWidth, image.naturalHeight));
+        const canvas = document.createElement("canvas");
+        canvas.width = Math.round(image.naturalWidth * scale);
+        canvas.height = Math.round(image.naturalHeight * scale);
+        const context = canvas.getContext("2d");
+        context.drawImage(image, 0, 0, canvas.width, canvas.height);
+        return canvas;
+      }
 
       async function compileTargets() {
         const status = document.getElementById("status");
@@ -103,7 +114,8 @@
 
           status.textContent = "開始編譯";
           const compiler = new Compiler();
-          await compiler.compileImageTargets(images, function (percent) {
+          const scaledTargets = images.map(createScaledTarget);
+          await compiler.compileImageTargets(scaledTargets, function (percent) {
             progress.textContent = percent.toFixed(1) + "%";
           });
 
