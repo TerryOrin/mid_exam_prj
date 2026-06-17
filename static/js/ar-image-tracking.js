@@ -1,3 +1,5 @@
+/* ─── AR Image Tracking Guide – A-Frame version ─────────────────────────── */
+
 function updateText(node, text) {
   if (node) node.textContent = text;
 }
@@ -14,154 +16,217 @@ function isPermissionError(error) {
   return /notallowed|permission|denied|security/i.test(`${name} ${message}`);
 }
 
+/* ── Lightbox ────────────────────────────────────────────────────────────── */
+function initTargetLightbox() {
+  const lightbox = document.getElementById("ar-target-lightbox");
+  const image = document.getElementById("ar-target-lightbox-image");
+  const triggers = Array.from(document.querySelectorAll("[data-lightbox-image]"));
+  const closeButtons = Array.from(document.querySelectorAll("[data-lightbox-close]"));
+
+  if (!lightbox || !image || triggers.length === 0) return;
+
+  if (lightbox.parentElement !== document.body) {
+    document.body.appendChild(lightbox);
+  }
+
+  const openLightbox = function (src, title) {
+    image.src = src || "";
+    image.alt = title || "AR target";
+    lightbox.classList.add("is-open");
+    lightbox.setAttribute("aria-hidden", "false");
+    document.body.classList.add("ar-lightbox-open");
+  };
+
+  const closeLightbox = function () {
+    lightbox.classList.remove("is-open");
+    lightbox.setAttribute("aria-hidden", "true");
+    image.src = "";
+    image.alt = "";
+    document.body.classList.remove("ar-lightbox-open");
+  };
+
+  window.__closeArTargetLightbox = closeLightbox;
+
+  triggers.forEach(function (trigger) {
+    trigger.addEventListener("click", function (e) {
+      e.preventDefault();
+      e.stopPropagation();
+      openLightbox(trigger.dataset.lightboxImage, trigger.dataset.lightboxTitle);
+    });
+  });
+
+  closeButtons.forEach(function (btn) {
+    btn.addEventListener("click", function (e) {
+      e.preventDefault();
+      e.stopPropagation();
+      closeLightbox();
+    });
+  });
+
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape" && lightbox.classList.contains("is-open")) closeLightbox();
+  });
+}
+
+/* ── AR Guide ────────────────────────────────────────────────────────────── */
 function initARAframeGuide() {
   const app = document.getElementById("ar-image-tracking-app");
   if (!app) return;
 
-  const hasMindFile = app.dataset.mindFileExists === "true";
+  const hasMindFile     = app.dataset.mindFileExists === "true";
   const isMindFileReady = app.dataset.mindFileReady === "true";
-  const scene = document.getElementById("ar-aframe-scene");
+
+  const scene       = document.getElementById("ar-aframe-scene");
   const statusLabel = document.getElementById("ar-status-label");
-  const statusCopy = document.getElementById("ar-status-copy");
-  const retryButton = document.getElementById("ar-retry-button");
-  const activeBadge = document.getElementById("ar-active-badge");
-  const activeVideo = document.getElementById("ar-active-video");
+  const statusPill  = document.getElementById("ar-status-pill");
+  const statusCopy  = document.getElementById("ar-status-copy");
+  const retryBtn    = document.getElementById("ar-retry-button");
+  const scanLine    = document.getElementById("ar-scan-line");
+
+  // 底部卡片
+  const idlePanel   = document.getElementById("ar-idle-hint");
+  const foundPanel  = document.getElementById("ar-found-panel");
   const activeTitle = document.getElementById("ar-active-title");
-  const activeCopy = document.getElementById("ar-active-copy");
-  const foundFeedback = document.getElementById("ar-found-feedback-label");
+  const foundTitle  = document.getElementById("ar-found-title");
+  const activeCopy  = document.getElementById("ar-status-copy");
+  const activeBadge = document.getElementById("ar-active-badge");
+  const activeCopyFound = document.getElementById("ar-active-copy");
+
   const videos = Array.from(document.querySelectorAll(".ar-source-video"));
 
+  /* helpers */
   const setState = function (state, label, copy) {
     app.dataset.state = state;
     if (label) updateText(statusLabel, label);
-    if (copy) updateText(statusCopy, copy);
+    if (copy)  updateText(statusCopy, copy);
+    if (statusPill) statusPill.dataset.state = state;
   };
 
-  const resetActiveTarget = function () {
-    updateText(activeBadge, "等待辨識");
-    updateText(activeVideo, "尚未播放影片");
-    updateText(activeTitle, "請對準圖卡");
-    updateText(activeCopy, "辨識到 target 後，影片會直接貼附在圖片位置上播放。");
-    updateText(foundFeedback, "掃描中");
+  const showIdleCard = function (title, hint) {
+    if (idlePanel)  idlePanel.hidden  = false;
+    if (foundPanel) foundPanel.hidden = true;
+    if (title) updateText(activeTitle, title);
+    if (hint)  updateText(activeCopy, hint);
   };
 
-  const stopOtherVideos = function (currentVideo) {
-    videos.forEach(function (video) {
-      if (video !== currentVideo) pauseAndReset(video);
-    });
+  const showFoundCard = function (title, badge, copy) {
+    if (idlePanel)  idlePanel.hidden  = true;
+    if (foundPanel) foundPanel.hidden = false;
+    if (title) updateText(foundTitle, title);
+    if (badge) updateText(activeBadge, badge);
+    if (copy)  updateText(activeCopyFound, copy);
   };
 
-  retryButton?.addEventListener("click", function () {
+  const resetToIdle = function () {
+    showIdleCard("請把鏡頭對準圖卡", "將鏡頭對準入口、水車或魚塭任一張圖卡");
+    if (scanLine) scanLine.classList.remove("is-hidden");
+  };
+
+  const stopAllVideos = function (except) {
+    videos.forEach(function (v) { if (v !== except) pauseAndReset(v); });
+  };
+
+  retryBtn?.addEventListener("click", function () {
     window.location.reload();
   });
 
+  /* 沒有 mind 檔或不可用 */
   if (!hasMindFile || !isMindFileReady) {
     videos.forEach(pauseAndReset);
-    const missingMessage =
-      "尚未建立圖片辨識檔 shuijing_targets.mind，請先用 MindAR Image Targets Compiler 建立 target 檔。";
-    const invalidMessage =
-      statusCopy?.textContent.trim() ||
-      "圖片辨識檔 shuijing_targets.mind 可能損毀或編譯不完整，請重新用 MindAR Image Targets Compiler 產生 .mind 檔。";
-    setState(
-      "error",
-      hasMindFile ? "target 檔損毀或不完整" : "缺少 target 檔",
-      hasMindFile ? invalidMessage : missingMessage
-    );
-    updateText(activeBadge, hasMindFile ? "Target 檔錯誤" : "缺少 target");
-    updateText(activeVideo, "未播放");
-    updateText(activeTitle, hasMindFile ? "target 檔損毀或不完整" : "Image Tracking 尚未就緒");
-    updateText(activeCopy, hasMindFile ? invalidMessage : missingMessage);
-    updateText(foundFeedback, "無法啟動");
+    const msg = hasMindFile
+      ? "圖片辨識檔可能損毀，請重新產生 .mind 檔"
+      : "尚未建立圖片辨識檔，請先完成初始化";
+    setState("error", "無法啟動", msg);
+    showIdleCard(hasMindFile ? "辨識檔有誤" : "尚未就緒", msg);
     return;
   }
 
-  setState("booting", "AR 載入中", "正在啟動 A-Frame 與 MindAR，請允許瀏覽器使用相機。");
-  resetActiveTarget();
+  setState("booting", "啟動中", "正在啟動相機，請允許瀏覽器使用相機…");
+  showIdleCard("請把鏡頭對準圖卡", "正在啟動，請稍候…");
 
+  /* 相機權限預檢 */
   if (navigator.permissions?.query) {
     navigator.permissions
       .query({ name: "camera" })
-      .then(function (permissionStatus) {
-        if (permissionStatus.state === "denied") {
-          setState("permission-denied", "相機權限已拒絕", "請在瀏覽器設定中允許 camera 後重新整理頁面。");
+      .then(function (status) {
+        if (status.state === "denied") {
+          setState("permission-denied", "無相機權限", "請在瀏覽器設定中允許相機後重新整理頁面");
+          showIdleCard("相機權限被拒絕", "請在設定中允許相機後重新整理");
         }
       })
-      .catch(function (error) {
-        console.warn("Camera permission query failed", error);
-      });
+      .catch(function () {});
   }
 
-  const targetPairs = [
+  /* target 對應 */
+  const pairs = [
     { target: "#target-0", video: "#ar-video-1", label: "入口導覽" },
     { target: "#target-1", video: "#ar-video-2", label: "水車地景" },
     { target: "#target-2", video: "#ar-video-3", label: "智慧魚塭" },
   ];
 
-  targetPairs.forEach(function ({ target, video, label }) {
+  pairs.forEach(function ({ target, video, label }) {
     const targetEl = document.querySelector(target);
-    const videoEl = document.querySelector(video);
-
-    if (!targetEl || !videoEl) {
-      console.warn("A-Frame target/video pair missing, skipping", { target, video });
-      return;
-    }
+    const videoEl  = document.querySelector(video);
+    if (!targetEl || !videoEl) return;
 
     targetEl.addEventListener("targetFound", function () {
-      stopOtherVideos(videoEl);
+      stopAllVideos(videoEl);
       videoEl.currentTime = 0;
-      videoEl.play().catch(function (error) {
-        console.warn("Video play failed", error);
-      });
-
-      setState("found", `已辨識：${label}`, "影片已覆蓋在圖片位置播放。");
-      updateText(activeBadge, "辨識成功");
-      updateText(activeVideo, videoEl.dataset.targetFilename || "影片播放中");
-      updateText(activeTitle, label);
-      updateText(activeCopy, videoEl.dataset.targetCopy || "影片正在覆蓋圖片位置播放。");
-      updateText(foundFeedback, label);
+      videoEl.play().catch(function (e) { console.warn("Video play failed", e); });
+      if (scanLine) scanLine.classList.add("is-hidden");
+      setState("found", "辨識成功", "");
+      showFoundCard(
+        label,
+        videoEl.dataset.targetBadge || "辨識成功",
+        videoEl.dataset.targetCopy  || "影片正在覆蓋圖片位置播放"
+      );
     });
 
     targetEl.addEventListener("targetLost", function () {
       pauseAndReset(videoEl);
-      setState("ready", "請重新對準圖片", "target 已離開畫面，請重新對準圖片。");
-      resetActiveTarget();
+      setState("ready", "掃描中", "");
+      resetToIdle();
     });
   });
 
+  /* A-Frame 事件 */
   scene?.addEventListener("arReady", function () {
     if (app.dataset.state !== "found") {
-      setState("ready", "相機已啟動", "請把鏡頭對準入口、水車或魚塭 target 圖片。");
-      resetActiveTarget();
+      setState("ready", "掃描中", "");
+      resetToIdle();
     }
   });
 
   scene?.addEventListener("arError", function (event) {
-    const error = event.detail?.error || event.detail || event;
+    const err = event.detail?.error || event.detail || event;
     videos.forEach(pauseAndReset);
-    if (isPermissionError(error)) {
-      setState("permission-denied", "相機權限已拒絕", "請在瀏覽器設定中允許 camera 後重新整理頁面。");
+    if (isPermissionError(err)) {
+      setState("permission-denied", "無相機權限", "請允許相機後重新整理");
+      showIdleCard("相機被拒絕", "請在設定中允許相機後重新整理頁面");
       return;
     }
-    setState("error", "AR 啟動失敗", "A-Frame / MindAR 無法啟動，請確認 HTTPS、相機權限與 target 檔。");
+    setState("error", "啟動失敗", "請確認 HTTPS 與相機權限後重試");
+    showIdleCard("無法啟動 AR", "請確認 HTTPS 連線與相機權限後重試");
   });
 
   scene?.addEventListener("loaded", function () {
     if (app.dataset.state === "booting") {
-      updateText(statusCopy, "A-Frame 場景已載入，正在等待 MindAR 啟動相機。");
+      updateText(statusCopy, "場景已載入，正在等待相機…");
     }
   });
 
-  document.addEventListener(
-    "visibilitychange",
-    function () {
-      if (document.hidden) videos.forEach(pauseAndReset);
-    },
-    { passive: true }
-  );
+  document.addEventListener("visibilitychange", function () {
+    if (document.hidden) videos.forEach(pauseAndReset);
+  }, { passive: true });
 }
 
+/* ── Init ────────────────────────────────────────────────────────────────── */
 if (document.readyState === "loading") {
-  document.addEventListener("DOMContentLoaded", initARAframeGuide, { once: true });
+  document.addEventListener("DOMContentLoaded", function () {
+    initTargetLightbox();
+    initARAframeGuide();
+  }, { once: true });
 } else {
+  initTargetLightbox();
   initARAframeGuide();
 }

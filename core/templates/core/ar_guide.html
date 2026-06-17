@@ -9,149 +9,172 @@
 {% endblock %}
 
 {% block content %}
+{# ── AR 主視窗：全螢幕攝影機場景 ─────────────────────────────────────── #}
 <section
   id="ar-image-tracking-app"
-  class="ar-aframe-section"
+  class="ar-hero-section"
   data-state="{% if mind_file_ready %}booting{% else %}error{% endif %}"
   data-mind-file-exists="{% if mind_file_exists %}true{% else %}false{% endif %}"
   data-mind-file-ready="{% if mind_file_ready %}true{% else %}false{% endif %}">
-  <div class="app-shell">
-    {% if mind_file_ready %}
-    <a-scene
-      id="ar-aframe-scene"
-      class="ar-aframe-scene"
-      mindar-image="imageTargetSrc: {% static mind_file_relpath %}; uiScanning: false; uiLoading: false;"
-      color-space="sRGB"
-      renderer="colorManagement: true, physicallyCorrectLights"
-      vr-mode-ui="enabled: false"
-      device-orientation-permission-ui="enabled: false"
-      embedded>
-      <a-assets timeout="30000">
-        {% for stop in ar_stops %}
-        <video
-          id="ar-video-{{ forloop.counter }}"
-          class="ar-source-video"
-          data-target-index="{{ stop.target_index }}"
-          data-target-title="{{ stop.title }}"
-          data-target-badge="{{ stop.badge }}"
-          data-target-copy="{{ stop.mission }}"
-          data-target-filename="{{ stop.video_filename }}"
-          src="{% static stop.video %}"
-          preload="auto"
-          loop
-          muted
-          playsinline
-          webkit-playsinline></video>
-        {% endfor %}
-      </a-assets>
 
-      <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
-
+  {% if mind_file_ready %}
+  {# A-Frame 場景（全螢幕嵌入） #}
+  <a-scene
+    id="ar-aframe-scene"
+    class="ar-scene"
+    mindar-image="imageTargetSrc: {% static mind_file_relpath %}; uiScanning: false; uiLoading: false;"
+    color-space="sRGB"
+    renderer="colorManagement: true, physicallyCorrectLights"
+    vr-mode-ui="enabled: false"
+    device-orientation-permission-ui="enabled: false"
+    embedded>
+    <a-assets timeout="30000">
       {% for stop in ar_stops %}
-      {% if stop.video_height_is_fallback %}
-      <!-- TODO: target image missing; revise this a-video height with the real target image height / width ratio. -->
-      {% endif %}
-      <a-entity id="target-{{ stop.target_index }}" mindar-image-target="targetIndex: {{ stop.target_index }}">
-        <a-video
-          src="#ar-video-{{ forloop.counter }}"
-          width="1"
-          height="{{ stop.video_height }}"
-          position="0 0 0.01"></a-video>
-      </a-entity>
+      <video
+        id="ar-video-{{ forloop.counter }}"
+        class="ar-source-video"
+        data-target-index="{{ stop.target_index }}"
+        data-target-title="{{ stop.title }}"
+        data-target-badge="{{ stop.badge }}"
+        data-target-copy="{{ stop.mission }}"
+        data-target-filename="{{ stop.video_filename }}"
+        src="{% static stop.video %}"
+        preload="auto"
+        loop
+        muted
+        playsinline
+        webkit-playsinline></video>
       {% endfor %}
-    </a-scene>
-    {% endif %}
+    </a-assets>
 
-    <div class="status-panel" role="status" aria-live="polite">
-      <div class="status-panel__top">
-        <span class="ar-overlay-badge" id="ar-active-badge">等待辨識</span>
-        <span class="ar-overlay-status" id="ar-active-video">尚未播放影片</span>
-      </div>
-      <p class="ar-section-kicker">A-Frame Image Tracking AR</p>
-      <h1>圖片辨識影片覆蓋導覽</h1>
-      <p id="ar-status-copy">
-        {% if mind_file_ready %}
-        正在啟動 A-Frame 與 MindAR，請允許瀏覽器使用相機。
-        {% elif mind_file_exists %}
-        {{ mind_file_error }}
-        {% else %}
-        尚未建立圖片辨識檔 shuijing_targets.mind，請先用 MindAR Image Targets Compiler 建立 target 檔。
-        {% endif %}
-      </p>
-      <div class="ar-status-row">
-        <span class="ar-status-label">系統狀態</span>
-        <strong id="ar-status-label">
-          {% if mind_file_ready %}AR 載入中{% elif mind_file_exists %}target 檔損毀或不完整{% else %}缺少 target 檔{% endif %}
-        </strong>
-      </div>
-      <div class="ar-status-row">
-        <span class="ar-status-label">Target 來源</span>
-        <strong>自訂水井 target：入口、水車、魚塭</strong>
-      </div>
-      <button type="button" id="ar-retry-button" class="btn btn-light btn-sm">重新啟動 AR</button>
+    <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
+
+    {% for stop in ar_stops %}
+    <a-entity id="target-{{ stop.target_index }}" mindar-image-target="targetIndex: {{ stop.target_index }}">
+      <a-video
+        src="#ar-video-{{ forloop.counter }}"
+        width="1"
+        height="{{ stop.video_height }}"
+        position="0 0 0.01"></a-video>
+    </a-entity>
+    {% endfor %}
+  </a-scene>
+  {% endif %}
+
+  {# ── 疊加 UI：四角掃描框 ─── #}
+  <div class="ar-scan-frame" aria-hidden="true">
+    <span class="ar-scan-frame__corner ar-scan-frame__corner--tl"></span>
+    <span class="ar-scan-frame__corner ar-scan-frame__corner--tr"></span>
+    <span class="ar-scan-frame__corner ar-scan-frame__corner--bl"></span>
+    <span class="ar-scan-frame__corner ar-scan-frame__corner--br"></span>
+    <div class="ar-scan-line" id="ar-scan-line"></div>
+  </div>
+
+  {# ── 頂部狀態列 ─── #}
+  <div class="ar-top-bar" role="status" aria-live="polite">
+    <div class="ar-top-bar__brand">
+      <i class="bi bi-badge-ar-fill"></i>
+      <span>風雲水鄉 AR</span>
     </div>
+    <div class="ar-top-bar__right">
+      <span class="ar-status-pill" id="ar-status-pill">
+        <span class="ar-status-pill__dot"></span>
+        <span id="ar-status-label">{% if mind_file_ready %}啟動中{% else %}未就緒{% endif %}</span>
+      </span>
+    </div>
+  </div>
 
-    <div class="camera-treatment" aria-hidden="true">
-      <div class="focus-frame">
-        <span></span><span></span><span></span><span></span>
-        <i></i>
+  {# ── 底部資訊卡（覆蓋在 AR 上） ─── #}
+  <div class="ar-bottom-card" id="ar-bottom-card">
+    {# 閒置狀態 #}
+    <div class="ar-bottom-card__idle" id="ar-idle-hint">
+      <div class="ar-bottom-card__icon">
+        <i class="bi bi-camera-fill"></i>
       </div>
-    </div>
-
-    <div class="found-feedback" aria-hidden="true">
-      <span id="ar-found-feedback-label">掃描中</span>
-    </div>
-
-    <div class="fallback-stage">
-      <div class="fallback-stage__panel">
-        <i class="bi bi-badge-ar-fill"></i>
-        <h2 id="ar-active-title">
-          {% if mind_file_ready %}請對準圖卡{% elif mind_file_exists %}target 檔損毀或不完整{% else %}Image Tracking 尚未就緒{% endif %}
-        </h2>
-        <p id="ar-active-copy">
+      <div>
+        <p class="ar-bottom-card__title" id="ar-active-title">
+          {% if mind_file_ready %}請把鏡頭對準圖卡{% elif mind_file_exists %}target 檔有問題{% else %}尚未就緒{% endif %}
+        </p>
+        <p class="ar-bottom-card__sub" id="ar-status-copy">
           {% if mind_file_ready %}
-          辨識到 target 後，影片會直接貼附在圖片位置上播放。
+          將鏡頭對準入口、水車或魚塭任一張圖卡
           {% elif mind_file_exists %}
           {{ mind_file_error }}
           {% else %}
-          尚未建立圖片辨識檔 shuijing_targets.mind，請先用 MindAR Image Targets Compiler 建立 target 檔。
+          尚未建立圖片辨識檔，請先完成初始化
           {% endif %}
         </p>
+      </div>
+      <button type="button" id="ar-retry-button" class="ar-retry-btn" title="重新啟動">
+        <i class="bi bi-arrow-clockwise"></i>
+      </button>
+    </div>
+
+    {# 辨識成功狀態 #}
+    <div class="ar-bottom-card__found" id="ar-found-panel" hidden>
+      <div class="ar-bottom-card__found-icon">
+        <i class="bi bi-check-circle-fill"></i>
+      </div>
+      <div class="ar-bottom-card__found-info">
+        <span class="ar-found-badge" id="ar-active-badge">辨識成功</span>
+        <p class="ar-bottom-card__title" id="ar-found-title">—</p>
+        <p class="ar-bottom-card__sub" id="ar-active-copy">影片播放中</p>
       </div>
     </div>
   </div>
 </section>
 
-<section class="section-block ar-target-reference">
+{# ── 下方 Target 參考圖卡（展示用） ─────────────────────────────────── #}
+<section class="ar-target-reference section-block">
   <div class="container">
-    <div class="d-flex justify-content-between align-items-end mb-3 flex-wrap gap-2">
-      <div>
-        <span class="ar-section-kicker">Target 圖卡</span>
-        <h2 class="section-title mb-1">三張圖片對應三支影片</h2>
-        <p class="section-subtitle mb-0">targetIndex 0 / 1 / 2 分別對應 `ar_video1.mp4`、`ar_video2.mp4`、`ar_video3.mp4`。</p>
-      </div>
+    <div class="ar-ref-head">
+      <span class="ar-section-kicker">Target 圖卡</span>
+      <h2 class="section-title mb-1">掃描以下三張圖片</h2>
+      <p class="section-subtitle mb-0">將手機鏡頭對準其中一張，待辨識成功後即可觀看對應影片。</p>
     </div>
 
     <div class="ar-stop-grid">
       {% for stop in ar_stops %}
-      <article class="ar-stop-card is-active" data-stop-card>
-        <div class="ar-stop-media">
-          <img src="{% static stop.image %}" alt="{{ stop.title }}">
-        </div>
+      <article class="ar-stop-card">
+        <button
+          type="button"
+          class="ar-stop-media"
+          data-lightbox-image="{% static stop.image %}"
+          data-lightbox-title="{{ stop.title }}"
+          aria-label="放大檢視 {{ stop.title }}">
+          <img src="{% static stop.image %}" alt="{{ stop.title }}" loading="lazy">
+          <div class="ar-stop-media__zoom">
+            <i class="bi bi-zoom-in"></i>
+          </div>
+        </button>
         <div class="ar-stop-body">
           <span class="badge-soft badge-soft--brand">{{ stop.badge }}</span>
-          <p class="ar-stop-eyebrow">{{ stop.eyebrow }}</p>
           <h3>{{ stop.title }}</h3>
           <p>{{ stop.description }}</p>
-          <small>targetIndex {{ stop.target_index }} -> {{ stop.video_filename }}</small>
         </div>
       </article>
       {% endfor %}
     </div>
+
+    <p class="ar-ref-tip">
+      <i class="bi bi-info-circle me-1"></i>
+      每次只對準一張圖卡效果最佳，請避免多張同時出現在鏡頭內。
+    </p>
   </div>
 </section>
+
+{# Lightbox #}
+<div class="ar-target-lightbox" id="ar-target-lightbox" aria-hidden="true">
+  <button type="button" class="ar-target-lightbox__backdrop" data-lightbox-close aria-label="關閉"></button>
+  <button type="button" class="ar-target-lightbox__close" data-lightbox-close aria-label="關閉">
+    <i class="bi bi-x-lg"></i>
+  </button>
+  <div class="ar-target-lightbox__stage">
+    <img id="ar-target-lightbox-image" src="" alt="">
+  </div>
+</div>
 {% endblock %}
 
 {% block extra_js %}
-<script src="{% static 'js/ar-image-tracking.js' %}?v=8" defer></script>
+<script src="{% static 'js/ar-image-tracking.js' %}?v=10" defer></script>
 {% endblock %}
