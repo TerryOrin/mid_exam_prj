@@ -1,4 +1,4 @@
-/* ─── AR Image Tracking Guide – A-Frame version ─────────────────────────── */
+"use strict";
 
 function updateText(node, text) {
   if (node) node.textContent = text;
@@ -10,34 +10,767 @@ function pauseAndReset(video) {
   video.currentTime = 0;
 }
 
-function isPermissionError(error) {
-  const name = error?.name || error?.error?.name || "";
-  const message = error?.message || error?.error?.message || String(error || "");
-  return /notallowed|permission|denied|security/i.test(`${name} ${message}`);
+function getCsrfToken() {
+  return (
+    window.__CSRF_TOKEN ||
+    document.querySelector('meta[name="csrf-token"]')?.getAttribute("content") ||
+    ""
+  );
 }
 
-/* ── Lightbox ────────────────────────────────────────────────────────────── */
+const DOM = {
+  exhibitMode: () => document.getElementById("exhibit-display-mode"),
+  arImmersive: () => document.getElementById("ar-immersive-mode"),
+  arScene: () => document.getElementById("ar-aframe-scene"),
+  fallbackCamera: () => document.getElementById("ar-camera-fallback"),
+  btnOpenAR: () => document.getElementById("btn-open-ar"),
+  btnExitAR: () => document.getElementById("btn-exit-ar"),
+  statusPill: () => document.getElementById("ar-status-pill"),
+  statusLabel: () => document.getElementById("ar-status-label"),
+  scanLine: () => document.getElementById("ar-scan-line"),
+  voiceLog: () => document.getElementById("ar-voice-log"),
+  voiceLogEmpty: () => document.getElementById("ar-voice-log-empty"),
+  micBtn: () => document.getElementById("ar-mic-btn"),
+  micHint: () => document.getElementById("ar-mic-hint"),
+  ttsToggle: () => document.getElementById("ar-tts-toggle"),
+  stopSpeechBtn: () => document.getElementById("ar-stop-speech-btn"),
+  clearBtn: () => document.getElementById("ar-clear-btn"),
+};
+
+const STATE = {
+  arMode: false,
+  isBusy: false,
+  holdActive: false,
+  pendingRecorderStart: false,
+  discardRecording: false,
+  micInitialized: false,
+  arEventsBound: false,
+  sceneReady: false,
+  currentAudio: null,
+  currentSpeech: null,
+  mediaStream: null,
+  mediaRecorder: null,
+  mediaMimeType: "",
+  mediaChunks: [],
+  fallbackCameraStream: null,
+  scriptPromises: Object.create(null),
+  ignoreMouseUntil: 0,
+};
+
+function setArStatus(state, label) {
+  const immersive = DOM.arImmersive();
+  if (immersive) immersive.dataset.state = state;
+
+  const pill = DOM.statusPill();
+  if (pill) pill.dataset.state = state;
+
+  updateText(DOM.statusLabel(), label);
+}
+
+function setMicState(state, hint) {
+  const micBtn = DOM.micBtn();
+  if (micBtn) micBtn.dataset.state = state;
+  updateText(DOM.micHint(), hint);
+}
+
+function setBusy(isBusy, hint) {
+  STATE.isBusy = isBusy;
+
+  const micBtn = DOM.micBtn();
+  if (micBtn) micBtn.disabled = isBusy;
+
+  if (isBusy) {
+    setMicState("busy", hint || "AI 辨識與思考中...");
+  } else {
+    setMicState("idle", hint || "按住說話");
+  }
+}
+
+function removeStatusMessage() {
+  const status = document.getElementById("ar-temp-status");
+  if (status) status.remove();
+}
+
+function appendStatusMessage(text) {
+  removeStatusMessage();
+
+  const log = DOM.voiceLog();
+  if (!log) return null;
+
+  const el = document.createElement("p");
+  el.id = "ar-temp-status";
+  el.className = "ar-voice-status-msg";
+  el.textContent = text;
+  log.appendChild(el);
+  log.scrollTop = log.scrollHeight;
+  return el;
+}
+
+function appendMessage(role, text) {
+  const log = DOM.voiceLog();
+  const empty = DOM.voiceLogEmpty();
+  if (!log || !text) return null;
+
+  if (empty) empty.style.display = "none";
+
+  const bubble = document.createElement("div");
+  bubble.className = `ar-voice-bubble ar-voice-bubble--${role}`;
+
+  const icon = document.createElement("div");
+  icon.className = "ar-voice-bubble__icon";
+  icon.innerHTML = role === "user"
+    ? '<i class="bi bi-person-fill"></i>'
+    : role === "system"
+      ? '<i class="bi bi-exclamation-circle"></i>'
+      : '<i class="bi bi-robot"></i>';
+
+  const body = document.createElement("div");
+  body.className = "ar-voice-bubble__body";
+  body.textContent = text;
+
+  bubble.append(icon, body);
+  log.appendChild(bubble);
+  log.scrollTop = log.scrollHeight;
+  return bubble;
+}
+
+function clearVoiceLogUI() {
+  const log = DOM.voiceLog();
+  if (!log) return;
+
+  Array.from(log.children).forEach((child) => {
+    if (child.id !== "ar-voice-log-empty") child.remove();
+  });
+
+  const empty = DOM.voiceLogEmpty();
+  if (empty) empty.style.display = "";
+}
+
+async function clearServerHistory() {
+  try {
+    await fetch(window.__AR_GUIDE_API_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-CSRFToken": getCsrfToken(),
+      },
+      body: JSON.stringify({ clear: true }),
+    });
+  } catch (error) {
+    console.warn("Clear AR guide history failed:", error);
+  }
+}
+
+function stopSpeechPlayback() {
+  if (STATE.currentSpeech && window.speechSynthesis) {
+    window.speechSynthesis.cancel();
+    STATE.currentSpeech = null;
+  }
+
+  if (STATE.currentAudio) {
+    STATE.currentAudio.pause();
+    STATE.currentAudio = null;
+  }
+
+  const stopBtn = DOM.stopSpeechBtn();
+  if (stopBtn) stopBtn.hidden = true;
+}
+
+function isAutoTtsEnabled() {
+  return DOM.ttsToggle()?.checked ?? true;
+}
+
+function speakWithBrowser(text) {
+  if (!window.speechSynthesis || !text) return;
+
+  const utterance = new SpeechSynthesisUtterance(text);
+  utterance.lang = "zh-TW";
+  utterance.rate = 0.94;
+  utterance.pitch = 1;
+
+  const voices = window.speechSynthesis.getVoices();
+  const zhVoice = voices.find((voice) => voice.lang === "zh-TW") || voices.find((voice) => voice.lang.startsWith("zh"));
+  if (zhVoice) utterance.voice = zhVoice;
+
+  const stopBtn = DOM.stopSpeechBtn();
+  if (stopBtn) stopBtn.hidden = false;
+
+  STATE.currentSpeech = utterance;
+  utterance.onend = () => {
+    STATE.currentSpeech = null;
+    if (stopBtn) stopBtn.hidden = true;
+  };
+  utterance.onerror = () => {
+    STATE.currentSpeech = null;
+    if (stopBtn) stopBtn.hidden = true;
+  };
+
+  window.speechSynthesis.cancel();
+  window.speechSynthesis.speak(utterance);
+}
+
+function playResponseAudio(audioUrl, text) {
+  stopSpeechPlayback();
+  if (!isAutoTtsEnabled()) return;
+
+  if (audioUrl) {
+    const audio = new Audio(audioUrl);
+    const stopBtn = DOM.stopSpeechBtn();
+    if (stopBtn) stopBtn.hidden = false;
+
+    STATE.currentAudio = audio;
+    audio.onended = () => {
+      STATE.currentAudio = null;
+      if (stopBtn) stopBtn.hidden = true;
+    };
+    audio.onerror = () => {
+      STATE.currentAudio = null;
+      if (stopBtn) stopBtn.hidden = true;
+      speakWithBrowser(text);
+    };
+
+    audio.play().catch(() => {
+      STATE.currentAudio = null;
+      if (stopBtn) stopBtn.hidden = true;
+      speakWithBrowser(text);
+    });
+    return;
+  }
+
+  speakWithBrowser(text);
+}
+
+function preferredRecorderMimeType() {
+  const candidates = [
+    "audio/webm;codecs=opus",
+    "audio/mp4",
+    "audio/webm",
+    "audio/ogg;codecs=opus",
+  ];
+
+  if (!window.MediaRecorder) return "";
+  return candidates.find((mimeType) => MediaRecorder.isTypeSupported(mimeType)) || "";
+}
+
+async function ensureMicrophoneStream() {
+  if (STATE.mediaStream && STATE.mediaStream.active) return STATE.mediaStream;
+
+  STATE.mediaStream = await navigator.mediaDevices.getUserMedia({
+    audio: {
+      channelCount: 1,
+      echoCancellation: true,
+      noiseSuppression: true,
+      autoGainControl: true,
+    },
+  });
+  return STATE.mediaStream;
+}
+
+function releaseMicrophoneStream() {
+  if (!STATE.mediaStream) return;
+  STATE.mediaStream.getTracks().forEach((track) => track.stop());
+  STATE.mediaStream = null;
+}
+
+function encodeWav(audioBuffer) {
+  const sampleRate = audioBuffer.sampleRate;
+  const channelData = audioBuffer.numberOfChannels === 1
+    ? audioBuffer.getChannelData(0)
+    : (() => {
+        const length = audioBuffer.length;
+        const mixed = new Float32Array(length);
+        for (let channelIndex = 0; channelIndex < audioBuffer.numberOfChannels; channelIndex += 1) {
+          const channel = audioBuffer.getChannelData(channelIndex);
+          for (let sampleIndex = 0; sampleIndex < length; sampleIndex += 1) {
+            mixed[sampleIndex] += channel[sampleIndex] / audioBuffer.numberOfChannels;
+          }
+        }
+        return mixed;
+      })();
+
+  const buffer = new ArrayBuffer(44 + channelData.length * 2);
+  const view = new DataView(buffer);
+
+  function writeString(offset, value) {
+    for (let index = 0; index < value.length; index += 1) {
+      view.setUint8(offset + index, value.charCodeAt(index));
+    }
+  }
+
+  writeString(0, "RIFF");
+  view.setUint32(4, 36 + channelData.length * 2, true);
+  writeString(8, "WAVE");
+  writeString(12, "fmt ");
+  view.setUint32(16, 16, true);
+  view.setUint16(20, 1, true);
+  view.setUint16(22, 1, true);
+  view.setUint32(24, sampleRate, true);
+  view.setUint32(28, sampleRate * 2, true);
+  view.setUint16(32, 2, true);
+  view.setUint16(34, 16, true);
+  writeString(36, "data");
+  view.setUint32(40, channelData.length * 2, true);
+
+  let offset = 44;
+  for (let index = 0; index < channelData.length; index += 1) {
+    const sample = Math.max(-1, Math.min(1, channelData[index]));
+    view.setInt16(offset, sample < 0 ? sample * 0x8000 : sample * 0x7fff, true);
+    offset += 2;
+  }
+
+  return new Blob([buffer], { type: "audio/wav" });
+}
+
+async function convertBlobToWav(blob) {
+  const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+  if (!AudioContextClass) return blob;
+
+  const audioContext = new AudioContextClass();
+  try {
+    const arrayBuffer = await blob.arrayBuffer();
+    const audioBuffer = await audioContext.decodeAudioData(arrayBuffer.slice(0));
+    return encodeWav(audioBuffer);
+  } catch (error) {
+    console.warn("Audio conversion fallback to original blob:", error);
+    return blob;
+  } finally {
+    if (typeof audioContext.close === "function") {
+      await audioContext.close();
+    }
+  }
+}
+
+function audioFileNameForBlob(blob) {
+  if (blob.type === "audio/wav") return "speech.wav";
+  if (blob.type === "audio/mp4") return "speech.m4a";
+  if (blob.type === "audio/ogg") return "speech.ogg";
+  return "speech.webm";
+}
+
+async function uploadAudioBlob(blob, originalMimeType) {
+  const formData = new FormData();
+  formData.append("audio", blob, audioFileNameForBlob(blob));
+  formData.append("audio_mime_type", blob.type || originalMimeType || "");
+
+  const response = await fetch(window.__AR_GUIDE_API_URL, {
+    method: "POST",
+    headers: {
+      "X-CSRFToken": getCsrfToken(),
+    },
+    body: formData,
+  });
+
+  const payload = await response.json();
+  if (!response.ok || payload.error) {
+    throw new Error(payload.error || "語音導覽服務暫時無法使用。");
+  }
+
+  if (payload.transcript) appendMessage("user", payload.transcript);
+  if (payload.text) appendMessage("ai", payload.text);
+
+  if (payload.text && isAutoTtsEnabled()) {
+    appendStatusMessage("生成語音中...");
+    window.setTimeout(() => {
+      removeStatusMessage();
+      playResponseAudio(payload.audio_url || "", payload.text);
+    }, 180);
+  } else {
+    removeStatusMessage();
+  }
+}
+
+async function processRecordedAudio() {
+  if (!STATE.mediaChunks.length) {
+    appendMessage("system", "沒有錄到語音，請再試一次。");
+    return;
+  }
+
+  const rawBlob = new Blob(STATE.mediaChunks, {
+    type: STATE.mediaMimeType || STATE.mediaRecorder?.mimeType || "audio/webm",
+  });
+  const originalMimeType = rawBlob.type;
+
+  STATE.mediaChunks = [];
+  appendStatusMessage("AI 辨識與思考中...");
+  setBusy(true, "AI 辨識與思考中...");
+
+  try {
+    const uploadBlob = await convertBlobToWav(rawBlob);
+    await uploadAudioBlob(uploadBlob, originalMimeType);
+  } catch (error) {
+    removeStatusMessage();
+    appendMessage("system", error.message || "語音上傳失敗，請稍後再試。");
+  } finally {
+    setBusy(false, "按住說話");
+    releaseMicrophoneStream();
+  }
+}
+
+async function startHoldRecording(event) {
+  if (STATE.isBusy || STATE.holdActive) return;
+  if (event.type === "mousedown" && Date.now() < STATE.ignoreMouseUntil) return;
+
+  event.preventDefault();
+  stopSpeechPlayback();
+
+  STATE.holdActive = true;
+  STATE.pendingRecorderStart = true;
+  setMicState("recording", "錄音中...");
+
+  try {
+    if (!window.MediaRecorder || !navigator.mediaDevices?.getUserMedia) {
+      throw new Error("此瀏覽器不支援錄音功能。");
+    }
+
+    const stream = await ensureMicrophoneStream();
+    if (!STATE.holdActive) {
+      STATE.pendingRecorderStart = false;
+      releaseMicrophoneStream();
+      setMicState("idle", "按住說話");
+      return;
+    }
+
+    const recorderOptions = {};
+    const mimeType = preferredRecorderMimeType();
+    if (mimeType) recorderOptions.mimeType = mimeType;
+
+    const recorder = new MediaRecorder(stream, recorderOptions);
+    STATE.mediaRecorder = recorder;
+    STATE.mediaMimeType = recorder.mimeType || mimeType;
+    STATE.mediaChunks = [];
+    STATE.pendingRecorderStart = false;
+
+    recorder.addEventListener("dataavailable", (recorderEvent) => {
+      if (recorderEvent.data?.size) STATE.mediaChunks.push(recorderEvent.data);
+    });
+
+    recorder.addEventListener("stop", () => {
+      const shouldProcess = !STATE.isBusy;
+      STATE.mediaRecorder = null;
+      if (STATE.discardRecording) {
+        STATE.discardRecording = false;
+        STATE.mediaChunks = [];
+        return;
+      }
+
+      if (shouldProcess) {
+        processRecordedAudio().catch((error) => {
+          appendMessage("system", error.message || "語音辨識失敗。");
+          removeStatusMessage();
+          setBusy(false, "按住說話");
+        });
+      }
+    });
+
+    recorder.addEventListener("error", () => {
+      appendMessage("system", "錄音失敗，請重新嘗試。");
+      STATE.mediaRecorder = null;
+      STATE.mediaChunks = [];
+      STATE.pendingRecorderStart = false;
+      STATE.holdActive = false;
+      releaseMicrophoneStream();
+      setBusy(false, "按住說話");
+    });
+
+    recorder.start();
+  } catch (error) {
+    STATE.holdActive = false;
+    STATE.pendingRecorderStart = false;
+    STATE.mediaRecorder = null;
+    STATE.mediaChunks = [];
+    releaseMicrophoneStream();
+    setMicState("idle", "按住說話");
+    appendMessage("system", error.message || "無法啟用麥克風，請確認權限設定。");
+  }
+}
+
+function stopHoldRecording(event) {
+  if (event.type === "mouseup" && Date.now() < STATE.ignoreMouseUntil) return;
+  if (!STATE.holdActive && !STATE.pendingRecorderStart) return;
+
+  event.preventDefault();
+  STATE.holdActive = false;
+
+  if (STATE.pendingRecorderStart) {
+    STATE.pendingRecorderStart = false;
+    releaseMicrophoneStream();
+    setMicState("idle", "按住說話");
+    return;
+  }
+
+  const recorder = STATE.mediaRecorder;
+  if (!recorder) {
+    setMicState("idle", "按住說話");
+    return;
+  }
+
+  if (recorder.state !== "inactive") recorder.stop();
+  setMicState("busy", "AI 辨識與思考中...");
+}
+
+function bindMicControls() {
+  if (STATE.micInitialized) return;
+  STATE.micInitialized = true;
+
+  const micBtn = DOM.micBtn();
+  if (!micBtn) return;
+
+  micBtn.addEventListener("touchstart", (event) => {
+    STATE.ignoreMouseUntil = Date.now() + 900;
+    startHoldRecording(event);
+  }, { passive: false });
+  micBtn.addEventListener("touchend", stopHoldRecording, { passive: false });
+  micBtn.addEventListener("touchcancel", stopHoldRecording, { passive: false });
+  micBtn.addEventListener("mousedown", startHoldRecording);
+
+  document.addEventListener("mouseup", stopHoldRecording);
+
+  DOM.stopSpeechBtn()?.addEventListener("click", stopSpeechPlayback);
+  DOM.clearBtn()?.addEventListener("click", async () => {
+    stopSpeechPlayback();
+    removeStatusMessage();
+    clearVoiceLogUI();
+    await clearServerHistory();
+    setBusy(false, "按住說話");
+  });
+}
+
+function loadScriptOnce(src, testFn) {
+  if (!src) return Promise.reject(new Error("缺少 script 路徑。"));
+  if (typeof testFn === "function" && testFn()) return Promise.resolve();
+  if (STATE.scriptPromises[src]) return STATE.scriptPromises[src];
+
+  STATE.scriptPromises[src] = new Promise((resolve, reject) => {
+    const existing = document.querySelector(`script[data-ar-src="${src}"]`);
+    if (existing) {
+      if (existing.dataset.loaded === "true") {
+        resolve();
+        return;
+      }
+      existing.addEventListener("load", () => resolve(), { once: true });
+      existing.addEventListener("error", () => reject(new Error(`載入失敗：${src}`)), { once: true });
+      return;
+    }
+
+    const script = document.createElement("script");
+    script.src = src;
+    script.async = true;
+    script.dataset.arSrc = src;
+    script.onload = () => {
+      script.dataset.loaded = "true";
+      resolve();
+    };
+    script.onerror = () => reject(new Error(`載入失敗：${src}`));
+    document.head.appendChild(script);
+  });
+
+  return STATE.scriptPromises[src];
+}
+
+async function ensureArRuntime() {
+  if (!window.__AR_MIND_FILE_READY) return;
+
+  await loadScriptOnce(window.__AR_AFRAME_SRC, () => Boolean(window.AFRAME));
+  await loadScriptOnce(window.__AR_MINDAR_SRC, () => Boolean(window.MINDAR?.IMAGE));
+}
+
+function bindArTargetEvents() {
+  const videos = Array.from(document.querySelectorAll(".ar-source-video"));
+  const pairs = [
+    { target: "#target-0", video: "#ar-video-1", label: "風雲水井" },
+    { target: "#target-1", video: "#ar-video-2", label: "水車地景" },
+    { target: "#target-2", video: "#ar-video-3", label: "智慧魚塭" },
+  ];
+
+  pairs.forEach(({ target, video, label }) => {
+    const targetNode = document.querySelector(target);
+    const videoNode = document.querySelector(video);
+    if (!targetNode || !videoNode) return;
+
+    targetNode.addEventListener("targetFound", () => {
+      videos.forEach((item) => {
+        if (item !== videoNode) pauseAndReset(item);
+      });
+
+      videoNode.currentTime = 0;
+      videoNode.play().catch((error) => console.warn("AR video play blocked:", error));
+      DOM.scanLine()?.classList.add("is-hidden");
+      setArStatus("found", `辨識到：${label}`);
+    });
+
+    targetNode.addEventListener("targetLost", () => {
+      pauseAndReset(videoNode);
+      DOM.scanLine()?.classList.remove("is-hidden");
+      setArStatus("ready", "掃描中");
+    });
+  });
+}
+
+function bindArSceneEvents() {
+  if (STATE.arEventsBound) return;
+  STATE.arEventsBound = true;
+
+  bindArTargetEvents();
+
+  const scene = DOM.arScene();
+  if (!scene) return;
+
+  scene.addEventListener("arReady", () => {
+    STATE.sceneReady = true;
+    setArStatus("ready", "掃描中");
+  });
+
+  scene.addEventListener("arError", () => {
+    STATE.sceneReady = false;
+    setArStatus("error", "AR 啟動失敗");
+    appendMessage("system", "AR 鏡頭初始化失敗，請確認相機權限與 HTTPS 設定。");
+  });
+
+  document.addEventListener("visibilitychange", () => {
+    if (document.hidden) {
+      document.querySelectorAll(".ar-source-video").forEach((video) => pauseAndReset(video));
+    }
+  }, { passive: true });
+}
+
+async function startFallbackCamera() {
+  const video = DOM.fallbackCamera();
+  if (!video) return;
+
+  if (STATE.fallbackCameraStream?.active) {
+    video.srcObject = STATE.fallbackCameraStream;
+    setArStatus("ready", "掃描中");
+    return;
+  }
+
+  STATE.fallbackCameraStream = await navigator.mediaDevices.getUserMedia({
+    video: { facingMode: "environment" },
+    audio: false,
+  });
+
+  video.srcObject = STATE.fallbackCameraStream;
+  setArStatus("ready", "掃描中");
+}
+
+function stopFallbackCamera() {
+  if (!STATE.fallbackCameraStream) return;
+  STATE.fallbackCameraStream.getTracks().forEach((track) => track.stop());
+  STATE.fallbackCameraStream = null;
+
+  const video = DOM.fallbackCamera();
+  if (video) video.srcObject = null;
+}
+
+function pauseArTracking() {
+  const scene = DOM.arScene();
+  const system = scene?.systems?.["mindar-image-system"];
+  if (system?.pause) {
+    try {
+      system.pause();
+    } catch (error) {
+      console.warn("Pause AR tracking failed:", error);
+    }
+  }
+}
+
+function resumeArTracking() {
+  const scene = DOM.arScene();
+  const system = scene?.systems?.["mindar-image-system"];
+  if (system?.unpause && STATE.sceneReady) {
+    try {
+      system.unpause();
+      setArStatus("ready", "掃描中");
+      return true;
+    } catch (error) {
+      console.warn("Resume AR tracking failed:", error);
+    }
+  }
+  return false;
+}
+
+async function enterArMode() {
+  if (STATE.arMode) return;
+  STATE.arMode = true;
+
+  document.body.classList.add("ar-mode-active");
+  DOM.exhibitMode()?.style.setProperty("display", "none");
+  clearVoiceLogUI();
+  removeStatusMessage();
+
+  const immersive = DOM.arImmersive();
+  if (immersive) {
+    immersive.hidden = false;
+    immersive.style.display = "";
+  }
+
+  setArStatus("booting", "啟動中");
+  bindMicControls();
+  await clearServerHistory();
+
+  try {
+    if (!window.__AR_MIND_FILE_READY) {
+      await startFallbackCamera();
+      return;
+    }
+
+    bindArSceneEvents();
+
+    if (resumeArTracking()) return;
+
+    await ensureArRuntime();
+  } catch (error) {
+    setArStatus("error", "AR 載入失敗");
+    appendMessage("system", error.message || "AR runtime 載入失敗。");
+  }
+}
+
+function exitArMode() {
+  if (!STATE.arMode) return;
+  STATE.arMode = false;
+
+  document.body.classList.remove("ar-mode-active");
+  DOM.exhibitMode()?.style.setProperty("display", "");
+
+  const immersive = DOM.arImmersive();
+  if (immersive) immersive.hidden = true;
+
+  stopSpeechPlayback();
+  removeStatusMessage();
+  pauseArTracking();
+  stopFallbackCamera();
+  releaseMicrophoneStream();
+
+  if (STATE.mediaRecorder?.state && STATE.mediaRecorder.state !== "inactive") {
+    STATE.discardRecording = true;
+    STATE.mediaRecorder.stop();
+  }
+  STATE.mediaRecorder = null;
+  STATE.mediaChunks = [];
+  STATE.holdActive = false;
+  STATE.pendingRecorderStart = false;
+  setBusy(false, "按住說話");
+}
+
 function initTargetLightbox() {
   const lightbox = document.getElementById("ar-target-lightbox");
   const image = document.getElementById("ar-target-lightbox-image");
   const triggers = Array.from(document.querySelectorAll("[data-lightbox-image]"));
-  const closeButtons = Array.from(document.querySelectorAll("[data-lightbox-close]"));
-
-  if (!lightbox || !image || triggers.length === 0) return;
+  const closeNodes = Array.from(document.querySelectorAll("[data-lightbox-close]"));
+  if (!lightbox || !image || !triggers.length) return;
 
   if (lightbox.parentElement !== document.body) {
     document.body.appendChild(lightbox);
   }
 
-  const openLightbox = function (src, title) {
+  const open = (src, title) => {
     image.src = src || "";
-    image.alt = title || "AR target";
+    image.alt = title || "";
     lightbox.classList.add("is-open");
     lightbox.setAttribute("aria-hidden", "false");
     document.body.classList.add("ar-lightbox-open");
   };
 
-  const closeLightbox = function () {
+  const close = () => {
     lightbox.classList.remove("is-open");
     lightbox.setAttribute("aria-hidden", "true");
     image.src = "";
@@ -45,188 +778,46 @@ function initTargetLightbox() {
     document.body.classList.remove("ar-lightbox-open");
   };
 
-  window.__closeArTargetLightbox = closeLightbox;
-
-  triggers.forEach(function (trigger) {
-    trigger.addEventListener("click", function (e) {
-      e.preventDefault();
-      e.stopPropagation();
-      openLightbox(trigger.dataset.lightboxImage, trigger.dataset.lightboxTitle);
+  triggers.forEach((trigger) => {
+    trigger.addEventListener("click", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      open(trigger.dataset.lightboxImage, trigger.dataset.lightboxTitle);
     });
   });
 
-  closeButtons.forEach(function (btn) {
-    btn.addEventListener("click", function (e) {
-      e.preventDefault();
-      e.stopPropagation();
-      closeLightbox();
+  closeNodes.forEach((node) => {
+    node.addEventListener("click", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      close();
     });
   });
 
-  document.addEventListener("keydown", function (e) {
-    if (e.key === "Escape" && lightbox.classList.contains("is-open")) closeLightbox();
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && lightbox.classList.contains("is-open")) close();
   });
 }
 
-/* ── AR Guide ────────────────────────────────────────────────────────────── */
-function initARAframeGuide() {
-  const app = document.getElementById("ar-image-tracking-app");
-  if (!app) return;
-
-  const hasMindFile     = app.dataset.mindFileExists === "true";
-  const isMindFileReady = app.dataset.mindFileReady === "true";
-
-  const scene       = document.getElementById("ar-aframe-scene");
-  const statusLabel = document.getElementById("ar-status-label");
-  const statusPill  = document.getElementById("ar-status-pill");
-  const statusCopy  = document.getElementById("ar-status-copy");
-  const retryBtn    = document.getElementById("ar-retry-button");
-  const scanLine    = document.getElementById("ar-scan-line");
-
-  // 底部卡片
-  const idlePanel   = document.getElementById("ar-idle-hint");
-  const foundPanel  = document.getElementById("ar-found-panel");
-  const activeTitle = document.getElementById("ar-active-title");
-  const foundTitle  = document.getElementById("ar-found-title");
-  const activeCopy  = document.getElementById("ar-status-copy");
-  const activeBadge = document.getElementById("ar-active-badge");
-  const activeCopyFound = document.getElementById("ar-active-copy");
-
-  const videos = Array.from(document.querySelectorAll(".ar-source-video"));
-
-  /* helpers */
-  const setState = function (state, label, copy) {
-    app.dataset.state = state;
-    if (label) updateText(statusLabel, label);
-    if (copy)  updateText(statusCopy, copy);
-    if (statusPill) statusPill.dataset.state = state;
-  };
-
-  const showIdleCard = function (title, hint) {
-    if (idlePanel)  idlePanel.hidden  = false;
-    if (foundPanel) foundPanel.hidden = true;
-    if (title) updateText(activeTitle, title);
-    if (hint)  updateText(activeCopy, hint);
-  };
-
-  const showFoundCard = function (title, badge, copy) {
-    if (idlePanel)  idlePanel.hidden  = true;
-    if (foundPanel) foundPanel.hidden = false;
-    if (title) updateText(foundTitle, title);
-    if (badge) updateText(activeBadge, badge);
-    if (copy)  updateText(activeCopyFound, copy);
-  };
-
-  const resetToIdle = function () {
-    showIdleCard("請把鏡頭對準圖卡", "將鏡頭對準入口、水車或魚塭任一張圖卡");
-    if (scanLine) scanLine.classList.remove("is-hidden");
-  };
-
-  const stopAllVideos = function (except) {
-    videos.forEach(function (v) { if (v !== except) pauseAndReset(v); });
-  };
-
-  retryBtn?.addEventListener("click", function () {
-    window.location.reload();
-  });
-
-  /* 沒有 mind 檔或不可用 */
-  if (!hasMindFile || !isMindFileReady) {
-    videos.forEach(pauseAndReset);
-    const msg = hasMindFile
-      ? "圖片辨識檔可能損毀，請重新產生 .mind 檔"
-      : "尚未建立圖片辨識檔，請先完成初始化";
-    setState("error", "無法啟動", msg);
-    showIdleCard(hasMindFile ? "辨識檔有誤" : "尚未就緒", msg);
-    return;
-  }
-
-  setState("booting", "啟動中", "正在啟動相機，請允許瀏覽器使用相機…");
-  showIdleCard("請把鏡頭對準圖卡", "正在啟動，請稍候…");
-
-  /* 相機權限預檢 */
-  if (navigator.permissions?.query) {
-    navigator.permissions
-      .query({ name: "camera" })
-      .then(function (status) {
-        if (status.state === "denied") {
-          setState("permission-denied", "無相機權限", "請在瀏覽器設定中允許相機後重新整理頁面");
-          showIdleCard("相機權限被拒絕", "請在設定中允許相機後重新整理");
-        }
-      })
-      .catch(function () {});
-  }
-
-  /* target 對應 */
-  const pairs = [
-    { target: "#target-0", video: "#ar-video-1", label: "入口導覽" },
-    { target: "#target-1", video: "#ar-video-2", label: "水車地景" },
-    { target: "#target-2", video: "#ar-video-3", label: "智慧魚塭" },
-  ];
-
-  pairs.forEach(function ({ target, video, label }) {
-    const targetEl = document.querySelector(target);
-    const videoEl  = document.querySelector(video);
-    if (!targetEl || !videoEl) return;
-
-    targetEl.addEventListener("targetFound", function () {
-      stopAllVideos(videoEl);
-      videoEl.currentTime = 0;
-      videoEl.play().catch(function (e) { console.warn("Video play failed", e); });
-      if (scanLine) scanLine.classList.add("is-hidden");
-      setState("found", "辨識成功", "");
-      showFoundCard(
-        label,
-        videoEl.dataset.targetBadge || "辨識成功",
-        videoEl.dataset.targetCopy  || "影片正在覆蓋圖片位置播放"
-      );
-    });
-
-    targetEl.addEventListener("targetLost", function () {
-      pauseAndReset(videoEl);
-      setState("ready", "掃描中", "");
-      resetToIdle();
-    });
-  });
-
-  /* A-Frame 事件 */
-  scene?.addEventListener("arReady", function () {
-    if (app.dataset.state !== "found") {
-      setState("ready", "掃描中", "");
-      resetToIdle();
-    }
-  });
-
-  scene?.addEventListener("arError", function (event) {
-    const err = event.detail?.error || event.detail || event;
-    videos.forEach(pauseAndReset);
-    if (isPermissionError(err)) {
-      setState("permission-denied", "無相機權限", "請允許相機後重新整理");
-      showIdleCard("相機被拒絕", "請在設定中允許相機後重新整理頁面");
-      return;
-    }
-    setState("error", "啟動失敗", "請確認 HTTPS 與相機權限後重試");
-    showIdleCard("無法啟動 AR", "請確認 HTTPS 連線與相機權限後重試");
-  });
-
-  scene?.addEventListener("loaded", function () {
-    if (app.dataset.state === "booting") {
-      updateText(statusCopy, "場景已載入，正在等待相機…");
-    }
-  });
-
-  document.addEventListener("visibilitychange", function () {
-    if (document.hidden) videos.forEach(pauseAndReset);
-  }, { passive: true });
-}
-
-/* ── Init ────────────────────────────────────────────────────────────────── */
-if (document.readyState === "loading") {
-  document.addEventListener("DOMContentLoaded", function () {
-    initTargetLightbox();
-    initARAframeGuide();
-  }, { once: true });
-} else {
+function init() {
   initTargetLightbox();
-  initARAframeGuide();
+
+  DOM.btnOpenAR()?.addEventListener("click", () => {
+    enterArMode().catch((error) => {
+      setArStatus("error", "AR 啟動失敗");
+      appendMessage("system", error.message || "無法進入 AR 模式。");
+    });
+  });
+
+  DOM.btnExitAR()?.addEventListener("click", exitArMode);
+
+  if (window.speechSynthesis) {
+    window.speechSynthesis.getVoices();
+  }
+}
+
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", init, { once: true });
+} else {
+  init();
 }

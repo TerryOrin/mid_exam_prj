@@ -1,24 +1,126 @@
 {% extends "core/base.html" %}
 {% load static %}
 
-{% block title %}AR 導覽{% endblock %}
+{% block title %}AR 智慧導覽 – 風雲水鄉{% endblock %}
 
 {% block extra_head %}
-<script src="https://aframe.io/releases/1.6.0/aframe.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
+{# A-Frame 與 MindAR 只在 AR 模式啟動後動態載入，避免阻塞首次渲染 #}
 {% endblock %}
 
 {% block content %}
-{# ── AR 主視窗：全螢幕攝影機場景 ─────────────────────────────────────── #}
-<section
-  id="ar-image-tracking-app"
-  class="ar-hero-section"
-  data-state="{% if mind_file_ready %}booting{% else %}error{% endif %}"
-  data-mind-file-exists="{% if mind_file_exists %}true{% else %}false{% endif %}"
-  data-mind-file-ready="{% if mind_file_ready %}true{% else %}false{% endif %}">
 
+{# ════════════════════════════════════════════════════════════════════════════
+   展場電腦展示模式（預設可見，AR 模式啟動後 display:none）
+   ════════════════════════════════════════════════════════════════════════════ #}
+<div id="exhibit-display-mode" class="exhibit-mode">
+
+  {# ── Hero Banner ── #}
+  <section class="ar-exhibit-hero">
+    <div class="ar-exhibit-hero__bg" aria-hidden="true"></div>
+    <div class="container ar-exhibit-hero__inner">
+      <div class="ar-exhibit-hero__text">
+        <span class="ar-section-kicker">智慧展場體驗</span>
+        <h1 class="ar-exhibit-hero__title">風雲水鄉<br>AR 智慧導覽</h1>
+        <p class="ar-exhibit-hero__sub">
+          掃描展場圖卡，即可觀看沉浸式 AR 影片並與 AI 語音導覽員對話，
+          探索百年水井、水車地景與智慧漁村的故事。
+        </p>
+        <div class="ar-exhibit-hero__pills">
+          <span class="ar-exhibit-pill"><i class="bi bi-camera-fill"></i> 圖像辨識 AR</span>
+          <span class="ar-exhibit-pill"><i class="bi bi-mic-fill"></i> AI 語音問答</span>
+          <span class="ar-exhibit-pill"><i class="bi bi-phone-fill"></i> 手機體驗</span>
+        </div>
+      </div>
+      <div class="ar-exhibit-hero__cta-wrap">
+        <button type="button" id="btn-open-ar" class="ar-launch-btn">
+          <span class="ar-launch-btn__ripple" aria-hidden="true"></span>
+          <i class="bi bi-badge-ar-fill ar-launch-btn__icon"></i>
+          <span class="ar-launch-btn__text">開啟 AR 智慧導覽</span>
+          <small class="ar-launch-btn__hint">請允許相機權限</small>
+        </button>
+        <p class="ar-exhibit-hero__note">
+          <i class="bi bi-phone me-1"></i>建議以手機掃描下方圖卡
+        </p>
+      </div>
+    </div>
+  </section>
+
+  {# ── 使用流程說明 ── #}
+  <section class="section-block ar-how-section">
+    <div class="container">
+      <div class="ar-how-grid">
+        <div class="ar-how-step">
+          <div class="ar-how-step__num">01</div>
+          <i class="bi bi-phone-fill ar-how-step__icon"></i>
+          <h3>開啟導覽</h3>
+          <p>點擊「開啟 AR 智慧導覽」，允許瀏覽器使用相機。</p>
+        </div>
+        <div class="ar-how-step">
+          <div class="ar-how-step__num">02</div>
+          <i class="bi bi-camera2 ar-how-step__icon"></i>
+          <h3>掃描圖卡</h3>
+          <p>將手機鏡頭對準展場任一張圖卡，等待自動辨識。</p>
+        </div>
+        <div class="ar-how-step">
+          <div class="ar-how-step__num">03</div>
+          <i class="bi bi-play-circle-fill ar-how-step__icon"></i>
+          <h3>觀看 AR 影片</h3>
+          <p>辨識成功後，影片會直接覆蓋在圖卡上自動播放。</p>
+        </div>
+        <div class="ar-how-step">
+          <div class="ar-how-step__num">04</div>
+          <i class="bi bi-mic-fill ar-how-step__icon"></i>
+          <h3>AI 語音問答</h3>
+          <p>按住麥克風按鈕說話，AI 導覽員即時語音回覆。</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  {# ── Target 掃描圖卡 ── #}
+  <section class="section-block ar-target-reference">
+    <div class="container">
+      <div class="ar-ref-head">
+        <span class="ar-section-kicker">展場掃描圖卡</span>
+        <h2 class="section-title mb-1">三個 AR 體驗站</h2>
+        <p class="section-subtitle mb-0">將手機對準其中一張圖卡，即可啟動對應的 AR 影片。</p>
+      </div>
+      <div class="ar-stop-grid">
+        {% for stop in ar_stops %}
+        <article class="ar-stop-card">
+          <button
+            type="button"
+            class="ar-stop-media"
+            data-lightbox-image="{% static stop.image %}"
+            data-lightbox-title="{{ stop.title }}"
+            aria-label="放大檢視 {{ stop.title }}">
+            <img src="{% static stop.image %}" alt="{{ stop.title }}" loading="lazy">
+            <div class="ar-stop-media__zoom"><i class="bi bi-zoom-in"></i></div>
+          </button>
+          <div class="ar-stop-body">
+            <span class="badge-soft badge-soft--brand">{{ stop.badge }}</span>
+            <h3>{{ stop.title }}</h3>
+            <p>{{ stop.description }}</p>
+          </div>
+        </article>
+        {% endfor %}
+      </div>
+      <p class="ar-ref-tip">
+        <i class="bi bi-info-circle me-1"></i>每次只對準一張圖卡效果最佳，請避免多張同時出現在鏡頭內。
+      </p>
+    </div>
+  </section>
+
+</div>{# / #exhibit-display-mode #}
+
+
+{# ════════════════════════════════════════════════════════════════════════════
+   AR 沉浸導覽模式（預設 display:none，點擊後啟動）
+   ════════════════════════════════════════════════════════════════════════════ #}
+<div id="ar-immersive-mode" class="ar-immersive" hidden>
+
+  {# ── A-Frame 全螢幕場景（AR 效果主體） ── #}
   {% if mind_file_ready %}
-  {# A-Frame 場景（全螢幕嵌入） #}
   <a-scene
     id="ar-aframe-scene"
     class="ar-scene"
@@ -39,29 +141,23 @@
         data-target-copy="{{ stop.mission }}"
         data-target-filename="{{ stop.video_filename }}"
         src="{% static stop.video %}"
-        preload="auto"
-        loop
-        muted
-        playsinline
-        webkit-playsinline></video>
+        preload="auto" loop muted playsinline webkit-playsinline></video>
       {% endfor %}
     </a-assets>
-
     <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
-
+    {# AR 影片覆蓋 Entity（MindAR 觸發） #}
     {% for stop in ar_stops %}
     <a-entity id="target-{{ stop.target_index }}" mindar-image-target="targetIndex: {{ stop.target_index }}">
-      <a-video
-        src="#ar-video-{{ forloop.counter }}"
-        width="1"
-        height="{{ stop.video_height }}"
-        position="0 0 0.01"></a-video>
+      <a-video src="#ar-video-{{ forloop.counter }}" width="1" height="{{ stop.video_height }}" position="0 0 0.01"></a-video>
     </a-entity>
     {% endfor %}
   </a-scene>
+  {% else %}
+  {# .mind 檔不存在時的 fallback：顯示相機畫面 #}
+  <video id="ar-camera-fallback" class="ar-camera-fallback" autoplay playsinline muted></video>
   {% endif %}
 
-  {# ── 疊加 UI：四角掃描框 ─── #}
+  {# ── 對準框 ── #}
   <div class="ar-scan-frame" aria-hidden="true">
     <span class="ar-scan-frame__corner ar-scan-frame__corner--tl"></span>
     <span class="ar-scan-frame__corner ar-scan-frame__corner--tr"></span>
@@ -70,8 +166,8 @@
     <div class="ar-scan-line" id="ar-scan-line"></div>
   </div>
 
-  {# ── 頂部狀態列 ─── #}
-  <div class="ar-top-bar" role="status" aria-live="polite">
+  {# ── 頂部列 ── #}
+  <header class="ar-top-bar">
     <div class="ar-top-bar__brand">
       <i class="bi bi-badge-ar-fill"></i>
       <span>風雲水鄉 AR</span>
@@ -79,91 +175,68 @@
     <div class="ar-top-bar__right">
       <span class="ar-status-pill" id="ar-status-pill">
         <span class="ar-status-pill__dot"></span>
-        <span id="ar-status-label">{% if mind_file_ready %}啟動中{% else %}未就緒{% endif %}</span>
+        <span id="ar-status-label">啟動中</span>
       </span>
+      <button type="button" id="btn-exit-ar" class="ar-exit-btn" title="退出 AR">
+        <i class="bi bi-x-lg"></i>
+        <span>退出</span>
+      </button>
     </div>
-  </div>
+  </header>
 
-  {# ── 底部資訊卡（覆蓋在 AR 上） ─── #}
-  <div class="ar-bottom-card" id="ar-bottom-card">
-    {# 閒置狀態 #}
-    <div class="ar-bottom-card__idle" id="ar-idle-hint">
-      <div class="ar-bottom-card__icon">
-        <i class="bi bi-camera-fill"></i>
+  {# ── 底部 AI 語音對話浮層 ── #}
+  <div class="ar-voice-panel" id="ar-voice-panel">
+
+    {# 對話紀錄滾動區 #}
+    <div class="ar-voice-log" id="ar-voice-log" aria-live="polite" aria-label="AI 導覽對話紀錄">
+      <div class="ar-voice-log__empty" id="ar-voice-log-empty">
+        <i class="bi bi-chat-dots"></i>
+        <p>按住下方按鈕開始說話</p>
       </div>
-      <div>
-        <p class="ar-bottom-card__title" id="ar-active-title">
-          {% if mind_file_ready %}請把鏡頭對準圖卡{% elif mind_file_exists %}target 檔有問題{% else %}尚未就緒{% endif %}
-        </p>
-        <p class="ar-bottom-card__sub" id="ar-status-copy">
-          {% if mind_file_ready %}
-          將鏡頭對準入口、水車或魚塭任一張圖卡
-          {% elif mind_file_exists %}
-          {{ mind_file_error }}
-          {% else %}
-          尚未建立圖片辨識檔，請先完成初始化
-          {% endif %}
-        </p>
+    </div>
+
+    {# 控制列 #}
+    <div class="ar-voice-controls">
+      {# 語音播報開關 #}
+      <div class="ar-voice-tts-toggle">
+        <label class="ar-tts-switch" for="ar-tts-toggle">
+          <input type="checkbox" id="ar-tts-toggle" checked>
+          <span class="ar-tts-switch__track"></span>
+        </label>
+        <span class="ar-tts-label">語音播報</span>
       </div>
-      <button type="button" id="ar-retry-button" class="ar-retry-btn" title="重新啟動">
-        <i class="bi bi-arrow-clockwise"></i>
+
+      {# 停止播放按鈕 #}
+      <button type="button" id="ar-stop-speech-btn" class="ar-stop-btn" hidden title="停止播放">
+        <i class="bi bi-stop-fill"></i>
+      </button>
+
+      {# 清除對話 #}
+      <button type="button" id="ar-clear-btn" class="ar-clear-btn" title="清除對話">
+        <i class="bi bi-trash3"></i>
       </button>
     </div>
 
-    {# 辨識成功狀態 #}
-    <div class="ar-bottom-card__found" id="ar-found-panel" hidden>
-      <div class="ar-bottom-card__found-icon">
-        <i class="bi bi-check-circle-fill"></i>
-      </div>
-      <div class="ar-bottom-card__found-info">
-        <span class="ar-found-badge" id="ar-active-badge">辨識成功</span>
-        <p class="ar-bottom-card__title" id="ar-found-title">—</p>
-        <p class="ar-bottom-card__sub" id="ar-active-copy">影片播放中</p>
-      </div>
-    </div>
-  </div>
-</section>
-
-{# ── 下方 Target 參考圖卡（展示用） ─────────────────────────────────── #}
-<section class="ar-target-reference section-block">
-  <div class="container">
-    <div class="ar-ref-head">
-      <span class="ar-section-kicker">Target 圖卡</span>
-      <h2 class="section-title mb-1">掃描以下三張圖片</h2>
-      <p class="section-subtitle mb-0">將手機鏡頭對準其中一張，待辨識成功後即可觀看對應影片。</p>
+    {# Hold-to-Talk 麥克風按鈕 #}
+    <div class="ar-mic-wrap">
+      <div class="ar-mic-hint" id="ar-mic-hint">按住說話</div>
+      <button
+        type="button"
+        id="ar-mic-btn"
+        class="ar-mic-btn"
+        aria-label="按住說話"
+        data-state="idle">
+        <span class="ar-mic-ripple" aria-hidden="true"></span>
+        <span class="ar-mic-ripple ar-mic-ripple--2" aria-hidden="true"></span>
+        <i class="bi bi-mic-fill ar-mic-btn__icon"></i>
+      </button>
     </div>
 
-    <div class="ar-stop-grid">
-      {% for stop in ar_stops %}
-      <article class="ar-stop-card">
-        <button
-          type="button"
-          class="ar-stop-media"
-          data-lightbox-image="{% static stop.image %}"
-          data-lightbox-title="{{ stop.title }}"
-          aria-label="放大檢視 {{ stop.title }}">
-          <img src="{% static stop.image %}" alt="{{ stop.title }}" loading="lazy">
-          <div class="ar-stop-media__zoom">
-            <i class="bi bi-zoom-in"></i>
-          </div>
-        </button>
-        <div class="ar-stop-body">
-          <span class="badge-soft badge-soft--brand">{{ stop.badge }}</span>
-          <h3>{{ stop.title }}</h3>
-          <p>{{ stop.description }}</p>
-        </div>
-      </article>
-      {% endfor %}
-    </div>
+  </div>{# / .ar-voice-panel #}
 
-    <p class="ar-ref-tip">
-      <i class="bi bi-info-circle me-1"></i>
-      每次只對準一張圖卡效果最佳，請避免多張同時出現在鏡頭內。
-    </p>
-  </div>
-</section>
+</div>{# / #ar-immersive-mode #}
 
-{# Lightbox #}
+{# ── Lightbox（圖卡放大） ── #}
 <div class="ar-target-lightbox" id="ar-target-lightbox" aria-hidden="true">
   <button type="button" class="ar-target-lightbox__backdrop" data-lightbox-close aria-label="關閉"></button>
   <button type="button" class="ar-target-lightbox__close" data-lightbox-close aria-label="關閉">
@@ -173,8 +246,17 @@
     <img id="ar-target-lightbox-image" src="" alt="">
   </div>
 </div>
+
 {% endblock %}
 
 {% block extra_js %}
-<script src="{% static 'js/ar-image-tracking.js' %}?v=10" defer></script>
+{# A-Frame 與 MindAR 先在 HTML 中預留位置，由 JS 動態插入以避免阻塞首屏 #}
+<script>
+  window.__AR_MIND_FILE_READY = {{ mind_file_ready|yesno:"true,false" }};
+  window.__AR_GUIDE_API_URL   = "{% url 'ar_ai_guide_api' %}";
+  window.__AR_AFRAME_SRC      = "https://aframe.io/releases/1.6.0/aframe.min.js";
+  window.__AR_MINDAR_SRC      = "{% static 'ar/mindar-image-aframe.prod.js' %}";
+  window.__CSRF_TOKEN         = "{{ csrf_token }}";
+</script>
+<script src="{% static 'js/ar-image-tracking.js' %}?v=12" defer></script>
 {% endblock %}

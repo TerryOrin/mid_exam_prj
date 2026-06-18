@@ -5,3 +5,4 @@ python-dotenv
 django-jazzmin
 openai>=1.30
 msgpack
+azure-cognitiveservices-speech>=1.38

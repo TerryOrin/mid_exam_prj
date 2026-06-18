@@ -1,18 +1,21 @@
+import base64
+import json
+import logging
+import os
+import re
+import tempfile
 from pathlib import Path
 
 from PIL import Image as PILImage
 from django.conf import settings
-from django.shortcuts import render, get_object_or_404
+from django.http import JsonResponse
 from django.core.paginator import Paginator
 from django.db.models import Q, Case, When, Value, IntegerField
-from django.http import JsonResponse
+from django.shortcuts import render, get_object_or_404
 from django.urls import reverse
-from django.views.decorators.http import require_POST
 from django.utils import timezone
-import json
-import logging
+from django.views.decorators.http import require_POST
 import msgpack
-import re
 
 from .models import HeroSlide, Event, StoryPost
 from .forms import ContactForm
@@ -578,3 +581,231 @@ def chatbot_api(request):
 
     request.session["chat_count"] = count + 1
     return JsonResponse({"reply": reply, "redirect_url": redirect_url})
+
+
+# ─── AR + AI 語音導覽 API ────────────────────────────────────────────────── #
+
+_AR_GUIDE_SESSION_KEY = "chat_history"
+_AR_GUIDE_MAX_ROUNDS = 5
+_AR_GUIDE_SYSTEM_PROMPT = (
+    "你是雲林水井村的智慧養殖與漁村導覽專家。"
+    "請用繁體中文、親切、口語化且精簡的語氣回答。"
+    "字數盡量控制在 50 字以內適合語音播報。"
+)
+
+
+def _trim_chat_history(history: list[dict]) -> list[dict]:
+    return history[-(_AR_GUIDE_MAX_ROUNDS * 2):]
+
+
+def _get_ar_guide_history(request) -> list[dict]:
+    history = request.session.get(_AR_GUIDE_SESSION_KEY, [])
+    if not isinstance(history, list):
+        return []
+
+    sanitized: list[dict] = []
+    for item in history:
+        if not isinstance(item, dict):
+            continue
+
+        role = item.get("role")
+        content = item.get("content")
+        if role in {"user", "assistant"} and isinstance(content, str) and content.strip():
+            sanitized.append({"role": role, "content": content.strip()})
+
+    return _trim_chat_history(sanitized)
+
+
+def _save_ar_guide_history(request, history: list[dict]) -> None:
+    request.session[_AR_GUIDE_SESSION_KEY] = _trim_chat_history(history)
+    request.session.modified = True
+
+
+def _parse_ar_guide_payload(request) -> tuple[bool, str]:
+    content_type = request.content_type or ""
+
+    if "application/json" in content_type:
+        try:
+            body = json.loads(request.body.decode("utf-8"))
+        except (json.JSONDecodeError, UnicodeDecodeError) as exc:
+            raise ValueError("JSON 格式錯誤。") from exc
+
+        if body.get("clear"):
+            return True, ""
+
+        return False, str(body.get("text") or "").strip()
+
+    clear_flag = str(request.POST.get("clear") or "").lower()
+    if clear_flag in {"1", "true", "yes"}:
+        return True, ""
+
+    return False, str(request.POST.get("text") or "").strip()
+
+
+def _extract_uploaded_audio(request) -> tuple[bytes, str]:
+    upload = request.FILES.get("audio")
+    if not upload:
+        raise ValueError("缺少音訊檔案。")
+
+    audio_bytes = upload.read()
+    if not audio_bytes:
+        raise ValueError("音訊檔案內容為空。")
+
+    suffix = Path(upload.name or "speech.wav").suffix.lower() or ".wav"
+    return audio_bytes, suffix
+
+
+def _azure_stt(audio_bytes: bytes, suffix: str) -> str:
+    try:
+        import azure.cognitiveservices.speech as speechsdk  # type: ignore
+    except ImportError as exc:
+        raise RuntimeError("缺少 Azure Speech SDK，請先安裝 azure-cognitiveservices-speech。") from exc
+
+    speech_key = (os.environ.get("AZURE_SPEECH_KEY") or "").strip()
+    speech_region = (os.environ.get("AZURE_SPEECH_REGION") or "eastasia").strip()
+    if not speech_key:
+        raise RuntimeError("未設定 AZURE_SPEECH_KEY，無法進行語音辨識。")
+
+    temp_path = None
+    try:
+        with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as temp_file:
+            temp_file.write(audio_bytes)
+            temp_path = temp_file.name
+
+        speech_config = speechsdk.SpeechConfig(subscription=speech_key, region=speech_region)
+        speech_config.speech_recognition_language = "zh-TW"
+        audio_config = speechsdk.audio.AudioConfig(filename=temp_path)
+        recognizer = speechsdk.SpeechRecognizer(
+            speech_config=speech_config,
+            audio_config=audio_config,
+        )
+        result = recognizer.recognize_once_async().get()
+
+        if result.reason == speechsdk.ResultReason.RecognizedSpeech:
+            transcript = (result.text or "").strip()
+            transcript = re.sub(r"[。．.!！?？]+$", "", transcript)
+            if transcript:
+                return transcript
+            raise RuntimeError("Azure STT 沒有回傳有效文字。")
+
+        if result.reason == speechsdk.ResultReason.NoMatch:
+            raise RuntimeError("Azure STT 無法辨識語音內容，請再說一次。")
+
+        cancellation = speechsdk.CancellationDetails(result)
+        error_details = cancellation.error_details or "未知錯誤"
+        raise RuntimeError(f"Azure STT 失敗：{error_details}")
+    finally:
+        if temp_path:
+            try:
+                Path(temp_path).unlink(missing_ok=True)
+            except OSError:
+                logger.warning("Failed to delete temp audio file: %s", temp_path)
+
+
+def _call_deepseek_for_ar(question: str, history: list[dict]) -> str:
+    from openai import OpenAI
+
+    api_key = (os.environ.get("DEEPSEEK_API_KEY") or os.environ.get("DS_API_KEY") or "").strip()
+    if not api_key:
+        raise RuntimeError("未設定 DEEPSEEK_API_KEY，無法呼叫 DeepSeek。")
+
+    client = OpenAI(api_key=api_key, base_url="https://api.deepseek.com")
+    messages: list[dict] = [{"role": "system", "content": _AR_GUIDE_SYSTEM_PROMPT}]
+    messages.extend(history)
+    messages.append({"role": "user", "content": question})
+
+    response = client.chat.completions.create(
+        model="deepseek-chat",
+        messages=messages,
+        max_tokens=180,
+        temperature=0.6,
+    )
+
+    content = response.choices[0].message.content or ""
+    answer = content.strip()
+    if not answer:
+        raise RuntimeError("DeepSeek 沒有回傳內容。")
+
+    return answer
+
+
+def _azure_tts_data_url(text: str) -> str:
+    try:
+        import azure.cognitiveservices.speech as speechsdk  # type: ignore
+    except ImportError:
+        logger.warning("Azure Speech SDK not installed. Skip TTS.")
+        return ""
+
+    speech_key = (os.environ.get("AZURE_SPEECH_KEY") or "").strip()
+    speech_region = (os.environ.get("AZURE_SPEECH_REGION") or "eastasia").strip()
+    if not speech_key:
+        logger.warning("AZURE_SPEECH_KEY missing. Skip TTS.")
+        return ""
+
+    try:
+        speech_config = speechsdk.SpeechConfig(subscription=speech_key, region=speech_region)
+        speech_config.speech_synthesis_voice_name = "zh-TW-HsiaoChenNeural"
+        speech_config.set_speech_synthesis_output_format(
+            speechsdk.SpeechSynthesisOutputFormat.Riff16Khz16BitMonoPcm
+        )
+        synthesizer = speechsdk.SpeechSynthesizer(speech_config=speech_config, audio_config=None)
+        result = synthesizer.speak_text_async(text).get()
+        if result.reason != speechsdk.ResultReason.SynthesizingAudioCompleted:
+            logger.warning("Azure TTS failed. Result reason: %s", result.reason)
+            return ""
+
+        audio_b64 = base64.b64encode(result.audio_data).decode("utf-8")
+        return f"data:audio/wav;base64,{audio_b64}"
+    except Exception as exc:
+        logger.warning("Azure TTS failed: %s", exc)
+        return ""
+
+
+@require_POST
+def ar_ai_guide_api(request):
+    try:
+        clear_requested, manual_text = _parse_ar_guide_payload(request)
+    except ValueError as exc:
+        return JsonResponse({"error": str(exc)}, status=400)
+
+    if clear_requested:
+        _save_ar_guide_history(request, [])
+        return JsonResponse({"ok": True})
+
+    transcript = ""
+    if request.FILES.get("audio"):
+        try:
+            audio_bytes, suffix = _extract_uploaded_audio(request)
+            transcript = _azure_stt(audio_bytes, suffix)
+        except ValueError as exc:
+            return JsonResponse({"error": str(exc)}, status=400)
+        except RuntimeError as exc:
+            logger.warning("AR guide STT failed: %s", exc)
+            return JsonResponse({"error": str(exc)}, status=500)
+    else:
+        transcript = manual_text
+
+    if not transcript:
+        return JsonResponse({"error": "缺少可辨識的語音或文字內容。"}, status=400)
+
+    history = _get_ar_guide_history(request)
+
+    try:
+        answer = _call_deepseek_for_ar(transcript, history)
+    except Exception as exc:
+        logger.exception("AR guide LLM call failed: %s", exc)
+        return JsonResponse({"error": f"DeepSeek 呼叫失敗：{exc}"}, status=500)
+
+    history.append({"role": "user", "content": transcript})
+    history.append({"role": "assistant", "content": answer})
+    _save_ar_guide_history(request, history)
+
+    audio_url = _azure_tts_data_url(answer)
+    return JsonResponse(
+        {
+            "transcript": transcript,
+            "text": answer,
+            "audio_url": audio_url,
+        }
+    )
+

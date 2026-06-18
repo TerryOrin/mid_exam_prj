@@ -12,4 +12,5 @@ urlpatterns = [
     path("usr/", views.usr_view, name="usr"),
     path("contact/", views.contact_view, name="contact"),
     path("api/chat/", views.chatbot_api, name="chatbot_api"),
+    path("api/ar-voice/", views.ar_ai_guide_api, name="ar_ai_guide_api"),
 ]
