@@ -1,6 +1,6 @@
 import json
 from datetime import timedelta
-from unittest.mock import patch
+from unittest.mock import ANY, patch
 
 from django.test import TestCase, override_settings
 from django.urls import reverse
@@ -86,7 +86,43 @@ class ArGuidePageTests(TestCase):
         response = self.client.get(reverse("ar_guide"))
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "Image Tracking AR")
-        self.assertContains(response, "圖片辨識影片覆蓋導覽")
+        self.assertContains(response, "AR 智慧導覽")
         self.assertContains(response, "ar_video1.mp4")
         self.assertContains(response, "風雲水井歷史介紹")
+        self.assertContains(response, 'id="ar-model-select"', html=False)
+
+
+class ArGuideApiTests(TestCase):
+    @patch("core.views._azure_tts_data_url", return_value="data:audio/wav;base64,ZmFrZQ==")
+    @patch("core.views.shared_llm.direct_chat", return_value="這是中文導覽回覆")
+    def test_ar_guide_api_uses_selected_model(self, mock_direct_chat, mock_tts):
+        response = self.client.post(
+            reverse("ar_ai_guide_api"),
+            data=json.dumps({"text": "請介紹風雲水井", "model": "gemini-2.5-flash-lite"}),
+            content_type="application/json",
+        )
+
+        self.assertEqual(response.status_code, 200)
+        payload = response.json()
+        self.assertEqual(payload["transcript"], "請介紹風雲水井")
+        self.assertEqual(payload["text"], "這是中文導覽回覆")
+        self.assertEqual(payload["model"]["key"], "gemini-2.5-flash-lite")
+        self.assertEqual(payload["model"]["label"], "Gemini 2.5 Flash Lite")
+
+        mock_direct_chat.assert_called_once()
+        args = mock_direct_chat.call_args
+        self.assertEqual(args.args[0], "請介紹風雲水井")
+        self.assertEqual(args.kwargs["model_name"], "gemini-2.5-flash-lite")
+        self.assertEqual(args.kwargs["system_prompt"], ANY)
+        mock_tts.assert_called_once_with("這是中文導覽回覆")
+        self.assertEqual(self.client.session["aiot_selected_model"], "gemini-2.5-flash-lite")
+
+    def test_ar_guide_api_rejects_unknown_model(self):
+        response = self.client.post(
+            reverse("ar_ai_guide_api"),
+            data=json.dumps({"text": "你好", "model": "unknown-model"}),
+            content_type="application/json",
+        )
+
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("Unsupported model", response.json()["error"])

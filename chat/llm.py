@@ -141,12 +141,38 @@ def _completion_request_kwargs(model: ModelConfig, messages: list[dict]) -> dict
     kwargs = {
         "model": model.key,
         "messages": messages,
-        "tools": tools.TOOL_SCHEMAS,
     }
     if model.provider == "deepseek":
         kwargs["reasoning_effort"] = "high"
         kwargs["extra_body"] = {"thinking": {"type": "enabled"}}
     return kwargs
+
+
+def _tool_completion_request_kwargs(model: ModelConfig, messages: list[dict]) -> dict:
+    kwargs = _completion_request_kwargs(model, messages)
+    kwargs["tools"] = tools.TOOL_SCHEMAS
+    return kwargs
+
+
+def direct_chat(
+    user_message: str,
+    *,
+    system_prompt: str,
+    history: list[dict] | None = None,
+    model_name: str | None = None,
+) -> str:
+    messages: list[dict] = [{"role": "system", "content": system_prompt}]
+    if history:
+        messages.extend(history)
+    messages.append({"role": "user", "content": user_message})
+
+    model = resolve_model(model_name)
+    client = _client(model)
+    response = client.chat.completions.create(**_completion_request_kwargs(model, messages))
+    text = _message_text(response.choices[0].message).strip()
+    if not text:
+        raise RuntimeError("The model did not return a final answer.")
+    return text
 
 
 def chat(user_message: str, history: list[dict] | None = None, model_name: str | None = None) -> str:
@@ -159,7 +185,7 @@ def chat(user_message: str, history: list[dict] | None = None, model_name: str |
     client = _client(model)
 
     for _ in range(MAX_TOOL_LOOPS):
-        response = client.chat.completions.create(**_completion_request_kwargs(model, messages))
+        response = client.chat.completions.create(**_tool_completion_request_kwargs(model, messages))
         msg = response.choices[0].message
 
         if not msg.tool_calls:

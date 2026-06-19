@@ -30,6 +30,8 @@ const DOM = {
   scanLine: () => document.getElementById("ar-scan-line"),
   voiceLog: () => document.getElementById("ar-voice-log"),
   voiceLogEmpty: () => document.getElementById("ar-voice-log-empty"),
+  modelSelect: () => document.getElementById("ar-model-select"),
+  modelStatus: () => document.getElementById("ar-model-status"),
   micBtn: () => document.getElementById("ar-mic-btn"),
   micHint: () => document.getElementById("ar-mic-hint"),
   ttsToggle: () => document.getElementById("ar-tts-toggle"),
@@ -178,6 +180,16 @@ function stopSpeechPlayback() {
 
 function isAutoTtsEnabled() {
   return DOM.ttsToggle()?.checked ?? true;
+}
+
+function getSelectedModel() {
+  return DOM.modelSelect()?.value || "";
+}
+
+function syncModelStatus(label) {
+  const select = DOM.modelSelect();
+  const selectedLabel = label || select?.selectedOptions?.[0]?.textContent || "";
+  updateText(DOM.modelStatus(), selectedLabel ? `目前模型：${selectedLabel}` : "目前模型：--");
 }
 
 function speakWithBrowser(text) {
@@ -351,6 +363,7 @@ async function uploadAudioBlob(blob, originalMimeType) {
   const formData = new FormData();
   formData.append("audio", blob, audioFileNameForBlob(blob));
   formData.append("audio_mime_type", blob.type || originalMimeType || "");
+  if (getSelectedModel()) formData.append("model", getSelectedModel());
 
   const response = await fetch(window.__AR_GUIDE_API_URL, {
     method: "POST",
@@ -367,6 +380,7 @@ async function uploadAudioBlob(blob, originalMimeType) {
 
   if (payload.transcript) appendMessage("user", payload.transcript);
   if (payload.text) appendMessage("ai", payload.text);
+  if (payload.model?.label) syncModelStatus(payload.model.label);
 
   if (payload.text && isAutoTtsEnabled()) {
     appendStatusMessage("生成語音中...");
@@ -524,6 +538,7 @@ function bindMicControls() {
   micBtn.addEventListener("mousedown", startHoldRecording);
 
   document.addEventListener("mouseup", stopHoldRecording);
+  DOM.modelSelect()?.addEventListener("change", () => syncModelStatus());
 
   DOM.stopSpeechBtn()?.addEventListener("click", stopSpeechPlayback);
   DOM.clearBtn()?.addEventListener("click", async () => {
@@ -801,6 +816,7 @@ function initTargetLightbox() {
 
 function init() {
   initTargetLightbox();
+  syncModelStatus();
 
   DOM.btnOpenAR()?.addEventListener("click", () => {
     enterArMode().catch((error) => {

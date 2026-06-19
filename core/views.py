@@ -17,10 +17,14 @@ from django.utils import timezone
 from django.views.decorators.http import require_POST
 import msgpack
 
+from chat import llm as shared_llm
+
 from .models import HeroSlide, Event, StoryPost
 from .forms import ContactForm
 
 logger = logging.getLogger(__name__)
+AR_GUIDE_MODEL_SESSION_KEY = "aiot_selected_model"
+AR_GUIDE_MAX_AUDIO_BYTES = 10 * 1024 * 1024
 NAV_INTENT_KEYWORDS = [
     "打開",
     "點開",
@@ -90,6 +94,7 @@ def about_view(request):
 
 
 def ar_guide_view(request):
+    current_model = _current_ar_guide_model_name(request)
     raw_stops = [
         {
             "eyebrow": "AR Stop 01",
@@ -181,6 +186,9 @@ def ar_guide_view(request):
         "mind_file_ready": mind_file_exists and mind_file_valid,
         "mind_file_error": mind_file_error,
         "mind_file_targets": mind_file_targets,
+        "model_options": shared_llm.get_available_models(),
+        "current_model": current_model,
+        "current_model_meta": _ar_model_payload(current_model),
     }
     return render(request, "core/ar_guide.html", context)
 
@@ -594,6 +602,21 @@ _AR_GUIDE_SYSTEM_PROMPT = (
 )
 
 
+def _current_ar_guide_model_name(request, requested_model: str | None = None) -> str:
+    candidate = requested_model or request.session.get(AR_GUIDE_MODEL_SESSION_KEY)
+    return shared_llm.resolve_model(candidate).key
+
+
+def _ar_model_payload(model_name: str) -> dict[str, str]:
+    model = shared_llm.resolve_model(model_name)
+    return {
+        "key": model.key,
+        "label": model.label,
+        "description": model.description,
+        "provider": model.provider,
+    }
+
+
 def _trim_chat_history(history: list[dict]) -> list[dict]:
     return history[-(_AR_GUIDE_MAX_ROUNDS * 2):]
 
@@ -621,7 +644,7 @@ def _save_ar_guide_history(request, history: list[dict]) -> None:
     request.session.modified = True
 
 
-def _parse_ar_guide_payload(request) -> tuple[bool, str]:
+def _parse_ar_guide_payload(request) -> tuple[bool, str, str | None]:
     content_type = request.content_type or ""
 
     if "application/json" in content_type:
@@ -631,15 +654,17 @@ def _parse_ar_guide_payload(request) -> tuple[bool, str]:
             raise ValueError("JSON 格式錯誤。") from exc
 
         if body.get("clear"):
-            return True, ""
+            return True, "", None
 
-        return False, str(body.get("text") or "").strip()
+        requested_model = str(body.get("model") or "").strip() or None
+        return False, str(body.get("text") or "").strip(), requested_model
 
     clear_flag = str(request.POST.get("clear") or "").lower()
     if clear_flag in {"1", "true", "yes"}:
-        return True, ""
+        return True, "", None
 
-    return False, str(request.POST.get("text") or "").strip()
+    requested_model = str(request.POST.get("model") or "").strip() or None
+    return False, str(request.POST.get("text") or "").strip(), requested_model
 
 
 def _extract_uploaded_audio(request) -> tuple[bytes, str]:
@@ -647,17 +672,49 @@ def _extract_uploaded_audio(request) -> tuple[bytes, str]:
     if not upload:
         raise ValueError("缺少音訊檔案。")
 
+    if upload.size and upload.size > AR_GUIDE_MAX_AUDIO_BYTES:
+        raise ValueError("音訊檔案過大，請控制在 10 MB 以內。")
+
     audio_bytes = upload.read()
     if not audio_bytes:
         raise ValueError("音訊檔案內容為空。")
+    if len(audio_bytes) > AR_GUIDE_MAX_AUDIO_BYTES:
+        raise ValueError("音訊檔案過大，請控制在 10 MB 以內。")
 
     suffix = Path(upload.name or "speech.wav").suffix.lower() or ".wav"
     return audio_bytes, suffix
 
 
+def _azure_stt_sync(audio_path: str, speech_key: str, speech_region: str, language: str = "zh-TW") -> str:
+    import azure.cognitiveservices.speech as speechsdk  # type: ignore
+
+    speech_config = speechsdk.SpeechConfig(subscription=speech_key, region=speech_region)
+    speech_config.speech_recognition_language = language
+    audio_config = speechsdk.audio.AudioConfig(filename=audio_path)
+    recognizer = speechsdk.SpeechRecognizer(
+        speech_config=speech_config,
+        audio_config=audio_config,
+    )
+    result = recognizer.recognize_once()
+
+    if result.reason == speechsdk.ResultReason.RecognizedSpeech:
+        transcript = (result.text or "").strip()
+        transcript = re.sub(r"[。．.!！?？]+$", "", transcript)
+        if transcript:
+            return transcript
+        raise RuntimeError("Azure STT 沒有回傳有效文字。")
+
+    if result.reason == speechsdk.ResultReason.NoMatch:
+        raise RuntimeError("Azure STT 無法辨識語音內容，請再說一次。")
+
+    cancellation = speechsdk.CancellationDetails(result)
+    error_details = cancellation.error_details or "未知錯誤"
+    raise RuntimeError(f"Azure STT 失敗：{error_details}")
+
+
 def _azure_stt(audio_bytes: bytes, suffix: str) -> str:
     try:
-        import azure.cognitiveservices.speech as speechsdk  # type: ignore
+        import azure.cognitiveservices.speech as speechsdk  # noqa: F401
     except ImportError as exc:
         raise RuntimeError("缺少 Azure Speech SDK，請先安裝 azure-cognitiveservices-speech。") from exc
 
@@ -672,28 +729,7 @@ def _azure_stt(audio_bytes: bytes, suffix: str) -> str:
             temp_file.write(audio_bytes)
             temp_path = temp_file.name
 
-        speech_config = speechsdk.SpeechConfig(subscription=speech_key, region=speech_region)
-        speech_config.speech_recognition_language = "zh-TW"
-        audio_config = speechsdk.audio.AudioConfig(filename=temp_path)
-        recognizer = speechsdk.SpeechRecognizer(
-            speech_config=speech_config,
-            audio_config=audio_config,
-        )
-        result = recognizer.recognize_once_async().get()
-
-        if result.reason == speechsdk.ResultReason.RecognizedSpeech:
-            transcript = (result.text or "").strip()
-            transcript = re.sub(r"[。．.!！?？]+$", "", transcript)
-            if transcript:
-                return transcript
-            raise RuntimeError("Azure STT 沒有回傳有效文字。")
-
-        if result.reason == speechsdk.ResultReason.NoMatch:
-            raise RuntimeError("Azure STT 無法辨識語音內容，請再說一次。")
-
-        cancellation = speechsdk.CancellationDetails(result)
-        error_details = cancellation.error_details or "未知錯誤"
-        raise RuntimeError(f"Azure STT 失敗：{error_details}")
+        return _azure_stt_sync(temp_path, speech_key, speech_region, language="zh-TW")
     finally:
         if temp_path:
             try:
@@ -702,36 +738,38 @@ def _azure_stt(audio_bytes: bytes, suffix: str) -> str:
                 logger.warning("Failed to delete temp audio file: %s", temp_path)
 
 
-def _call_deepseek_for_ar(question: str, history: list[dict]) -> str:
-    from openai import OpenAI
-
-    api_key = (os.environ.get("DEEPSEEK_API_KEY") or os.environ.get("DS_API_KEY") or "").strip()
-    if not api_key:
-        raise RuntimeError("未設定 DEEPSEEK_API_KEY，無法呼叫 DeepSeek。")
-
-    client = OpenAI(api_key=api_key, base_url="https://api.deepseek.com")
-    messages: list[dict] = [{"role": "system", "content": _AR_GUIDE_SYSTEM_PROMPT}]
-    messages.extend(history)
-    messages.append({"role": "user", "content": question})
-
-    response = client.chat.completions.create(
-        model="deepseek-chat",
-        messages=messages,
-        max_tokens=180,
-        temperature=0.6,
+def _call_llm_for_ar(question: str, history: list[dict], model_name: str) -> str:
+    return shared_llm.direct_chat(
+        question,
+        system_prompt=_AR_GUIDE_SYSTEM_PROMPT,
+        history=history,
+        model_name=model_name,
     )
 
-    content = response.choices[0].message.content or ""
-    answer = content.strip()
-    if not answer:
-        raise RuntimeError("DeepSeek 沒有回傳內容。")
 
-    return answer
+def _azure_tts_sync(
+    text: str,
+    voice: str,
+    speech_key: str,
+    speech_region: str,
+) -> bytes:
+    import azure.cognitiveservices.speech as speechsdk  # type: ignore
+
+    speech_config = speechsdk.SpeechConfig(subscription=speech_key, region=speech_region)
+    speech_config.speech_synthesis_voice_name = voice
+    speech_config.set_speech_synthesis_output_format(
+        speechsdk.SpeechSynthesisOutputFormat.Riff16Khz16BitMonoPcm
+    )
+    synthesizer = speechsdk.SpeechSynthesizer(speech_config=speech_config, audio_config=None)
+    result = synthesizer.speak_text_async(text).get()
+    if result.reason != speechsdk.ResultReason.SynthesizingAudioCompleted:
+        raise RuntimeError(f"Azure TTS 失敗：{result.reason}")
+    return bytes(result.audio_data)
 
 
 def _azure_tts_data_url(text: str) -> str:
     try:
-        import azure.cognitiveservices.speech as speechsdk  # type: ignore
+        import azure.cognitiveservices.speech as speechsdk  # noqa: F401
     except ImportError:
         logger.warning("Azure Speech SDK not installed. Skip TTS.")
         return ""
@@ -743,18 +781,13 @@ def _azure_tts_data_url(text: str) -> str:
         return ""
 
     try:
-        speech_config = speechsdk.SpeechConfig(subscription=speech_key, region=speech_region)
-        speech_config.speech_synthesis_voice_name = "zh-TW-HsiaoChenNeural"
-        speech_config.set_speech_synthesis_output_format(
-            speechsdk.SpeechSynthesisOutputFormat.Riff16Khz16BitMonoPcm
+        audio_bytes = _azure_tts_sync(
+            text=text,
+            voice="zh-TW-HsiaoChenNeural",
+            speech_key=speech_key,
+            speech_region=speech_region,
         )
-        synthesizer = speechsdk.SpeechSynthesizer(speech_config=speech_config, audio_config=None)
-        result = synthesizer.speak_text_async(text).get()
-        if result.reason != speechsdk.ResultReason.SynthesizingAudioCompleted:
-            logger.warning("Azure TTS failed. Result reason: %s", result.reason)
-            return ""
-
-        audio_b64 = base64.b64encode(result.audio_data).decode("utf-8")
+        audio_b64 = base64.b64encode(audio_bytes).decode("utf-8")
         return f"data:audio/wav;base64,{audio_b64}"
     except Exception as exc:
         logger.warning("Azure TTS failed: %s", exc)
@@ -764,13 +797,18 @@ def _azure_tts_data_url(text: str) -> str:
 @require_POST
 def ar_ai_guide_api(request):
     try:
-        clear_requested, manual_text = _parse_ar_guide_payload(request)
+        clear_requested, manual_text, requested_model = _parse_ar_guide_payload(request)
     except ValueError as exc:
         return JsonResponse({"error": str(exc)}, status=400)
 
     if clear_requested:
         _save_ar_guide_history(request, [])
         return JsonResponse({"ok": True})
+
+    try:
+        model_name = _current_ar_guide_model_name(request, requested_model)
+    except ValueError as exc:
+        return JsonResponse({"error": str(exc)}, status=400)
 
     transcript = ""
     if request.FILES.get("audio"):
@@ -788,13 +826,14 @@ def ar_ai_guide_api(request):
     if not transcript:
         return JsonResponse({"error": "缺少可辨識的語音或文字內容。"}, status=400)
 
+    request.session[AR_GUIDE_MODEL_SESSION_KEY] = model_name
     history = _get_ar_guide_history(request)
 
     try:
-        answer = _call_deepseek_for_ar(transcript, history)
+        answer = _call_llm_for_ar(transcript, history, model_name)
     except Exception as exc:
         logger.exception("AR guide LLM call failed: %s", exc)
-        return JsonResponse({"error": f"DeepSeek 呼叫失敗：{exc}"}, status=500)
+        return JsonResponse({"error": f"AI 模型呼叫失敗：{exc}"}, status=500)
 
     history.append({"role": "user", "content": transcript})
     history.append({"role": "assistant", "content": answer})
@@ -806,6 +845,7 @@ def ar_ai_guide_api(request):
             "transcript": transcript,
             "text": answer,
             "audio_url": audio_url,
+            "model": _ar_model_payload(model_name),
         }
     )
 

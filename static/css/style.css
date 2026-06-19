@@ -552,6 +552,13 @@ body.ar-lightbox-open { overflow: hidden; }
 
 /* 底部 AI 語音浮層 */
 .ar-voice-panel { position:absolute; bottom:0; left:0; right:0; z-index:15; display:flex; flex-direction:column; min-height:33vh; padding:0 0.85rem; background:linear-gradient(to top, rgba(0,0,0,0.72), rgba(0,0,0,0.52) 52%, rgba(0,0,0,0)); }
+.ar-voice-meta { display:flex; align-items:center; justify-content:space-between; gap:0.75rem; padding-top:0.85rem; }
+.ar-model-picker { display:flex; align-items:center; gap:0.55rem; min-width:0; }
+.ar-model-picker__label { font-size:0.74rem; color:rgba(255,255,255,0.68); white-space:nowrap; }
+.ar-model-select { min-width:150px; max-width:52vw; border-radius:999px; border:1px solid rgba(255,255,255,0.16); background:rgba(0,0,0,0.38); color:#fff; font-size:0.74rem; line-height:1.2; padding:0.38rem 0.75rem; outline:none; }
+.ar-model-select:focus { border-color:rgba(80,220,160,0.75); box-shadow:0 0 0 2px rgba(80,220,160,0.2); }
+.ar-model-select option { color:#111; }
+.ar-model-status { font-size:0.72rem; color:rgba(255,255,255,0.58); text-align:right; white-space:nowrap; }
 .ar-voice-log { max-height:30vh; overflow-y:auto; padding:0.75rem 0 0.5rem; scroll-behavior:smooth; scrollbar-width:thin; scrollbar-color:rgba(255,255,255,0.2) transparent; }
 .ar-voice-log__empty { display:flex; flex-direction:column; align-items:center; gap:0.35rem; color:rgba(255,255,255,0.4); font-size:0.82rem; padding:0.8rem 0; }
 .ar-voice-log__empty i { font-size:1.6rem; }
@@ -620,6 +627,10 @@ body.ar-lightbox-open { overflow: hidden; }
   .ar-how-grid { grid-template-columns:1fr; gap:0.75rem; }
   .ar-stop-grid { grid-template-columns:1fr; gap:0.75rem; }
   .ar-stop-card { display:grid; grid-template-columns:110px 1fr; }
+  .ar-voice-meta { align-items:flex-start; flex-direction:column; gap:0.45rem; }
+  .ar-model-picker { width:100%; }
+  .ar-model-select { flex:1; max-width:none; width:100%; }
+  .ar-model-status { text-align:left; white-space:normal; }
   .ar-stop-media { aspect-ratio:auto; height:100%; min-height:100px; }
   .ar-launch-btn { width:150px; height:150px; }
   .ar-launch-btn__icon { font-size:2rem; }

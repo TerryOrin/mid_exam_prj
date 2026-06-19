@@ -187,6 +187,18 @@
   {# ── 底部 AI 語音對話浮層 ── #}
   <div class="ar-voice-panel" id="ar-voice-panel">
 
+    <div class="ar-voice-meta">
+      <label class="ar-model-picker" for="ar-model-select">
+        <span class="ar-model-picker__label">AI 模型</span>
+        <select id="ar-model-select" class="ar-model-select" aria-label="選擇 AI 模型">
+          {% for option in model_options %}
+          <option value="{{ option.key }}" {% if option.key == current_model %}selected{% endif %}>{{ option.label }}</option>
+          {% endfor %}
+        </select>
+      </label>
+      <span class="ar-model-status" id="ar-model-status">目前模型：{{ current_model_meta.label }}</span>
+    </div>
+
     {# 對話紀錄滾動區 #}
     <div class="ar-voice-log" id="ar-voice-log" aria-live="polite" aria-label="AI 導覽對話紀錄">
       <div class="ar-voice-log__empty" id="ar-voice-log-empty">
@@ -258,5 +270,5 @@
   window.__AR_MINDAR_SRC      = "{% static 'ar/mindar-image-aframe.prod.js' %}";
   window.__CSRF_TOKEN         = "{{ csrf_token }}";
 </script>
-<script src="{% static 'js/ar-image-tracking.js' %}?v=12" defer></script>
+<script src="{% static 'js/ar-image-tracking.js' %}?v=13" defer></script>
 {% endblock %}
