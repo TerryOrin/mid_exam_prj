@@ -126,3 +126,68 @@ class ArGuideApiTests(TestCase):
 
         self.assertEqual(response.status_code, 400)
         self.assertIn("Unsupported model", response.json()["error"])
+
+
+class IotWarRoomTests(TestCase):
+    def test_iot_war_room_page_renders(self):
+        response = self.client.get(reverse("iot_war_room"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "IoT 智慧養殖戰情室")
+        self.assertContains(response, "iot-trend-chart")
+        self.assertContains(response, reverse("iot_data_api"))
+        self.assertContains(response, reverse("ai_diagnose_api"))
+
+    def test_iot_data_api_returns_bounded_simulated_values(self):
+        response = self.client.get(reverse("iot_data_api"))
+
+        self.assertEqual(response.status_code, 200)
+        payload = response.json()
+        self.assertEqual(payload["resource"], "iot_data")
+        self.assertEqual(payload["window_hours"], 12)
+        self.assertGreaterEqual(len(payload["history"]), 100)
+        self.assertLessEqual(payload["current"]["temperature_c"]["value"], 30.0)
+        self.assertGreaterEqual(payload["current"]["temperature_c"]["value"], 20.0)
+        self.assertLessEqual(payload["current"]["ph"]["value"], 8.5)
+        self.assertGreaterEqual(payload["current"]["ph"]["value"], 6.5)
+        self.assertLessEqual(payload["current"]["dissolved_oxygen_mg_l"]["value"], 8.0)
+        self.assertGreaterEqual(payload["current"]["dissolved_oxygen_mg_l"]["value"], 4.0)
+
+    def test_iot_data_api_post_is_ready_for_future_ingest(self):
+        response = self.client.post(
+            reverse("iot_data_api"),
+            data=json.dumps(
+                {
+                    "pond": "示範池",
+                    "temperature_c": 25.1,
+                    "ph": 7.4,
+                    "dissolved_oxygen_mg_l": 6.2,
+                }
+            ),
+            content_type="application/json",
+        )
+
+        self.assertEqual(response.status_code, 501)
+        self.assertIn("stub", response.json()["detail"].lower())
+
+    def test_ai_diagnose_api_returns_lightweight_advice(self):
+        response = self.client.post(
+            reverse("ai_diagnose_api"),
+            data=json.dumps(
+                {
+                    "current": {
+                        "temperature_c": 29.1,
+                        "ph": 7.5,
+                        "dissolved_oxygen_mg_l": 4.7,
+                    }
+                }
+            ),
+            content_type="application/json",
+        )
+
+        self.assertEqual(response.status_code, 200)
+        payload = response.json()
+        self.assertEqual(payload["resource"], "ai_diagnose")
+        self.assertEqual(payload["severity"], "alert")
+        self.assertTrue(payload["facts"])
+        self.assertIn("溶氧", payload["advice"])

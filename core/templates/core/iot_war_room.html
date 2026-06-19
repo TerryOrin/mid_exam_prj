@@ -1,0 +1,498 @@
+{% extends "core/base.html" %}
+{% load static %}
+
+{% block title %}IoT 智慧養殖戰情室{% endblock %}
+
+{% block extra_head %}
+<link href="{% static 'css/iot_war_room.css' %}?v=1" rel="stylesheet">
+{% endblock %}
+
+{% block content %}
+{{ initial_payload|json_script:"iot-initial-payload" }}
+
+<section class="iot-hero">
+  <div class="container iot-hero__inner">
+    <div class="iot-hero__copy">
+      <span class="iot-hero__eyebrow">IoT Smart Aquaculture Command Center</span>
+      <h1>IoT 智慧養殖戰情室</h1>
+      <p>以低負載即時模擬方式呈現水溫、pH 與溶氧波動，讓展示站點在 PythonAnywhere 上也能穩定運作。</p>
+    </div>
+    <div class="iot-hero__meta">
+      <div class="iot-meta-pill">
+        <span>資料來源</span>
+        <strong id="iot-source-label">模擬感測</strong>
+      </div>
+      <div class="iot-meta-pill">
+        <span>更新頻率</span>
+        <strong>{{ poll_seconds }} 秒</strong>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="iot-shell">
+  <div class="container">
+    <div class="iot-toolbar">
+      <span class="iot-toolbar__site" id="iot-site-name">{{ initial_payload.site }}</span>
+      <span class="iot-toolbar__status" id="iot-refresh-note">頁面可見時每 {{ poll_seconds }} 秒更新一次</span>
+      <span class="iot-toolbar__time" id="iot-updated-at">同步中</span>
+    </div>
+
+    <section class="iot-status-grid" aria-label="即時狀態區">
+      <article class="iot-kpi-card" id="card-temperature">
+        <div class="iot-kpi-card__head">
+          <span>水溫</span>
+          <span class="iot-chip" id="chip-temperature">同步中</span>
+        </div>
+        <div class="iot-kpi-card__value">
+          <strong id="value-temperature">--</strong>
+          <span>°C</span>
+        </div>
+        <p class="iot-kpi-card__range">建議區間 22–28°C</p>
+        <div class="iot-kpi-card__meter"><span id="bar-temperature"></span></div>
+        <p class="iot-kpi-card__hint" id="hint-temperature">等待資料中</p>
+      </article>
+
+      <article class="iot-kpi-card" id="card-ph">
+        <div class="iot-kpi-card__head">
+          <span>pH 值</span>
+          <span class="iot-chip" id="chip-ph">同步中</span>
+        </div>
+        <div class="iot-kpi-card__value">
+          <strong id="value-ph">--</strong>
+        </div>
+        <p class="iot-kpi-card__range">建議區間 6.8–8.2</p>
+        <div class="iot-kpi-card__meter"><span id="bar-ph"></span></div>
+        <p class="iot-kpi-card__hint" id="hint-ph">等待資料中</p>
+      </article>
+
+      <article class="iot-kpi-card" id="card-do">
+        <div class="iot-kpi-card__head">
+          <span>溶氧量 DO</span>
+          <span class="iot-chip" id="chip-do">同步中</span>
+        </div>
+        <div class="iot-kpi-card__value">
+          <strong id="value-do">--</strong>
+          <span>mg/L</span>
+        </div>
+        <p class="iot-kpi-card__range">建議區間 5.5–7.5 mg/L</p>
+        <div class="iot-kpi-card__meter"><span id="bar-do"></span></div>
+        <p class="iot-kpi-card__hint" id="hint-do">等待資料中</p>
+      </article>
+
+      <article class="iot-kpi-card iot-kpi-card--overview" id="card-overview">
+        <div class="iot-kpi-card__head">
+          <span>養殖總覽</span>
+          <span class="iot-chip" id="chip-overall">同步中</span>
+        </div>
+        <div class="iot-overview__title" id="overview-title">資料同步中</div>
+        <p class="iot-overview__copy" id="overview-copy">頁面已載入，正在建立戰情面板。</p>
+        <dl class="iot-overview__list">
+          <div>
+            <dt>資料窗格</dt>
+            <dd>最近 12 小時</dd>
+          </div>
+          <div>
+            <dt>警示數量</dt>
+            <dd id="overview-alert-count">0</dd>
+          </div>
+          <div>
+            <dt>輪詢策略</dt>
+            <dd>可見頁面低頻更新</dd>
+          </div>
+        </dl>
+      </article>
+    </section>
+
+    <section class="iot-trend-layout" aria-label="歷史趨勢區">
+      <div class="iot-panel iot-panel--chart">
+        <div class="iot-panel__head">
+          <div>
+            <span class="iot-panel__eyebrow">History Trend</span>
+            <h2>過去 12 小時水質趨勢</h2>
+          </div>
+          <div class="iot-panel__legend">
+            <span><i class="iot-dot iot-dot--temp"></i>水溫</span>
+            <span><i class="iot-dot iot-dot--ph"></i>pH</span>
+            <span><i class="iot-dot iot-dot--do"></i>溶氧</span>
+          </div>
+        </div>
+        <div class="iot-chart-wrap">
+          <canvas id="iot-trend-chart" aria-label="水質折線圖"></canvas>
+        </div>
+      </div>
+
+      <aside class="iot-panel iot-panel--diagnosis">
+        <div class="iot-panel__head iot-panel__head--stack">
+          <div>
+            <span class="iot-panel__eyebrow">AI Advisory</span>
+            <h2>AI 水質診斷</h2>
+          </div>
+          <button type="button" class="btn btn-brand" id="ai-diagnose-btn">AI 水質診斷</button>
+        </div>
+
+        <div class="iot-diagnosis-box" id="diagnosis-box" data-state="idle">
+          <span class="iot-diagnosis-box__state" id="diagnosis-state">尚未分析</span>
+          <h3 id="diagnosis-title">等待診斷</h3>
+          <p id="diagnosis-text">點擊按鈕後，前端會把最新水溫、pH 與溶氧數值送到 AI 診斷 API。</p>
+          <ul class="iot-diagnosis-box__facts" id="diagnosis-facts">
+            <li>最新快照尚未載入。</li>
+          </ul>
+          <p class="iot-diagnosis-box__meta" id="diagnosis-meta">這裡會顯示診斷來源與時間。</p>
+        </div>
+
+        <div class="iot-side-note">
+          <h3>更新策略</h3>
+          <p>此頁不做整頁重整，只會更新數字與圖表。當頁面切到背景時，會暫停輪詢，降低 PythonAnywhere Worker 壓力。</p>
+        </div>
+      </aside>
+    </section>
+  </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+<script>
+  (function () {
+    const initialPayloadNode = document.getElementById("iot-initial-payload");
+    if (!initialPayloadNode || !window.Chart) return;
+
+    const ENDPOINTS = {
+      data: "{% url 'iot_data_api' %}",
+      diagnose: "{% url 'ai_diagnose_api' %}",
+    };
+    const POLL_INTERVAL_MS = {{ poll_seconds|default:15 }} * 1000;
+    const csrf = document.querySelector('meta[name="csrf-token"]')?.content || "";
+
+    const els = {
+      sourceLabel: document.getElementById("iot-source-label"),
+      siteName: document.getElementById("iot-site-name"),
+      updatedAt: document.getElementById("iot-updated-at"),
+      refreshNote: document.getElementById("iot-refresh-note"),
+      chipOverall: document.getElementById("chip-overall"),
+      overviewTitle: document.getElementById("overview-title"),
+      overviewCopy: document.getElementById("overview-copy"),
+      overviewAlertCount: document.getElementById("overview-alert-count"),
+      diagnoseBtn: document.getElementById("ai-diagnose-btn"),
+      diagnosisBox: document.getElementById("diagnosis-box"),
+      diagnosisState: document.getElementById("diagnosis-state"),
+      diagnosisTitle: document.getElementById("diagnosis-title"),
+      diagnosisText: document.getElementById("diagnosis-text"),
+      diagnosisFacts: document.getElementById("diagnosis-facts"),
+      diagnosisMeta: document.getElementById("diagnosis-meta"),
+      chartCanvas: document.getElementById("iot-trend-chart"),
+      cards: {
+        temperature_c: {
+          value: document.getElementById("value-temperature"),
+          chip: document.getElementById("chip-temperature"),
+          hint: document.getElementById("hint-temperature"),
+          bar: document.getElementById("bar-temperature"),
+          card: document.getElementById("card-temperature"),
+        },
+        ph: {
+          value: document.getElementById("value-ph"),
+          chip: document.getElementById("chip-ph"),
+          hint: document.getElementById("hint-ph"),
+          bar: document.getElementById("bar-ph"),
+          card: document.getElementById("card-ph"),
+        },
+        dissolved_oxygen_mg_l: {
+          value: document.getElementById("value-do"),
+          chip: document.getElementById("chip-do"),
+          hint: document.getElementById("hint-do"),
+          bar: document.getElementById("bar-do"),
+          card: document.getElementById("card-do"),
+        },
+      }
+    };
+
+    const state = {
+      payload: JSON.parse(initialPayloadNode.textContent),
+      chart: null,
+      timerId: null,
+      inFlight: false,
+    };
+
+    const chipLabels = {
+      good: "穩定",
+      watch: "注意",
+      alert: "警示",
+      idle: "尚未分析",
+      loading: "分析中",
+    };
+
+    function setChip(node, level, label) {
+      if (!node) return;
+      node.className = `iot-chip is-${level}`;
+      node.textContent = label || chipLabels[level] || level;
+    }
+
+    function formatUpdatedAt(isoText) {
+      if (!isoText) return "--";
+      const date = new Date(isoText);
+      return Number.isNaN(date.getTime()) ? isoText : date.toLocaleString("zh-TW", {
+        month: "2-digit",
+        day: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+      });
+    }
+
+    function setListItems(node, items) {
+      if (!node) return;
+      node.innerHTML = "";
+      (items && items.length ? items : ["目前沒有可顯示的資訊。"]).forEach((item) => {
+        const li = document.createElement("li");
+        li.textContent = item;
+        node.appendChild(li);
+      });
+    }
+
+    function updateMetricCard(metricKey, metric) {
+      const cardRefs = els.cards[metricKey];
+      if (!cardRefs || !metric) return;
+
+      cardRefs.value.textContent = Number(metric.value).toFixed(2);
+      cardRefs.hint.textContent = metric.status?.detail || "";
+      cardRefs.bar.style.width = `${metric.progress_pct || 0}%`;
+      setChip(cardRefs.chip, metric.status?.level || "good", metric.status?.label || "");
+      cardRefs.card.dataset.level = metric.status?.level || "good";
+    }
+
+    function ensureChart() {
+      if (state.chart) return state.chart;
+
+      const ctx = els.chartCanvas.getContext("2d");
+      state.chart = new Chart(ctx, {
+        type: "line",
+        data: {
+          labels: [],
+          datasets: [
+            {
+              label: "水溫 (°C)",
+              data: [],
+              borderColor: "#f28c45",
+              backgroundColor: "rgba(242, 140, 69, 0.12)",
+              yAxisID: "yTemp",
+              pointRadius: 0,
+              tension: 0.28,
+              borderWidth: 2,
+            },
+            {
+              label: "pH",
+              data: [],
+              borderColor: "#2e8b57",
+              backgroundColor: "rgba(46, 139, 87, 0.12)",
+              yAxisID: "yWater",
+              pointRadius: 0,
+              tension: 0.28,
+              borderWidth: 2,
+            },
+            {
+              label: "溶氧 (mg/L)",
+              data: [],
+              borderColor: "#1f78b4",
+              backgroundColor: "rgba(31, 120, 180, 0.12)",
+              yAxisID: "yWater",
+              pointRadius: 0,
+              tension: 0.28,
+              borderWidth: 2,
+            },
+          ],
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          interaction: {
+            mode: "index",
+            intersect: false,
+          },
+          plugins: {
+            legend: {
+              display: false,
+            },
+            tooltip: {
+              backgroundColor: "rgba(18, 37, 43, 0.94)",
+              padding: 12,
+              titleColor: "#fff",
+              bodyColor: "rgba(255,255,255,0.92)",
+            },
+          },
+          scales: {
+            x: {
+              grid: {
+                display: false,
+              },
+              ticks: {
+                maxTicksLimit: 8,
+                color: "#5f7175",
+              },
+            },
+            yTemp: {
+              position: "left",
+              min: 20,
+              max: 30,
+              ticks: {
+                color: "#8b5d30",
+              },
+              grid: {
+                color: "rgba(23, 52, 59, 0.08)",
+              },
+            },
+            yWater: {
+              position: "right",
+              min: 4,
+              max: 9,
+              ticks: {
+                color: "#2e6b53",
+              },
+              grid: {
+                drawOnChartArea: false,
+              },
+            },
+          },
+        },
+      });
+      return state.chart;
+    }
+
+    function updateChart(history) {
+      const chart = ensureChart();
+      chart.data.labels = history.map((point) => point.label);
+      chart.data.datasets[0].data = history.map((point) => point.temperature_c);
+      chart.data.datasets[1].data = history.map((point) => point.ph);
+      chart.data.datasets[2].data = history.map((point) => point.dissolved_oxygen_mg_l);
+      chart.update("none");
+    }
+
+    function updateDiagnosisSnapshot(payload) {
+      const current = payload.current;
+      setListItems(els.diagnosisFacts, [
+        `水溫 ${Number(current.temperature_c.value).toFixed(2)} °C`,
+        `pH ${Number(current.ph.value).toFixed(2)}`,
+        `溶氧 ${Number(current.dissolved_oxygen_mg_l.value).toFixed(2)} mg/L`,
+      ]);
+    }
+
+    function renderPayload(payload) {
+      state.payload = payload;
+      els.sourceLabel.textContent = payload.source === "simulated-read-time" ? "即時計算模擬" : payload.source;
+      els.siteName.textContent = payload.site || "示範魚塭";
+      els.updatedAt.textContent = `最後更新：${formatUpdatedAt(payload.generated_at)}`;
+      els.refreshNote.textContent = document.hidden
+        ? "目前頁面在背景，已暫停輪詢"
+        : `頁面可見時每 ${payload.refresh_after_seconds || {{ poll_seconds|default:15 }}} 秒更新一次`;
+
+      updateMetricCard("temperature_c", payload.current?.temperature_c);
+      updateMetricCard("ph", payload.current?.ph);
+      updateMetricCard("dissolved_oxygen_mg_l", payload.current?.dissolved_oxygen_mg_l);
+
+      setChip(els.chipOverall, payload.overview?.level || "good", payload.overview?.label || "");
+      els.overviewTitle.textContent = payload.overview?.label || "狀態穩定";
+      els.overviewCopy.textContent = payload.overview?.message || "";
+      els.overviewAlertCount.textContent = payload.overview?.alert_count ?? 0;
+
+      updateChart(payload.history || []);
+      updateDiagnosisSnapshot(payload);
+    }
+
+    function scheduleNextPoll(delayMs) {
+      if (state.timerId) {
+        window.clearTimeout(state.timerId);
+      }
+      if (document.hidden) return;
+      state.timerId = window.setTimeout(fetchIotData, delayMs);
+    }
+
+    async function fetchIotData() {
+      if (state.inFlight || document.hidden) return;
+      state.inFlight = true;
+
+      try {
+        const response = await fetch(ENDPOINTS.data, {
+          headers: {
+            "Accept": "application/json",
+          },
+          cache: "no-store",
+        });
+        const payload = await response.json();
+        if (!response.ok) {
+          throw new Error(payload.error || "資料更新失敗。");
+        }
+        renderPayload(payload);
+      } catch (error) {
+        els.refreshNote.textContent = `資料更新失敗：${error.message}`;
+      } finally {
+        state.inFlight = false;
+        scheduleNextPoll(POLL_INTERVAL_MS);
+      }
+    }
+
+    async function runDiagnosis() {
+      if (!state.payload?.current) return;
+
+      els.diagnoseBtn.disabled = true;
+      els.diagnosisBox.dataset.state = "loading";
+      setChip(els.diagnosisState, "loading", "分析中");
+      els.diagnosisTitle.textContent = "AI 正在整理建議";
+      els.diagnosisText.textContent = "正在把最新水質數值送往診斷 API。";
+      els.diagnosisMeta.textContent = "等待回應中...";
+
+      try {
+        const response = await fetch(ENDPOINTS.diagnose, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-CSRFToken": csrf,
+          },
+          body: JSON.stringify({
+            current: {
+              temperature_c: state.payload.current.temperature_c.value,
+              ph: state.payload.current.ph.value,
+              dissolved_oxygen_mg_l: state.payload.current.dissolved_oxygen_mg_l.value,
+            },
+            generated_at: state.payload.generated_at,
+          }),
+        });
+        const payload = await response.json();
+        if (!response.ok) {
+          throw new Error(payload.error || "診斷失敗。");
+        }
+
+        els.diagnosisBox.dataset.state = payload.severity || "good";
+        setChip(els.diagnosisState, payload.severity || "good", payload.title || "完成");
+        els.diagnosisTitle.textContent = payload.title || "診斷完成";
+        els.diagnosisText.textContent = payload.advice || "目前沒有額外建議。";
+        setListItems(els.diagnosisFacts, payload.facts || []);
+        els.diagnosisMeta.textContent = `來源：${payload.source || "unknown"}｜${formatUpdatedAt(payload.generated_at)}`;
+      } catch (error) {
+        els.diagnosisBox.dataset.state = "alert";
+        setChip(els.diagnosisState, "alert", "診斷失敗");
+        els.diagnosisTitle.textContent = "暫時無法分析";
+        els.diagnosisText.textContent = error.message || "請稍後再試。";
+        setListItems(els.diagnosisFacts, ["診斷 API 未成功回傳結果。"]);
+        els.diagnosisMeta.textContent = "請確認後端 API 是否正常。";
+      } finally {
+        els.diagnoseBtn.disabled = false;
+      }
+    }
+
+    document.addEventListener("visibilitychange", function () {
+      if (document.hidden) {
+        if (state.timerId) window.clearTimeout(state.timerId);
+        els.refreshNote.textContent = "目前頁面在背景，已暫停輪詢";
+        return;
+      }
+      renderPayload(state.payload);
+      fetchIotData();
+    });
+
+    els.diagnoseBtn?.addEventListener("click", runDiagnosis);
+
+    renderPayload(state.payload);
+    scheduleNextPoll(POLL_INTERVAL_MS);
+  })();
+</script>
+{% endblock %}

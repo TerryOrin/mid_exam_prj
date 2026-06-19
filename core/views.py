@@ -1,9 +1,13 @@
 import base64
 import json
 import logging
+import math
 import os
+import random
 import re
 import tempfile
+from datetime import datetime, timedelta
+from functools import lru_cache
 from pathlib import Path
 
 from PIL import Image as PILImage
@@ -14,7 +18,8 @@ from django.db.models import Q, Case, When, Value, IntegerField
 from django.shortcuts import render, get_object_or_404
 from django.urls import reverse
 from django.utils import timezone
-from django.views.decorators.http import require_POST
+from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_POST, require_http_methods
 import msgpack
 
 from chat import llm as shared_llm
@@ -25,6 +30,44 @@ from .forms import ContactForm
 logger = logging.getLogger(__name__)
 AR_GUIDE_MODEL_SESSION_KEY = "aiot_selected_model"
 AR_GUIDE_MAX_AUDIO_BYTES = 10 * 1024 * 1024
+IOT_DEFAULT_WINDOW_HOURS = 12
+IOT_DEFAULT_INTERVAL_MINUTES = 5
+IOT_MAX_WINDOW_HOURS = 24
+IOT_POLL_SECONDS = 15
+IOT_CACHE_BUCKET_SECONDS = 15
+IOT_SITE_NAME = "風雲水鄉示範魚塭"
+IOT_METRIC_CONFIG = {
+    "temperature_c": {
+        "label": "水溫",
+        "unit": "°C",
+        "min": 20.0,
+        "max": 30.0,
+        "safe_low": 22.0,
+        "safe_high": 28.0,
+        "watch_low": 21.0,
+        "watch_high": 29.0,
+    },
+    "ph": {
+        "label": "pH 值",
+        "unit": "",
+        "min": 6.5,
+        "max": 8.5,
+        "safe_low": 6.8,
+        "safe_high": 8.2,
+        "watch_low": 6.7,
+        "watch_high": 8.3,
+    },
+    "dissolved_oxygen_mg_l": {
+        "label": "溶氧量",
+        "unit": "mg/L",
+        "min": 4.0,
+        "max": 8.0,
+        "safe_low": 5.5,
+        "safe_high": 7.5,
+        "watch_low": 5.0,
+        "watch_high": 7.8,
+    },
+}
 NAV_INTENT_KEYWORDS = [
     "打開",
     "點開",
@@ -276,6 +319,346 @@ def contact_view(request):
             "form": form,
             "submitted": submitted,
         },
+    )
+
+
+def _clamp_float(value: float, lower: float, upper: float) -> float:
+    return max(lower, min(value, upper))
+
+
+def _parse_bounded_int(raw_value, *, default: int, minimum: int, maximum: int) -> int:
+    try:
+        value = int(raw_value)
+    except (TypeError, ValueError):
+        return default
+    return max(minimum, min(maximum, value))
+
+
+def _stable_noise(metric_key: str, dt: datetime, amplitude: float, *, bucket_seconds: int = 900) -> float:
+    bucket = int(dt.timestamp() // bucket_seconds)
+    rng = random.Random(f"{metric_key}:{bucket}")
+    return rng.uniform(-amplitude, amplitude)
+
+
+def _status_for_metric(metric_key: str, value: float) -> dict[str, str]:
+    config = IOT_METRIC_CONFIG[metric_key]
+    if config["safe_low"] <= value <= config["safe_high"]:
+        return {"level": "good", "label": "穩定", "detail": "位於建議運作區間。"}
+    if config["watch_low"] <= value <= config["watch_high"]:
+        return {"level": "watch", "label": "注意", "detail": "接近警戒邊界，建議持續觀察。"}
+    return {"level": "alert", "label": "警示", "detail": "已偏離安全區間，建議立即巡檢。"}
+
+
+def _simulate_iot_snapshot(dt: datetime) -> dict[str, float]:
+    local_dt = timezone.localtime(dt)
+    ts = local_dt.timestamp()
+    seconds_in_day = (
+        local_dt.hour * 3600
+        + local_dt.minute * 60
+        + local_dt.second
+        + (local_dt.microsecond / 1_000_000)
+    )
+    day_angle = (seconds_in_day / 86400.0) * math.tau
+    hour_decimal = local_dt.hour + (local_dt.minute / 60.0)
+
+    temperature = (
+        25.1
+        + 2.6 * math.sin(day_angle - 1.05)
+        + 0.55 * math.sin((math.tau * ts / 7200.0) + 0.7)
+        + _stable_noise("temperature", local_dt, 0.28, bucket_seconds=600)
+    )
+    temperature = round(_clamp_float(temperature, 20.0, 30.0), 2)
+
+    ph_value = (
+        7.35
+        + 0.28 * math.sin(day_angle - 0.2)
+        + 0.12 * math.sin((math.tau * ts / 14400.0) + 1.8)
+        + _stable_noise("ph", local_dt, 0.08, bucket_seconds=900)
+    )
+    ph_value = round(_clamp_float(ph_value, 6.5, 8.5), 2)
+
+    dawn_dip = math.exp(-(((hour_decimal - 5.1) / 1.5) ** 2))
+    dissolved_oxygen = (
+        6.2
+        - 0.22 * (temperature - 25.0)
+        + 0.72 * math.sin(day_angle + 1.9)
+        + 0.36 * math.sin((math.tau * ts / 10800.0) - 0.45)
+        - 0.95 * dawn_dip
+        + _stable_noise("dissolved_oxygen", local_dt, 0.18, bucket_seconds=600)
+    )
+    dissolved_oxygen = round(_clamp_float(dissolved_oxygen, 4.0, 8.0), 2)
+
+    return {
+        "temperature_c": temperature,
+        "ph": ph_value,
+        "dissolved_oxygen_mg_l": dissolved_oxygen,
+    }
+
+
+def _build_metric_payload(metric_key: str, value: float) -> dict[str, object]:
+    config = IOT_METRIC_CONFIG[metric_key]
+    status = _status_for_metric(metric_key, value)
+    span = config["max"] - config["min"]
+    progress = ((value - config["min"]) / span) * 100 if span else 0
+
+    return {
+        "label": config["label"],
+        "value": round(value, 2),
+        "unit": config["unit"],
+        "display": f"{value:.2f} {config['unit']}".strip(),
+        "range_min": config["min"],
+        "range_max": config["max"],
+        "safe_low": config["safe_low"],
+        "safe_high": config["safe_high"],
+        "progress_pct": round(_clamp_float(progress, 0, 100), 1),
+        "status": status,
+    }
+
+
+def _overview_from_snapshot(snapshot: dict[str, float]) -> dict[str, object]:
+    temperature_status = _status_for_metric("temperature_c", snapshot["temperature_c"])
+    ph_status = _status_for_metric("ph", snapshot["ph"])
+    do_status = _status_for_metric("dissolved_oxygen_mg_l", snapshot["dissolved_oxygen_mg_l"])
+    levels = [temperature_status["level"], ph_status["level"], do_status["level"]]
+
+    if "alert" in levels:
+        return {
+            "level": "alert",
+            "label": "需立即處理",
+            "message": "至少一項指標超出安全區間，建議立即巡檢魚塭與增氧設備。",
+            "alert_count": levels.count("alert"),
+        }
+    if "watch" in levels:
+        return {
+            "level": "watch",
+            "label": "持續觀察",
+            "message": "目前有指標接近警戒邊界，建議留意清晨與午後波動。",
+            "alert_count": levels.count("watch"),
+        }
+    return {
+        "level": "good",
+        "label": "狀態穩定",
+        "message": "目前水質維持在建議區間，可持續例行巡檢。",
+        "alert_count": 0,
+    }
+
+
+def _build_iot_history(now: datetime, *, hours: int, interval_minutes: int) -> list[dict[str, object]]:
+    start = now - timedelta(hours=hours)
+    cursor = start.replace(second=0, microsecond=0)
+    step = timedelta(minutes=interval_minutes)
+    history: list[dict[str, object]] = []
+
+    while cursor < now:
+        snapshot = _simulate_iot_snapshot(cursor)
+        local_cursor = timezone.localtime(cursor)
+        history.append(
+            {
+                "timestamp": local_cursor.isoformat(),
+                "label": local_cursor.strftime("%H:%M"),
+                **snapshot,
+            }
+        )
+        cursor += step
+
+    snapshot = _simulate_iot_snapshot(now)
+    local_now = timezone.localtime(now)
+    history.append(
+        {
+            "timestamp": local_now.isoformat(),
+            "label": local_now.strftime("%H:%M"),
+            **snapshot,
+        }
+    )
+    return history
+
+
+@lru_cache(maxsize=96)
+def _build_iot_payload_cached(bucket_epoch: int, hours: int, interval_minutes: int) -> dict[str, object]:
+    now = datetime.fromtimestamp(bucket_epoch, tz=timezone.get_current_timezone())
+    snapshot = _simulate_iot_snapshot(now)
+    history = _build_iot_history(now, hours=hours, interval_minutes=interval_minutes)
+
+    current_payload = {
+        "timestamp": timezone.localtime(now).isoformat(),
+        "temperature_c": _build_metric_payload("temperature_c", snapshot["temperature_c"]),
+        "ph": _build_metric_payload("ph", snapshot["ph"]),
+        "dissolved_oxygen_mg_l": _build_metric_payload(
+            "dissolved_oxygen_mg_l", snapshot["dissolved_oxygen_mg_l"]
+        ),
+    }
+
+    return {
+        "resource": "iot_data",
+        "site": IOT_SITE_NAME,
+        "source": "simulated-read-time",
+        "generated_at": timezone.localtime(now).isoformat(),
+        "window_hours": hours,
+        "interval_minutes": interval_minutes,
+        "refresh_after_seconds": IOT_POLL_SECONDS,
+        "current": current_payload,
+        "overview": _overview_from_snapshot(snapshot),
+        "history": history,
+        "metric_ranges": IOT_METRIC_CONFIG,
+    }
+
+
+def _build_iot_payload(*, hours: int = IOT_DEFAULT_WINDOW_HOURS, interval_minutes: int = IOT_DEFAULT_INTERVAL_MINUTES) -> dict[str, object]:
+    now = timezone.localtime().replace(microsecond=0)
+    bucket_epoch = int(now.timestamp() // IOT_CACHE_BUCKET_SECONDS) * IOT_CACHE_BUCKET_SECONDS
+    return _build_iot_payload_cached(bucket_epoch, hours, interval_minutes)
+
+
+def _json_no_store(payload: dict[str, object], *, status: int = 200):
+    response = JsonResponse(payload, status=status)
+    response["Cache-Control"] = "no-store, max-age=0"
+    return response
+
+
+def iot_war_room_view(request):
+    initial_payload = _build_iot_payload()
+    return render(
+        request,
+        "core/iot_war_room.html",
+        {
+            "initial_payload": initial_payload,
+            "poll_seconds": IOT_POLL_SECONDS,
+        },
+    )
+
+
+@csrf_exempt
+@require_http_methods(["GET", "POST"])
+def iot_data_api(request):
+    if request.method == "POST":
+        # Future hardware ingest hook:
+        # When ESP32 or other microcontrollers start POSTing real sensor readings,
+        # validate JSON fields here, verify a device credential such as
+        # `X-Device-Token`, and replace this stub with
+        # SensorReading.objects.create(...) or a queue/cache write path.
+        # Example expected payload keys:
+        # {"pond": "示範池", "measured_at": "...", "temperature_c": 25.1, "ph": 7.4, "dissolved_oxygen_mg_l": 6.2}
+        return _json_no_store(
+            {
+                "resource": "iot_data",
+                "detail": "Real sensor ingestion stub is ready. Persist validated POST payload here when ESP32 upload is enabled.",
+            },
+            status=501,
+        )
+
+    hours = _parse_bounded_int(
+        request.GET.get("hours"),
+        default=IOT_DEFAULT_WINDOW_HOURS,
+        minimum=1,
+        maximum=IOT_MAX_WINDOW_HOURS,
+    )
+    interval_minutes = _parse_bounded_int(
+        request.GET.get("interval_minutes"),
+        default=IOT_DEFAULT_INTERVAL_MINUTES,
+        minimum=3,
+        maximum=15,
+    )
+    return _json_no_store(_build_iot_payload(hours=hours, interval_minutes=interval_minutes))
+
+
+def _normalise_current_metrics(payload: dict[str, object]) -> dict[str, float]:
+    try:
+        temperature = float(payload["temperature_c"])
+        ph_value = float(payload["ph"])
+        dissolved_oxygen = float(payload["dissolved_oxygen_mg_l"])
+    except (KeyError, TypeError, ValueError) as exc:
+        raise ValueError("current payload must include temperature_c, ph, and dissolved_oxygen_mg_l.") from exc
+
+    return {
+        "temperature_c": round(temperature, 2),
+        "ph": round(ph_value, 2),
+        "dissolved_oxygen_mg_l": round(dissolved_oxygen, 2),
+    }
+
+
+def _heuristic_ai_diagnosis(current: dict[str, float]) -> dict[str, object]:
+    facts: list[str] = []
+    advice: list[str] = []
+    severity = "good"
+
+    dissolved_oxygen = current["dissolved_oxygen_mg_l"]
+    temperature = current["temperature_c"]
+    ph_value = current["ph"]
+
+    if dissolved_oxygen < 5.0:
+        severity = "alert"
+        facts.append(f"溶氧 {dissolved_oxygen:.2f} mg/L，低於 5.0 mg/L 警戒值。")
+        advice.append("目前溶氧量偏低，建議優先開啟水車或增氧設備。")
+    elif dissolved_oxygen < 5.5:
+        severity = "watch"
+        facts.append(f"溶氧 {dissolved_oxygen:.2f} mg/L，接近清晨風險區。")
+        advice.append("溶氧量接近警戒值，建議持續觀察清晨變化並預作增氧準備。")
+
+    if temperature > 28.5:
+        severity = "alert" if severity == "alert" else "watch"
+        facts.append(f"水溫 {temperature:.2f} °C，午後熱壓力偏高。")
+        advice.append("水溫偏高，建議加強循環、避免午後過量投餌。")
+    elif temperature < 21.5:
+        severity = "alert" if severity == "alert" else "watch"
+        facts.append(f"水溫 {temperature:.2f} °C，低於常態投餌甜蜜區。")
+        advice.append("水溫偏低，建議放慢投餌節奏並觀察魚群活動力。")
+
+    if ph_value < 6.8 or ph_value > 8.2:
+        severity = "alert" if severity == "alert" else "watch"
+        facts.append(f"pH {ph_value:.2f}，已偏離建議區間 6.8–8.2。")
+        advice.append("pH 有偏移，建議檢查換水節奏、藻相與投餌負荷。")
+
+    if not advice:
+        facts.append("三項核心指標都仍在建議區間內。")
+        advice.append("目前水質大致穩定，建議維持例行巡檢並持續觀察日夜波動。")
+
+    title_map = {
+        "alert": "需立即處理",
+        "watch": "建議持續觀察",
+        "good": "狀態穩定",
+    }
+    return {
+        "severity": severity,
+        "title": title_map[severity],
+        "advice": " ".join(advice[:2]),
+        "facts": facts[:3],
+    }
+
+
+@require_http_methods(["POST"])
+def ai_diagnose_api(request):
+    try:
+        body = json.loads(request.body.decode("utf-8"))
+    except (json.JSONDecodeError, UnicodeDecodeError):
+        return _json_no_store({"error": "Request body must be valid JSON."}, status=400)
+
+    raw_current = body.get("current") if isinstance(body, dict) else None
+    if not isinstance(raw_current, dict):
+        return _json_no_store({"error": "current payload is required."}, status=400)
+
+    try:
+        current = _normalise_current_metrics(raw_current)
+    except ValueError as exc:
+        return _json_no_store({"error": str(exc)}, status=400)
+
+    # Future LLM hook:
+    # 1. Build a concise prompt from `current` and optional history summary.
+    # 2. Call DeepSeek/Gemini here, for example via `shared_llm.direct_chat(...)`.
+    # 3. If the model call fails or is disabled, keep the lightweight heuristic fallback below.
+    diagnosis = _heuristic_ai_diagnosis(current)
+
+    model_name = ""
+    if isinstance(body.get("model"), str):
+        model_name = body["model"].strip()
+
+    return _json_no_store(
+        {
+            "resource": "ai_diagnose",
+            "generated_at": timezone.localtime().isoformat(),
+            "source": "heuristic-fallback",
+            "model": model_name,
+            **diagnosis,
+        }
     )
 
 
