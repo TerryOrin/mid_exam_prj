@@ -1,14 +1,12 @@
 import base64
 import json
 import logging
-import math
 import os
-import random
 import re
+import secrets
 import tempfile
-from datetime import datetime, timedelta
-from functools import lru_cache
 from pathlib import Path
+from urllib.parse import urlparse
 
 from PIL import Image as PILImage
 from django.conf import settings
@@ -18,10 +16,18 @@ from django.db.models import Q, Case, When, Value, IntegerField
 from django.shortcuts import render, get_object_or_404
 from django.urls import reverse
 from django.utils import timezone
+from django.utils.crypto import constant_time_compare
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST, require_http_methods
 import msgpack
 
+from chat.dashboard import (
+    IOT_DEFAULT_INTERVAL_MINUTES as DASHBOARD_IOT_DEFAULT_INTERVAL_MINUTES,
+    IOT_DEFAULT_WINDOW_HOURS as DASHBOARD_IOT_DEFAULT_WINDOW_HOURS,
+    IOT_MAX_WINDOW_HOURS as DASHBOARD_IOT_MAX_WINDOW_HOURS,
+    IOT_POLL_SECONDS as DASHBOARD_IOT_POLL_SECONDS,
+    build_iot_payload as build_aligned_iot_payload,
+)
 from chat import llm as shared_llm
 
 from .models import HeroSlide, Event, StoryPost
@@ -30,44 +36,6 @@ from .forms import ContactForm
 logger = logging.getLogger(__name__)
 AR_GUIDE_MODEL_SESSION_KEY = "aiot_selected_model"
 AR_GUIDE_MAX_AUDIO_BYTES = 10 * 1024 * 1024
-IOT_DEFAULT_WINDOW_HOURS = 12
-IOT_DEFAULT_INTERVAL_MINUTES = 5
-IOT_MAX_WINDOW_HOURS = 24
-IOT_POLL_SECONDS = 15
-IOT_CACHE_BUCKET_SECONDS = 15
-IOT_SITE_NAME = "風雲水鄉示範魚塭"
-IOT_METRIC_CONFIG = {
-    "temperature_c": {
-        "label": "水溫",
-        "unit": "°C",
-        "min": 20.0,
-        "max": 30.0,
-        "safe_low": 22.0,
-        "safe_high": 28.0,
-        "watch_low": 21.0,
-        "watch_high": 29.0,
-    },
-    "ph": {
-        "label": "pH 值",
-        "unit": "",
-        "min": 6.5,
-        "max": 8.5,
-        "safe_low": 6.8,
-        "safe_high": 8.2,
-        "watch_low": 6.7,
-        "watch_high": 8.3,
-    },
-    "dissolved_oxygen_mg_l": {
-        "label": "溶氧量",
-        "unit": "mg/L",
-        "min": 4.0,
-        "max": 8.0,
-        "safe_low": 5.5,
-        "safe_high": 7.5,
-        "watch_low": 5.0,
-        "watch_high": 7.8,
-    },
-}
 NAV_INTENT_KEYWORDS = [
     "打開",
     "點開",
@@ -83,6 +51,10 @@ NAV_INTENT_KEYWORDS = [
     "看看",
     "看",
 ]
+AI_GUIDE_CHAT_SESSION_KEY = "ai_guide_chat_count"
+AI_GUIDE_CHAT_MODEL = "deepseek-v4-flash"
+AI_GUIDE_CHAT_TIMEOUT_SECONDS = 20.0
+IOT_API_BROWSER_TOKEN_SESSION_KEY = "iot_browser_api_token"
 
 
 def _events_with_image_first(queryset):
@@ -232,6 +204,7 @@ def ar_guide_view(request):
         "model_options": shared_llm.get_available_models(),
         "current_model": current_model,
         "current_model_meta": _ar_model_payload(current_model),
+        "iot_api_token": _ensure_iot_browser_token(request),
     }
     return render(request, "core/ar_guide.html", context)
 
@@ -322,10 +295,6 @@ def contact_view(request):
     )
 
 
-def _clamp_float(value: float, lower: float, upper: float) -> float:
-    return max(lower, min(value, upper))
-
-
 def _parse_bounded_int(raw_value, *, default: int, minimum: int, maximum: int) -> int:
     try:
         value = int(raw_value)
@@ -334,195 +303,78 @@ def _parse_bounded_int(raw_value, *, default: int, minimum: int, maximum: int) -
     return max(minimum, min(maximum, value))
 
 
-def _stable_noise(metric_key: str, dt: datetime, amplitude: float, *, bucket_seconds: int = 900) -> float:
-    bucket = int(dt.timestamp() // bucket_seconds)
-    rng = random.Random(f"{metric_key}:{bucket}")
-    return rng.uniform(-amplitude, amplitude)
-
-
-def _status_for_metric(metric_key: str, value: float) -> dict[str, str]:
-    config = IOT_METRIC_CONFIG[metric_key]
-    if config["safe_low"] <= value <= config["safe_high"]:
-        return {"level": "good", "label": "穩定", "detail": "位於建議運作區間。"}
-    if config["watch_low"] <= value <= config["watch_high"]:
-        return {"level": "watch", "label": "注意", "detail": "接近警戒邊界，建議持續觀察。"}
-    return {"level": "alert", "label": "警示", "detail": "已偏離安全區間，建議立即巡檢。"}
-
-
-def _simulate_iot_snapshot(dt: datetime) -> dict[str, float]:
-    local_dt = timezone.localtime(dt)
-    ts = local_dt.timestamp()
-    seconds_in_day = (
-        local_dt.hour * 3600
-        + local_dt.minute * 60
-        + local_dt.second
-        + (local_dt.microsecond / 1_000_000)
-    )
-    day_angle = (seconds_in_day / 86400.0) * math.tau
-    hour_decimal = local_dt.hour + (local_dt.minute / 60.0)
-
-    temperature = (
-        25.1
-        + 2.6 * math.sin(day_angle - 1.05)
-        + 0.55 * math.sin((math.tau * ts / 7200.0) + 0.7)
-        + _stable_noise("temperature", local_dt, 0.28, bucket_seconds=600)
-    )
-    temperature = round(_clamp_float(temperature, 20.0, 30.0), 2)
-
-    ph_value = (
-        7.35
-        + 0.28 * math.sin(day_angle - 0.2)
-        + 0.12 * math.sin((math.tau * ts / 14400.0) + 1.8)
-        + _stable_noise("ph", local_dt, 0.08, bucket_seconds=900)
-    )
-    ph_value = round(_clamp_float(ph_value, 6.5, 8.5), 2)
-
-    dawn_dip = math.exp(-(((hour_decimal - 5.1) / 1.5) ** 2))
-    dissolved_oxygen = (
-        6.2
-        - 0.22 * (temperature - 25.0)
-        + 0.72 * math.sin(day_angle + 1.9)
-        + 0.36 * math.sin((math.tau * ts / 10800.0) - 0.45)
-        - 0.95 * dawn_dip
-        + _stable_noise("dissolved_oxygen", local_dt, 0.18, bucket_seconds=600)
-    )
-    dissolved_oxygen = round(_clamp_float(dissolved_oxygen, 4.0, 8.0), 2)
-
-    return {
-        "temperature_c": temperature,
-        "ph": ph_value,
-        "dissolved_oxygen_mg_l": dissolved_oxygen,
-    }
-
-
-def _build_metric_payload(metric_key: str, value: float) -> dict[str, object]:
-    config = IOT_METRIC_CONFIG[metric_key]
-    status = _status_for_metric(metric_key, value)
-    span = config["max"] - config["min"]
-    progress = ((value - config["min"]) / span) * 100 if span else 0
-
-    return {
-        "label": config["label"],
-        "value": round(value, 2),
-        "unit": config["unit"],
-        "display": f"{value:.2f} {config['unit']}".strip(),
-        "range_min": config["min"],
-        "range_max": config["max"],
-        "safe_low": config["safe_low"],
-        "safe_high": config["safe_high"],
-        "progress_pct": round(_clamp_float(progress, 0, 100), 1),
-        "status": status,
-    }
-
-
-def _overview_from_snapshot(snapshot: dict[str, float]) -> dict[str, object]:
-    temperature_status = _status_for_metric("temperature_c", snapshot["temperature_c"])
-    ph_status = _status_for_metric("ph", snapshot["ph"])
-    do_status = _status_for_metric("dissolved_oxygen_mg_l", snapshot["dissolved_oxygen_mg_l"])
-    levels = [temperature_status["level"], ph_status["level"], do_status["level"]]
-
-    if "alert" in levels:
-        return {
-            "level": "alert",
-            "label": "需立即處理",
-            "message": "至少一項指標超出安全區間，建議立即巡檢魚塭與增氧設備。",
-            "alert_count": levels.count("alert"),
-        }
-    if "watch" in levels:
-        return {
-            "level": "watch",
-            "label": "持續觀察",
-            "message": "目前有指標接近警戒邊界，建議留意清晨與午後波動。",
-            "alert_count": levels.count("watch"),
-        }
-    return {
-        "level": "good",
-        "label": "狀態穩定",
-        "message": "目前水質維持在建議區間，可持續例行巡檢。",
-        "alert_count": 0,
-    }
-
-
-def _build_iot_history(now: datetime, *, hours: int, interval_minutes: int) -> list[dict[str, object]]:
-    start = now - timedelta(hours=hours)
-    cursor = start.replace(second=0, microsecond=0)
-    step = timedelta(minutes=interval_minutes)
-    history: list[dict[str, object]] = []
-
-    while cursor < now:
-        snapshot = _simulate_iot_snapshot(cursor)
-        local_cursor = timezone.localtime(cursor)
-        history.append(
-            {
-                "timestamp": local_cursor.isoformat(),
-                "label": local_cursor.strftime("%H:%M"),
-                **snapshot,
-            }
-        )
-        cursor += step
-
-    snapshot = _simulate_iot_snapshot(now)
-    local_now = timezone.localtime(now)
-    history.append(
-        {
-            "timestamp": local_now.isoformat(),
-            "label": local_now.strftime("%H:%M"),
-            **snapshot,
-        }
-    )
-    return history
-
-
-@lru_cache(maxsize=96)
-def _build_iot_payload_cached(bucket_epoch: int, hours: int, interval_minutes: int) -> dict[str, object]:
-    now = datetime.fromtimestamp(bucket_epoch, tz=timezone.get_current_timezone())
-    snapshot = _simulate_iot_snapshot(now)
-    history = _build_iot_history(now, hours=hours, interval_minutes=interval_minutes)
-
-    current_payload = {
-        "timestamp": timezone.localtime(now).isoformat(),
-        "temperature_c": _build_metric_payload("temperature_c", snapshot["temperature_c"]),
-        "ph": _build_metric_payload("ph", snapshot["ph"]),
-        "dissolved_oxygen_mg_l": _build_metric_payload(
-            "dissolved_oxygen_mg_l", snapshot["dissolved_oxygen_mg_l"]
-        ),
-    }
-
-    return {
-        "resource": "iot_data",
-        "site": IOT_SITE_NAME,
-        "source": "simulated-read-time",
-        "generated_at": timezone.localtime(now).isoformat(),
-        "window_hours": hours,
-        "interval_minutes": interval_minutes,
-        "refresh_after_seconds": IOT_POLL_SECONDS,
-        "current": current_payload,
-        "overview": _overview_from_snapshot(snapshot),
-        "history": history,
-        "metric_ranges": IOT_METRIC_CONFIG,
-    }
-
-
-def _build_iot_payload(*, hours: int = IOT_DEFAULT_WINDOW_HOURS, interval_minutes: int = IOT_DEFAULT_INTERVAL_MINUTES) -> dict[str, object]:
-    now = timezone.localtime().replace(microsecond=0)
-    bucket_epoch = int(now.timestamp() // IOT_CACHE_BUCKET_SECONDS) * IOT_CACHE_BUCKET_SECONDS
-    return _build_iot_payload_cached(bucket_epoch, hours, interval_minutes)
-
-
 def _json_no_store(payload: dict[str, object], *, status: int = 200):
     response = JsonResponse(payload, status=status)
     response["Cache-Control"] = "no-store, max-age=0"
     return response
 
 
+def _iot_api_master_token() -> str:
+    return (os.environ.get("IOT_API_MASTER_TOKEN") or "").strip()
+
+
+def _ensure_iot_browser_token(request) -> str:
+    token = request.session.get(IOT_API_BROWSER_TOKEN_SESSION_KEY)
+    if isinstance(token, str) and token.strip():
+        return token
+
+    token = secrets.token_urlsafe(24)
+    request.session[IOT_API_BROWSER_TOKEN_SESSION_KEY] = token
+    request.session.modified = True
+    return token
+
+
+def _extract_iot_api_token(request) -> str:
+    auth_header = str(request.headers.get("Authorization") or "").strip()
+    if auth_header.lower().startswith("bearer "):
+        return auth_header[7:].strip()
+    return str(request.headers.get("X-IoT-Token") or "").strip()
+
+
+def _has_valid_iot_api_token(request) -> bool:
+    provided = _extract_iot_api_token(request)
+    if not provided:
+        return False
+
+    master_token = _iot_api_master_token()
+    if master_token and constant_time_compare(provided, master_token):
+        return True
+
+    browser_token = request.session.get(IOT_API_BROWSER_TOKEN_SESSION_KEY)
+    if isinstance(browser_token, str) and browser_token and constant_time_compare(
+        provided,
+        browser_token,
+    ):
+        return True
+
+    return False
+
+
+def _require_iot_api_token(request):
+    if _has_valid_iot_api_token(request):
+        return None
+    return _json_no_store(
+        {
+            "error": "Missing or invalid IoT API token.",
+            "detail": "Send X-IoT-Token: <token> or Authorization: Bearer <token>.",
+        },
+        status=403,
+    )
+
+
 def iot_war_room_view(request):
-    initial_payload = _build_iot_payload()
+    initial_payload = build_aligned_iot_payload()
+    current_model = shared_llm.resolve_model(request.session.get(AR_GUIDE_MODEL_SESSION_KEY)).key
     return render(
         request,
         "core/iot_war_room.html",
         {
             "initial_payload": initial_payload,
-            "poll_seconds": IOT_POLL_SECONDS,
+            "poll_seconds": DASHBOARD_IOT_POLL_SECONDS,
+            "model_options": shared_llm.get_available_models(),
+            "current_model": current_model,
+            "current_model_meta": _ar_model_payload(current_model),
+            "iot_api_token": _ensure_iot_browser_token(request),
         },
     )
 
@@ -530,6 +382,10 @@ def iot_war_room_view(request):
 @csrf_exempt
 @require_http_methods(["GET", "POST"])
 def iot_data_api(request):
+    auth_error = _require_iot_api_token(request)
+    if auth_error is not None:
+        return auth_error
+
     if request.method == "POST":
         # Future hardware ingest hook:
         # When ESP32 or other microcontrollers start POSTing real sensor readings,
@@ -548,17 +404,19 @@ def iot_data_api(request):
 
     hours = _parse_bounded_int(
         request.GET.get("hours"),
-        default=IOT_DEFAULT_WINDOW_HOURS,
+        default=DASHBOARD_IOT_DEFAULT_WINDOW_HOURS,
         minimum=1,
-        maximum=IOT_MAX_WINDOW_HOURS,
+        maximum=DASHBOARD_IOT_MAX_WINDOW_HOURS,
     )
     interval_minutes = _parse_bounded_int(
         request.GET.get("interval_minutes"),
-        default=IOT_DEFAULT_INTERVAL_MINUTES,
+        default=DASHBOARD_IOT_DEFAULT_INTERVAL_MINUTES,
         minimum=3,
         maximum=15,
     )
-    return _json_no_store(_build_iot_payload(hours=hours, interval_minutes=interval_minutes))
+    return _json_no_store(
+        build_aligned_iot_payload(hours=hours, interval_minutes=interval_minutes)
+    )
 
 
 def _normalise_current_metrics(payload: dict[str, object]) -> dict[str, float]:
@@ -625,8 +483,73 @@ def _heuristic_ai_diagnosis(current: dict[str, float]) -> dict[str, object]:
     }
 
 
+_AI_DIAGNOSE_SYSTEM_PROMPT = (
+    "你是智慧養殖水質診斷助手。"
+    "請根據目前水溫、pH 與溶氧數值，用繁體中文提供短而具體的風險判讀。"
+    "只能回傳 JSON，格式為 "
+    '{"severity":"good|watch|alert","title":"...","advice":"...","facts":["...","..."]}。'
+    "不要輸出 Markdown，不要加前後說明。"
+)
+
+
+def _extract_json_object(text: str) -> str:
+    fenced_match = re.search(r"```(?:json)?\s*(\{.*\})\s*```", text, flags=re.DOTALL)
+    if fenced_match:
+        return fenced_match.group(1)
+
+    start = text.find("{")
+    end = text.rfind("}")
+    if start == -1 or end == -1 or end <= start:
+        raise ValueError("Model reply did not contain a JSON object.")
+    return text[start : end + 1]
+
+
+def _llm_ai_diagnosis(current: dict[str, float], model_name: str) -> dict[str, object]:
+    prompt = (
+        "請針對以下魚塭即時數值做水質診斷。\n"
+        f"- 水溫：{current['temperature_c']:.2f} °C\n"
+        f"- pH：{current['ph']:.2f}\n"
+        f"- 溶氧：{current['dissolved_oxygen_mg_l']:.2f} mg/L\n"
+        "輸出內容要讓養殖現場人員可以直接採取行動。"
+    )
+    reply = shared_llm.direct_chat(
+        prompt,
+        system_prompt=_AI_DIAGNOSE_SYSTEM_PROMPT,
+        model_name=model_name,
+    )
+    payload = json.loads(_extract_json_object(reply))
+
+    severity = str(payload.get("severity") or "").strip().lower()
+    if severity not in {"good", "watch", "alert"}:
+        raise ValueError("Model reply contained an unsupported severity.")
+
+    title = str(payload.get("title") or "").strip()
+    advice = str(payload.get("advice") or "").strip()
+    raw_facts = payload.get("facts") or []
+    if isinstance(raw_facts, str):
+        raw_facts = [raw_facts]
+    if not isinstance(raw_facts, list):
+        raw_facts = []
+    facts = [str(item).strip() for item in raw_facts if str(item).strip()][:3]
+
+    if not title or not advice:
+        raise ValueError("Model reply is missing title or advice.")
+
+    return {
+        "severity": severity,
+        "title": title,
+        "advice": advice,
+        "facts": facts or ["模型未提供額外觀察重點。"],
+    }
+
+
+@csrf_exempt
 @require_http_methods(["POST"])
 def ai_diagnose_api(request):
+    auth_error = _require_iot_api_token(request)
+    if auth_error is not None:
+        return auth_error
+
     try:
         body = json.loads(request.body.decode("utf-8"))
     except (json.JSONDecodeError, UnicodeDecodeError):
@@ -641,22 +564,31 @@ def ai_diagnose_api(request):
     except ValueError as exc:
         return _json_no_store({"error": str(exc)}, status=400)
 
-    # Future LLM hook:
-    # 1. Build a concise prompt from `current` and optional history summary.
-    # 2. Call DeepSeek/Gemini here, for example via `shared_llm.direct_chat(...)`.
-    # 3. If the model call fails or is disabled, keep the lightweight heuristic fallback below.
-    diagnosis = _heuristic_ai_diagnosis(current)
-
     model_name = ""
     if isinstance(body.get("model"), str):
         model_name = body["model"].strip()
+    if model_name:
+        try:
+            model_name = shared_llm.resolve_model(model_name).key
+        except ValueError as exc:
+            return _json_no_store({"error": str(exc)}, status=400)
+        request.session[AR_GUIDE_MODEL_SESSION_KEY] = model_name
+
+    diagnosis = _heuristic_ai_diagnosis(current)
+    source = "heuristic-fallback"
+    if model_name:
+        try:
+            diagnosis = _llm_ai_diagnosis(current, model_name)
+            source = "selected-llm"
+        except Exception as exc:  # noqa: BLE001
+            logger.warning("AI diagnose LLM fallback triggered: %s", exc)
 
     return _json_no_store(
         {
             "resource": "ai_diagnose",
             "generated_at": timezone.localtime().isoformat(),
-            "source": "heuristic-fallback",
-            "model": model_name,
+            "source": source,
+            "model": _ar_model_payload(model_name) if model_name else None,
             **diagnosis,
         }
     )
@@ -870,6 +802,372 @@ def _absolute_link(request, path):
     if path.startswith("http://") or path.startswith("https://"):
         return path
     return request.build_absolute_uri(path)
+
+
+def _relative_internal_url(url: str) -> str:
+    raw_url = str(url or "").strip()
+    if not raw_url:
+        return ""
+
+    parsed = urlparse(raw_url)
+    if parsed.scheme or parsed.netloc:
+        if not parsed.path.startswith("/"):
+            return ""
+        query = f"?{parsed.query}" if parsed.query else ""
+        return f"{parsed.path}{query}"
+
+    if not raw_url.startswith("/"):
+        return ""
+    return raw_url
+
+
+def _llm_message_text(message) -> str:
+    content = getattr(message, "content", None)
+    if isinstance(content, str):
+        return content
+    if isinstance(content, list):
+        parts: list[str] = []
+        for item in content:
+            if isinstance(item, dict):
+                text = item.get("text")
+                if isinstance(text, str):
+                    parts.append(text)
+                continue
+            text = getattr(item, "text", None)
+            if isinstance(text, str):
+                parts.append(text)
+        return "".join(parts)
+    return ""
+
+
+def _build_ai_guide_action_options(request, user_message: str = "") -> list[dict[str, str]]:
+    options = [
+        {"label": "首頁", "url": reverse("home")},
+        {"label": "關於計畫", "url": reverse("about")},
+        {"label": "近期活動", "url": reverse("events_list")},
+        {"label": "水文化故事", "url": reverse("stories")},
+        {"label": "USR 成果", "url": reverse("usr")},
+        {"label": "AR 導覽", "url": reverse("ar_guide")},
+        {"label": "AIOT 水質助手", "url": reverse("chat:page")},
+        {"label": "IoT 戰情室", "url": reverse("iot_war_room")},
+        {"label": "聯絡我們", "url": reverse("contact")},
+    ]
+
+    matched_events, matched_posts = _rank_local_content(user_message)
+    for event in matched_events[:2]:
+        options.append({"label": f"活動｜{event.title}", "url": event.get_absolute_url()})
+    for post in matched_posts[:2]:
+        options.append(
+            {
+                "label": f"{post.get_category_display()}｜{post.title}",
+                "url": post.get_absolute_url(),
+            }
+        )
+
+    deduped: list[dict[str, str]] = []
+    seen_urls: set[str] = set()
+    for item in options:
+        url = item["url"]
+        if url in seen_urls:
+            continue
+        seen_urls.add(url)
+        deduped.append(item)
+    return deduped
+
+
+def _default_ai_guide_button_label(url: str) -> str:
+    if url.startswith(reverse("iot_war_room")):
+        return "前往 IoT 戰情室"
+    if url.startswith(reverse("chat:page")):
+        return "前往 AIOT 水質助手"
+    if url.startswith(reverse("events_list")):
+        return "查看近期活動"
+    if url.startswith(reverse("stories")):
+        return "查看水文化故事"
+    if url.startswith(reverse("usr")):
+        return "查看 USR 成果"
+    if url.startswith(reverse("ar_guide")):
+        return "開啟 AR 導覽"
+    if url.startswith(reverse("contact")):
+        return "前往聯絡頁面"
+    if url.startswith(reverse("about")):
+        return "查看計畫介紹"
+    if url.startswith("/events/"):
+        return "查看活動詳情"
+    if url.startswith("/stories/"):
+        return "查看內容詳情"
+    return "前往相關頁面"
+
+
+def _suggest_ai_guide_action_url(request, user_message: str, page_path: str = "") -> str:
+    text = (user_message or "").strip()
+    lowered = text.lower()
+    current_path = _relative_internal_url(page_path or "/") or "/"
+
+    manual_target = ""
+    if "戰情室" in text or "war room" in lowered:
+        manual_target = reverse("iot_war_room")
+    elif "aiot" in lowered or "水質助手" in text:
+        manual_target = reverse("chat:page")
+    elif "近期活動" in text or "活動" in text or "event" in lowered:
+        manual_target = reverse("events_list")
+    elif "故事" in text or "story" in lowered:
+        manual_target = reverse("stories")
+    elif "usr" in lowered or "成果" in text:
+        manual_target = reverse("usr")
+    elif "ar 導覽" in lowered or ("ar" in lowered and "導覽" in text) or "掃描導覽" in text:
+        manual_target = reverse("ar_guide")
+    elif "聯絡" in text or "contact" in lowered:
+        manual_target = reverse("contact")
+    elif "關於計畫" in text or "計畫介紹" in text or "about" in lowered:
+        manual_target = reverse("about")
+
+    if manual_target:
+        return "" if current_path.split("?")[0] == manual_target.split("?")[0] else manual_target
+
+    legacy_target = _relative_internal_url(
+        _resolve_redirect_target(request, user_message, page_path=page_path)
+    )
+    if legacy_target and current_path.split("?")[0] != legacy_target.split("?")[0]:
+        return legacy_target
+    return ""
+
+
+def _build_ai_guide_local_reply(user_message: str) -> str:
+    matched_events, matched_posts = _rank_local_content(user_message)
+    lowered = (user_message or "").lower()
+
+    if matched_events and ("活動" in user_message or "event" in lowered):
+        return f"我先幫你對到近期活動，從「{matched_events[0].title}」開始看會最快。"
+    if matched_posts and ("故事" in user_message or "usr" in lowered or "成果" in user_message):
+        return f"我找到一則相近內容：「{matched_posts[0].title}」，你可以先從這裡看。"
+    if matched_posts and ("aiot" in lowered or "水質助手" in user_message):
+        return f"如果你想看即時水質互動，先從「{matched_posts[0].title}」相關內容延伸最合適。"
+    if matched_events:
+        return f"我先整理到和你問題最接近的活動是「{matched_events[0].title}」。"
+    if matched_posts:
+        return f"我找到一則相近內容：「{matched_posts[0].title}」。"
+    return "我可以幫你找近期活動、USR 成果、AIOT 水質助手或 IoT 戰情室。"
+
+
+def _build_ai_guide_payload(
+    reply_text: str,
+    *,
+    has_action: bool = False,
+    button_label: str = "",
+    url: str = "",
+) -> dict[str, object]:
+    cleaned_url = _relative_internal_url(url)
+    show_action = bool(has_action and cleaned_url)
+    return {
+        "reply_text": str(reply_text or "").strip() or "我先幫你整理站內資訊。",
+        "suggested_action": {
+            "has_action": show_action,
+            "button_label": button_label.strip() if show_action else "",
+            "url": cleaned_url if show_action else "",
+        },
+    }
+
+
+def _build_ai_guide_fallback_payload(
+    request,
+    user_message: str,
+    page_path: str = "",
+    *,
+    raw_reply: str = "",
+) -> dict[str, object]:
+    if raw_reply.strip():
+        return _build_ai_guide_payload(raw_reply.strip(), has_action=False)
+
+    fallback_url = _suggest_ai_guide_action_url(request, user_message, page_path=page_path)
+    return _build_ai_guide_payload(
+        _build_ai_guide_local_reply(user_message),
+        has_action=bool(fallback_url),
+        button_label=_default_ai_guide_button_label(fallback_url),
+        url=fallback_url,
+    )
+
+
+def _coerce_ai_guide_payload(
+    request,
+    user_message: str,
+    page_path: str,
+    payload: dict[str, object],
+) -> dict[str, object]:
+    if not isinstance(payload, dict):
+        return _build_ai_guide_fallback_payload(request, user_message, page_path=page_path)
+
+    current_path = _relative_internal_url(page_path or "/") or "/"
+    action_options = _build_ai_guide_action_options(request, user_message)
+    allowed_urls = {item["url"] for item in action_options}
+    fallback_url = _suggest_ai_guide_action_url(request, user_message, page_path=page_path)
+
+    reply_text = str(payload.get("reply_text") or "").strip() or _build_ai_guide_local_reply(
+        user_message
+    )
+    raw_action = payload.get("suggested_action")
+    if not isinstance(raw_action, dict):
+        raw_action = {}
+
+    action_url = _relative_internal_url(str(raw_action.get("url") or ""))
+    if action_url and current_path.split("?")[0] == action_url.split("?")[0]:
+        action_url = ""
+    if action_url not in allowed_urls:
+        action_url = ""
+    if not action_url and fallback_url in allowed_urls:
+        action_url = fallback_url
+
+    should_show_action = bool(action_url) and (
+        bool(raw_action.get("has_action")) or bool(fallback_url)
+    )
+    button_label = str(raw_action.get("button_label") or "").strip()
+    if should_show_action and not button_label:
+        button_label = _default_ai_guide_button_label(action_url)
+
+    return _build_ai_guide_payload(
+        reply_text,
+        has_action=should_show_action,
+        button_label=button_label,
+        url=action_url,
+    )
+
+
+def _build_ai_guide_system_prompt(
+    request,
+    user_message: str,
+    page_path: str = "",
+    page_title: str = "",
+) -> str:
+    action_lines = "\n".join(
+        f"- {item['label']}：{item['url']}" for item in _build_ai_guide_action_options(request, user_message)
+    )
+    site_context = _build_chat_context_payload(
+        request=request,
+        user_message=user_message,
+        page_path=page_path,
+        page_title=page_title,
+    )
+
+    return (
+        "你是「風雲水鄉 AI 導覽助手」，只能回答本網站內容，並協助使用者找到對應頁面。"
+        "你必須永遠只輸出單一 JSON 字串，絕對不能輸出 Markdown、```json、前言、結語或任何 JSON 以外的文字。"
+        'JSON 格式必須完全符合：{"reply_text":"...","suggested_action":{"has_action":true,"button_label":"...","url":"/..."}}。'
+        "reply_text 要用繁體中文、親切、精簡，盡量控制在 80 字內。"
+        "如果 suggested_action.has_action 為 false，button_label 與 url 必須是空字串。"
+        "只有在使用者明確想看頁面、清單、詳情，或按一下按鈕會更有幫助時，才把 has_action 設為 true。"
+        "url 只能從下列相對路徑中挑選，不能自創、不能用完整網址、不能跳到站外：\n"
+        f"{action_lines}\n\n"
+        f"目前頁面：{site_context['current_page']}\n\n"
+        f"站內導覽：\n{site_context['navigation_lines']}\n\n"
+        f"相關活動：\n{site_context['event_lines']}\n\n"
+        f"相關文章：\n{site_context['post_lines']}"
+    )
+
+
+def _call_deepseek_ai_guide(request, user_message: str, page_path: str = "", page_title: str = "") -> str:
+    from openai import OpenAI
+
+    api_key = ((os.environ.get("DS_API_KEY") or os.environ.get("DEEPSEEK_API_KEY") or "")).strip()
+    if not api_key:
+        raise RuntimeError("Missing DS_API_KEY or DEEPSEEK_API_KEY.")
+
+    system_prompt = _build_ai_guide_system_prompt(
+        request=request,
+        user_message=user_message,
+        page_path=page_path,
+        page_title=page_title,
+    )
+    client = OpenAI(
+        api_key=api_key,
+        base_url=shared_llm.DEEPSEEK_OPENAI_BASE_URL,
+        timeout=AI_GUIDE_CHAT_TIMEOUT_SECONDS,
+    )
+    response = client.chat.completions.create(
+        model=AI_GUIDE_CHAT_MODEL,
+        messages=[
+            {"role": "system", "content": system_prompt},
+            {
+                "role": "user",
+                "content": (
+                    f"目前頁面標題：{page_title or '未提供'}\n"
+                    f"目前頁面路徑：{page_path or '/'}\n"
+                    f"使用者訊息：{user_message}"
+                ),
+            },
+        ],
+        temperature=0.2,
+        max_tokens=260,
+    )
+    reply_text = _llm_message_text(response.choices[0].message).strip()
+    if not reply_text:
+        raise RuntimeError("DeepSeek returned an empty reply.")
+    return reply_text
+
+
+@require_POST
+def ai_guide_chat(request):
+    count = request.session.get(AI_GUIDE_CHAT_SESSION_KEY, 0)
+    if count >= MAX_CHAT_PER_SESSION:
+        return _json_no_store(
+            _build_ai_guide_payload(
+                "今天已聊到 30 則，先讓系統稍微休息一下，晚點再來找我就可以。",
+                has_action=False,
+            )
+        )
+
+    try:
+        body = json.loads(request.body.decode("utf-8"))
+    except (json.JSONDecodeError, UnicodeDecodeError):
+        return _json_no_store({"error": "Request body must be valid JSON."}, status=400)
+    if not isinstance(body, dict):
+        return _json_no_store({"error": "Request body must be a JSON object."}, status=400)
+
+    user_message = str(body.get("user_message") or "").strip()
+    page_path = str(body.get("page_path") or "").strip()
+    page_title = str(body.get("page_title") or "").strip()
+
+    if not user_message or len(user_message) > 500:
+        return _json_no_store({"error": "user_message is empty or too long."}, status=400)
+    if page_path and not page_path.startswith("/"):
+        page_path = "/"
+    if len(page_title) > 200:
+        page_title = page_title[:200]
+
+    try:
+        raw_reply = _call_deepseek_ai_guide(
+            request,
+            user_message=user_message,
+            page_path=page_path,
+            page_title=page_title,
+        )
+    except Exception as exc:  # noqa: BLE001
+        logger.warning("AI guide chat fallback triggered: %s", exc)
+        payload = _build_ai_guide_fallback_payload(
+            request,
+            user_message,
+            page_path=page_path,
+        )
+    else:
+        try:
+            parsed_reply = json.loads(raw_reply)
+        except json.JSONDecodeError:
+            payload = _build_ai_guide_fallback_payload(
+                request,
+                user_message,
+                page_path=page_path,
+                raw_reply=raw_reply,
+            )
+        else:
+            payload = _coerce_ai_guide_payload(
+                request,
+                user_message,
+                page_path,
+                parsed_reply,
+            )
+
+    request.session[AI_GUIDE_CHAT_SESSION_KEY] = count + 1
+    request.session.modified = True
+    return _json_no_store(payload)
 
 
 @require_POST

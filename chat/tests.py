@@ -1,6 +1,7 @@
 from unittest.mock import patch
 
 from django.test import SimpleTestCase, TestCase
+from django.urls import reverse
 from django.utils import timezone
 
 from water.models import Pond, SensorReading
@@ -91,3 +92,20 @@ class WaterQualityAssistantTests(TestCase):
         self.assertEqual(payload["metrics"]["nitrite_mg_l"], 0.62)
         self.assertEqual(payload["ponds"][0]["ammonia_mg_l"], 0.31)
         self.assertEqual(payload["ponds"][0]["nitrite_mg_l"], 0.62)
+
+    def test_dashboard_api_returns_sidebar_metrics_only(self):
+        response = self.client.get(reverse("chat:dashboard-api"))
+
+        self.assertEqual(response.status_code, 200)
+        payload = response.json()
+        self.assertNotIn("war_room", payload)
+        self.assertEqual(payload["metrics"]["temperature_c"], 29.4)
+        self.assertEqual(payload["metrics"]["ph"], 8.1)
+        self.assertEqual(payload["metrics"]["dissolved_oxygen_mg_l"], 5.8)
+
+    def test_chat_page_keeps_assistant_layout(self):
+        response = self.client.get(reverse("chat:page"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "AIOT 水質助手")
+        self.assertNotContains(response, "AIOT Smart Operations")

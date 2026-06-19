@@ -6,9 +6,8 @@ from django.http import JsonResponse
 from django.shortcuts import render
 from django.views.decorators.http import require_GET, require_http_methods
 
-from water.models import Pond
-
-from . import llm, tools
+from . import llm
+from .dashboard import build_dashboard_payload
 
 SESSION_MODEL_KEY = "aiot_selected_model"
 SESSION_HISTORY_KEY = "aiot_chat_history"
@@ -62,62 +61,7 @@ def _append_session_message(request, role: str, content: str) -> None:
 
 
 def _dashboard_payload() -> dict:
-    pond_summaries = []
-    readings = []
-    alert_count = 0
-
-    for pond in Pond.objects.prefetch_related("readings").order_by("name"):
-        latest = pond.readings.first()
-        if latest is None:
-            pond_summaries.append(
-                {
-                    "name": pond.name,
-                    "species": pond.species,
-                    "description": pond.description,
-                    "status": "No data",
-                    "has_measurements": False,
-                }
-            )
-            continue
-
-        readings.append(latest)
-        threshold_result = tools.check_thresholds(pond.name)
-        alerts = threshold_result.get("alerts", [])
-        alert_count += len(alerts)
-        pond_summaries.append(
-            {
-                "name": pond.name,
-                "species": pond.species,
-                "description": pond.description,
-                "status": "Alert" if alerts else "Normal",
-                "has_measurements": True,
-                "measured_at": latest.measured_at.isoformat(),
-                "temperature_c": latest.temperature,
-                "ph": latest.ph,
-                "dissolved_oxygen_mg_l": latest.dissolved_oxygen,
-                "ammonia_mg_l": latest.ammonia,
-                "nitrite_mg_l": latest.nitrite,
-                "alerts": alerts,
-            }
-        )
-
-    def _avg(attr: str) -> float | None:
-        values = [getattr(reading, attr) for reading in readings if getattr(reading, attr) is not None]
-        if not values:
-            return None
-        return round(sum(values) / len(values), 2)
-
-    return {
-        "metrics": {
-            "temperature_c": _avg("temperature"),
-            "ph": _avg("ph"),
-            "dissolved_oxygen_mg_l": _avg("dissolved_oxygen"),
-            "ammonia_mg_l": _avg("ammonia"),
-            "nitrite_mg_l": _avg("nitrite"),
-            "alert_count": alert_count,
-        },
-        "ponds": pond_summaries,
-    }
+    return build_dashboard_payload(include_war_room=False)
 
 
 def chat_page(request):

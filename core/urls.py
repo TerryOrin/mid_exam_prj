@@ -12,6 +12,7 @@ urlpatterns = [
     path("stories/<slug:slug>/", views.story_detail_view, name="story_detail"),
     path("usr/", views.usr_view, name="usr"),
     path("contact/", views.contact_view, name="contact"),
+    path("api/ai-guide-chat/", views.ai_guide_chat, name="ai_guide_chat"),
     path("api/chat/", views.chatbot_api, name="chatbot_api"),
     path("api/iot_data/", views.iot_data_api, name="iot_data_api"),
     path("api/ai_diagnose/", views.ai_diagnose_api, name="ai_diagnose_api"),

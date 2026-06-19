@@ -4,7 +4,7 @@
 {% block title %}IoT 智慧養殖戰情室{% endblock %}
 
 {% block extra_head %}
-<link href="{% static 'css/iot_war_room.css' %}?v=1" rel="stylesheet">
+<link href="{% static 'css/iot_war_room.css' %}?v=2" rel="stylesheet">
 {% endblock %}
 
 {% block content %}
@@ -13,19 +13,8 @@
 <section class="iot-hero">
   <div class="container iot-hero__inner">
     <div class="iot-hero__copy">
-      <span class="iot-hero__eyebrow">IoT Smart Aquaculture Command Center</span>
       <h1>IoT 智慧養殖戰情室</h1>
-      <p>以低負載即時模擬方式呈現水溫、pH 與溶氧波動，讓展示站點在 PythonAnywhere 上也能穩定運作。</p>
-    </div>
-    <div class="iot-hero__meta">
-      <div class="iot-meta-pill">
-        <span>資料來源</span>
-        <strong id="iot-source-label">模擬感測</strong>
-      </div>
-      <div class="iot-meta-pill">
-        <span>更新頻率</span>
-        <strong>{{ poll_seconds }} 秒</strong>
-      </div>
+      <p>上方指標直接對齊 AIOT 水質助手的平均數值，下方保留 12 小時趨勢圖與 AI 水質診斷，方便在同一頁快速判讀。</p>
     </div>
   </div>
 </section>
@@ -38,69 +27,30 @@
       <span class="iot-toolbar__time" id="iot-updated-at">同步中</span>
     </div>
 
-    <section class="iot-status-grid" aria-label="即時狀態區">
-      <article class="iot-kpi-card" id="card-temperature">
-        <div class="iot-kpi-card__head">
-          <span>水溫</span>
-          <span class="iot-chip" id="chip-temperature">同步中</span>
-        </div>
-        <div class="iot-kpi-card__value">
-          <strong id="value-temperature">--</strong>
-          <span>°C</span>
-        </div>
-        <p class="iot-kpi-card__range">建議區間 22–28°C</p>
-        <div class="iot-kpi-card__meter"><span id="bar-temperature"></span></div>
-        <p class="iot-kpi-card__hint" id="hint-temperature">等待資料中</p>
+    <section class="iot-summary-grid" aria-label="平均水質總覽">
+      <article class="iot-summary-card">
+        <span>平均溫度</span>
+        <strong id="summary-temperature">{{ initial_payload.summary.temperature_c.display }}</strong>
       </article>
-
-      <article class="iot-kpi-card" id="card-ph">
-        <div class="iot-kpi-card__head">
-          <span>pH 值</span>
-          <span class="iot-chip" id="chip-ph">同步中</span>
-        </div>
-        <div class="iot-kpi-card__value">
-          <strong id="value-ph">--</strong>
-        </div>
-        <p class="iot-kpi-card__range">建議區間 6.8–8.2</p>
-        <div class="iot-kpi-card__meter"><span id="bar-ph"></span></div>
-        <p class="iot-kpi-card__hint" id="hint-ph">等待資料中</p>
+      <article class="iot-summary-card">
+        <span>平均 pH</span>
+        <strong id="summary-ph">{{ initial_payload.summary.ph.display }}</strong>
       </article>
-
-      <article class="iot-kpi-card" id="card-do">
-        <div class="iot-kpi-card__head">
-          <span>溶氧量 DO</span>
-          <span class="iot-chip" id="chip-do">同步中</span>
-        </div>
-        <div class="iot-kpi-card__value">
-          <strong id="value-do">--</strong>
-          <span>mg/L</span>
-        </div>
-        <p class="iot-kpi-card__range">建議區間 5.5–7.5 mg/L</p>
-        <div class="iot-kpi-card__meter"><span id="bar-do"></span></div>
-        <p class="iot-kpi-card__hint" id="hint-do">等待資料中</p>
+      <article class="iot-summary-card">
+        <span>平均溶氧</span>
+        <strong id="summary-do">{{ initial_payload.summary.dissolved_oxygen_mg_l.display }}</strong>
       </article>
-
-      <article class="iot-kpi-card iot-kpi-card--overview" id="card-overview">
-        <div class="iot-kpi-card__head">
-          <span>養殖總覽</span>
-          <span class="iot-chip" id="chip-overall">同步中</span>
-        </div>
-        <div class="iot-overview__title" id="overview-title">資料同步中</div>
-        <p class="iot-overview__copy" id="overview-copy">頁面已載入，正在建立戰情面板。</p>
-        <dl class="iot-overview__list">
-          <div>
-            <dt>資料窗格</dt>
-            <dd>最近 12 小時</dd>
-          </div>
-          <div>
-            <dt>警示數量</dt>
-            <dd id="overview-alert-count">0</dd>
-          </div>
-          <div>
-            <dt>輪詢策略</dt>
-            <dd>可見頁面低頻更新</dd>
-          </div>
-        </dl>
+      <article class="iot-summary-card">
+        <span>Ammonia (NH3)</span>
+        <strong id="summary-ammonia">{{ initial_payload.summary.ammonia_mg_l.display }}</strong>
+      </article>
+      <article class="iot-summary-card">
+        <span>Nitrite (NO2-)</span>
+        <strong id="summary-nitrite">{{ initial_payload.summary.nitrite_mg_l.display }}</strong>
+      </article>
+      <article class="iot-summary-card iot-summary-card--alert">
+        <span>警示數量</span>
+        <strong id="summary-alert-count">{{ initial_payload.summary.alert_count.display }}</strong>
       </article>
     </section>
 
@@ -124,26 +74,36 @@
 
       <aside class="iot-panel iot-panel--diagnosis">
         <div class="iot-panel__head iot-panel__head--stack">
-          <div>
+          <div class="iot-panel__heading">
             <span class="iot-panel__eyebrow">AI Advisory</span>
             <h2>AI 水質診斷</h2>
           </div>
-          <button type="button" class="btn btn-brand" id="ai-diagnose-btn">AI 水質診斷</button>
+          <div class="iot-diagnosis-controls">
+            <label class="iot-model-picker" for="diagnose-model-select">
+              <span>診斷模型</span>
+              <select id="diagnose-model-select" class="iot-model-select">
+                {% for option in model_options %}
+                <option value="{{ option.key }}" {% if option.key == current_model %}selected{% endif %}>{{ option.label }}</option>
+                {% endfor %}
+              </select>
+            </label>
+            <button type="button" class="btn btn-brand" id="ai-diagnose-btn">AI 水質診斷</button>
+          </div>
         </div>
 
         <div class="iot-diagnosis-box" id="diagnosis-box" data-state="idle">
           <span class="iot-diagnosis-box__state" id="diagnosis-state">尚未分析</span>
           <h3 id="diagnosis-title">等待診斷</h3>
-          <p id="diagnosis-text">點擊按鈕後，前端會把最新水溫、pH 與溶氧數值送到 AI 診斷 API。</p>
+          <p id="diagnosis-text">點擊按鈕後，系統會以目前選定模型分析平均水溫、pH 與溶氧數值。</p>
           <ul class="iot-diagnosis-box__facts" id="diagnosis-facts">
-            <li>最新快照尚未載入。</li>
+            <li>最新平均水質快照尚未載入。</li>
           </ul>
-          <p class="iot-diagnosis-box__meta" id="diagnosis-meta">這裡會顯示診斷來源與時間。</p>
+          <p class="iot-diagnosis-box__meta" id="diagnosis-meta">模型：{{ current_model_meta.label }}</p>
         </div>
 
         <div class="iot-side-note">
           <h3>更新策略</h3>
-          <p>此頁不做整頁重整，只會更新數字與圖表。當頁面切到背景時，會暫停輪詢，降低 PythonAnywhere Worker 壓力。</p>
+          <p>此頁不做整頁重整，只會更新平均數值、圖表與診斷資料。當頁面切到背景時，會暫停輪詢，降低 PythonAnywhere Worker 壓力。</p>
         </div>
       </aside>
     </section>
@@ -162,19 +122,24 @@
       data: "{% url 'iot_data_api' %}",
       diagnose: "{% url 'ai_diagnose_api' %}",
     };
+    const IOT_API_TOKEN = "{{ iot_api_token|escapejs }}";
     const POLL_INTERVAL_MS = {{ poll_seconds|default:15 }} * 1000;
     const csrf = document.querySelector('meta[name="csrf-token"]')?.content || "";
 
     const els = {
-      sourceLabel: document.getElementById("iot-source-label"),
       siteName: document.getElementById("iot-site-name"),
       updatedAt: document.getElementById("iot-updated-at"),
       refreshNote: document.getElementById("iot-refresh-note"),
-      chipOverall: document.getElementById("chip-overall"),
-      overviewTitle: document.getElementById("overview-title"),
-      overviewCopy: document.getElementById("overview-copy"),
-      overviewAlertCount: document.getElementById("overview-alert-count"),
+      summary: {
+        temperature_c: document.getElementById("summary-temperature"),
+        ph: document.getElementById("summary-ph"),
+        dissolved_oxygen_mg_l: document.getElementById("summary-do"),
+        ammonia_mg_l: document.getElementById("summary-ammonia"),
+        nitrite_mg_l: document.getElementById("summary-nitrite"),
+        alert_count: document.getElementById("summary-alert-count"),
+      },
       diagnoseBtn: document.getElementById("ai-diagnose-btn"),
+      modelSelect: document.getElementById("diagnose-model-select"),
       diagnosisBox: document.getElementById("diagnosis-box"),
       diagnosisState: document.getElementById("diagnosis-state"),
       diagnosisTitle: document.getElementById("diagnosis-title"),
@@ -182,29 +147,6 @@
       diagnosisFacts: document.getElementById("diagnosis-facts"),
       diagnosisMeta: document.getElementById("diagnosis-meta"),
       chartCanvas: document.getElementById("iot-trend-chart"),
-      cards: {
-        temperature_c: {
-          value: document.getElementById("value-temperature"),
-          chip: document.getElementById("chip-temperature"),
-          hint: document.getElementById("hint-temperature"),
-          bar: document.getElementById("bar-temperature"),
-          card: document.getElementById("card-temperature"),
-        },
-        ph: {
-          value: document.getElementById("value-ph"),
-          chip: document.getElementById("chip-ph"),
-          hint: document.getElementById("hint-ph"),
-          bar: document.getElementById("bar-ph"),
-          card: document.getElementById("card-ph"),
-        },
-        dissolved_oxygen_mg_l: {
-          value: document.getElementById("value-do"),
-          chip: document.getElementById("chip-do"),
-          hint: document.getElementById("hint-do"),
-          bar: document.getElementById("bar-do"),
-          card: document.getElementById("card-do"),
-        },
-      }
     };
 
     const state = {
@@ -224,7 +166,7 @@
 
     function setChip(node, level, label) {
       if (!node) return;
-      node.className = `iot-chip is-${level}`;
+      node.className = `iot-diagnosis-box__state is-${level}`;
       node.textContent = label || chipLabels[level] || level;
     }
 
@@ -250,15 +192,12 @@
       });
     }
 
-    function updateMetricCard(metricKey, metric) {
-      const cardRefs = els.cards[metricKey];
-      if (!cardRefs || !metric) return;
-
-      cardRefs.value.textContent = Number(metric.value).toFixed(2);
-      cardRefs.hint.textContent = metric.status?.detail || "";
-      cardRefs.bar.style.width = `${metric.progress_pct || 0}%`;
-      setChip(cardRefs.chip, metric.status?.level || "good", metric.status?.label || "");
-      cardRefs.card.dataset.level = metric.status?.level || "good";
+    function renderSummary(summary) {
+      if (!summary) return;
+      Object.entries(els.summary).forEach(([key, node]) => {
+        if (!node) return;
+        node.textContent = summary[key]?.display || "--";
+      });
     }
 
     function ensureChart() {
@@ -368,32 +307,25 @@
     }
 
     function updateDiagnosisSnapshot(payload) {
-      const current = payload.current;
+      const summary = payload.summary || {};
       setListItems(els.diagnosisFacts, [
-        `水溫 ${Number(current.temperature_c.value).toFixed(2)} °C`,
-        `pH ${Number(current.ph.value).toFixed(2)}`,
-        `溶氧 ${Number(current.dissolved_oxygen_mg_l.value).toFixed(2)} mg/L`,
+        `平均水溫 ${summary.temperature_c?.display || "--"}`,
+        `平均 pH ${summary.ph?.display || "--"}`,
+        `平均溶氧 ${summary.dissolved_oxygen_mg_l?.display || "--"}`,
+        `Ammonia ${summary.ammonia_mg_l?.display || "--"}`,
+        `Nitrite ${summary.nitrite_mg_l?.display || "--"}`,
       ]);
     }
 
     function renderPayload(payload) {
       state.payload = payload;
-      els.sourceLabel.textContent = payload.source === "simulated-read-time" ? "即時計算模擬" : payload.source;
-      els.siteName.textContent = payload.site || "示範魚塭";
+      els.siteName.textContent = payload.site || "IoT 智慧養殖戰情室";
       els.updatedAt.textContent = `最後更新：${formatUpdatedAt(payload.generated_at)}`;
       els.refreshNote.textContent = document.hidden
         ? "目前頁面在背景，已暫停輪詢"
         : `頁面可見時每 ${payload.refresh_after_seconds || {{ poll_seconds|default:15 }}} 秒更新一次`;
 
-      updateMetricCard("temperature_c", payload.current?.temperature_c);
-      updateMetricCard("ph", payload.current?.ph);
-      updateMetricCard("dissolved_oxygen_mg_l", payload.current?.dissolved_oxygen_mg_l);
-
-      setChip(els.chipOverall, payload.overview?.level || "good", payload.overview?.label || "");
-      els.overviewTitle.textContent = payload.overview?.label || "狀態穩定";
-      els.overviewCopy.textContent = payload.overview?.message || "";
-      els.overviewAlertCount.textContent = payload.overview?.alert_count ?? 0;
-
+      renderSummary(payload.summary || {});
       updateChart(payload.history || []);
       updateDiagnosisSnapshot(payload);
     }
@@ -414,6 +346,7 @@
         const response = await fetch(ENDPOINTS.data, {
           headers: {
             "Accept": "application/json",
+            "X-IoT-Token": IOT_API_TOKEN,
           },
           cache: "no-store",
         });
@@ -432,13 +365,15 @@
 
     async function runDiagnosis() {
       if (!state.payload?.current) return;
+      const selectedModel = els.modelSelect?.value || "{{ current_model|escapejs }}";
+      const selectedLabel = els.modelSelect?.selectedOptions?.[0]?.textContent?.trim() || "{{ current_model_meta.label|escapejs }}";
 
       els.diagnoseBtn.disabled = true;
       els.diagnosisBox.dataset.state = "loading";
       setChip(els.diagnosisState, "loading", "分析中");
       els.diagnosisTitle.textContent = "AI 正在整理建議";
-      els.diagnosisText.textContent = "正在把最新水質數值送往診斷 API。";
-      els.diagnosisMeta.textContent = "等待回應中...";
+      els.diagnosisText.textContent = "正在把平均水質數值送往 AI 診斷 API。";
+      els.diagnosisMeta.textContent = `模型：${selectedLabel}｜等待回應中...`;
 
       try {
         const response = await fetch(ENDPOINTS.diagnose, {
@@ -446,8 +381,10 @@
           headers: {
             "Content-Type": "application/json",
             "X-CSRFToken": csrf,
+            "X-IoT-Token": IOT_API_TOKEN,
           },
           body: JSON.stringify({
+            model: selectedModel,
             current: {
               temperature_c: state.payload.current.temperature_c.value,
               ph: state.payload.current.ph.value,
@@ -466,14 +403,15 @@
         els.diagnosisTitle.textContent = payload.title || "診斷完成";
         els.diagnosisText.textContent = payload.advice || "目前沒有額外建議。";
         setListItems(els.diagnosisFacts, payload.facts || []);
-        els.diagnosisMeta.textContent = `來源：${payload.source || "unknown"}｜${formatUpdatedAt(payload.generated_at)}`;
+        const modelLabel = payload.model?.label || selectedLabel;
+        els.diagnosisMeta.textContent = `來源：${payload.source || "unknown"}｜模型：${modelLabel}｜${formatUpdatedAt(payload.generated_at)}`;
       } catch (error) {
         els.diagnosisBox.dataset.state = "alert";
         setChip(els.diagnosisState, "alert", "診斷失敗");
         els.diagnosisTitle.textContent = "暫時無法分析";
         els.diagnosisText.textContent = error.message || "請稍後再試。";
         setListItems(els.diagnosisFacts, ["診斷 API 未成功回傳結果。"]);
-        els.diagnosisMeta.textContent = "請確認後端 API 是否正常。";
+        els.diagnosisMeta.textContent = `模型：${selectedLabel}｜請確認 API Key 與模型服務是否正常。`;
       } finally {
         els.diagnoseBtn.disabled = false;
       }

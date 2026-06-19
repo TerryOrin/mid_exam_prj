@@ -18,6 +18,63 @@ function getCsrfToken() {
   );
 }
 
+function formatClockTime(date) {
+  return new Intl.DateTimeFormat("zh-TW", {
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: false,
+  }).format(date);
+}
+
+function extractIotSnapshot(payload) {
+  const current = payload?.current || {};
+  const temperature = Number(current.temperature_c?.value);
+  const phValue = Number(current.ph?.value);
+  const dissolvedOxygen = Number(current.dissolved_oxygen_mg_l?.value);
+
+  if (
+    Number.isNaN(temperature) ||
+    Number.isNaN(phValue) ||
+    Number.isNaN(dissolvedOxygen)
+  ) {
+    throw new Error("IoT API payload is missing expected numeric values.");
+  }
+
+  return {
+    temperature_c: temperature,
+    ph: phValue,
+    dissolved_oxygen_mg_l: dissolvedOxygen,
+    timestamp: payload?.generated_at || new Date().toISOString(),
+    source: payload?.source || "iot-api",
+  };
+}
+
+function simulateIotSnapshot() {
+  const now = new Date();
+  const seconds =
+    now.getHours() * 3600 +
+    now.getMinutes() * 60 +
+    now.getSeconds() +
+    now.getMilliseconds() / 1000;
+  const angle = (seconds / 86400) * Math.PI * 2;
+
+  const temperature = 25.4 + Math.sin(angle - 0.95) * 2.2 + Math.sin(seconds / 1800) * 0.35;
+  const phValue = 7.35 + Math.sin(angle + 0.25) * 0.34 + Math.sin(seconds / 3600) * 0.08;
+  const dissolvedOxygen =
+    6.1 +
+    Math.sin(angle + 1.8) * 0.65 -
+    Math.exp(-((((now.getHours() + now.getMinutes() / 60) - 5.1) / 1.55) ** 2)) * 0.9;
+
+  return {
+    temperature_c: Math.max(20, Math.min(30, Number(temperature.toFixed(2)))),
+    ph: Math.max(6.5, Math.min(8.5, Number(phValue.toFixed(2)))),
+    dissolved_oxygen_mg_l: Math.max(4, Math.min(8, Number(dissolvedOxygen.toFixed(2)))),
+    timestamp: now.toISOString(),
+    source: "browser-fallback",
+  };
+}
+
 const DOM = {
   exhibitMode: () => document.getElementById("exhibit-display-mode"),
   arImmersive: () => document.getElementById("ar-immersive-mode"),
@@ -57,6 +114,7 @@ const STATE = {
   fallbackCameraStream: null,
   scriptPromises: Object.create(null),
   ignoreMouseUntil: 0,
+  arIotPanelBound: false,
 };
 
 function setArStatus(state, label) {
@@ -589,6 +647,165 @@ async function ensureArRuntime() {
   await loadScriptOnce(window.__AR_MINDAR_SRC, () => Boolean(window.MINDAR?.IMAGE));
 }
 
+function registerAframeIotPanelComponent() {
+  if (!window.AFRAME || window.AFRAME.components["aframe-iot-panel"]) return;
+
+  window.AFRAME.registerComponent("aframe-iot-panel", {
+    schema: {
+      panel: { type: "selector" },
+      titletext: { type: "selector" },
+      synctext: { type: "selector" },
+      temperaturetext: { type: "selector" },
+      phtext: { type: "selector" },
+      dotext: { type: "selector" },
+      apiurl: { type: "string", default: "" },
+      apitoken: { type: "string", default: "" },
+      intervalms: { type: "int", default: 10000 },
+    },
+
+    init() {
+      this.intervalId = null;
+      this.isTracking = false;
+
+      this.handleFound = this.handleFound.bind(this);
+      this.handleLost = this.handleLost.bind(this);
+
+      this.el.addEventListener("targetFound", this.handleFound);
+      this.el.addEventListener("markerFound", this.handleFound);
+      this.el.addEventListener("targetLost", this.handleLost);
+      this.el.addEventListener("markerLost", this.handleLost);
+
+      this.setPanelVisible(false);
+      this.renderSnapshot(simulateIotSnapshot(), true);
+    },
+
+    pause() {
+      this.stopPolling();
+    },
+
+    remove() {
+      this.stopPolling();
+      this.el.removeEventListener("targetFound", this.handleFound);
+      this.el.removeEventListener("markerFound", this.handleFound);
+      this.el.removeEventListener("targetLost", this.handleLost);
+      this.el.removeEventListener("markerLost", this.handleLost);
+    },
+
+    setPanelVisible(isVisible) {
+      if (this.data.panel) {
+        this.data.panel.setAttribute("visible", Boolean(isVisible));
+      }
+    },
+
+    renderSnapshot(snapshot, isFallback = false) {
+      const stampText = `${isFallback ? "模擬資料" : "即時資料"} ${formatClockTime(new Date(snapshot.timestamp || Date.now()))}`;
+      const titleText = isFallback ? "AIOT 即時水質（模擬）" : "AIOT 即時水質";
+
+      this.data.titletext?.setAttribute("value", titleText);
+      this.data.synctext?.setAttribute("value", stampText);
+      this.data.temperaturetext?.setAttribute(
+        "value",
+        `溫度  ${Number(snapshot.temperature_c).toFixed(2)} °C`
+      );
+      this.data.phtext?.setAttribute(
+        "value",
+        `pH    ${Number(snapshot.ph).toFixed(2)}`
+      );
+      this.data.dotext?.setAttribute(
+        "value",
+        `DO    ${Number(snapshot.dissolved_oxygen_mg_l).toFixed(2)} mg/L`
+      );
+    },
+
+    async fetchSnapshot() {
+      if (!this.data.apiurl) {
+        return { snapshot: simulateIotSnapshot(), isFallback: true };
+      }
+
+      const headers = { Accept: "application/json" };
+      if (this.data.apitoken) {
+        headers["X-IoT-Token"] = this.data.apitoken;
+      }
+
+      try {
+        const response = await fetch(this.data.apiurl, {
+          headers,
+          cache: "no-store",
+        });
+        const payload = await response.json();
+        if (!response.ok) {
+          throw new Error(payload.error || "IoT API request failed.");
+        }
+        return { snapshot: extractIotSnapshot(payload), isFallback: false };
+      } catch (error) {
+        console.warn("AR IoT panel falling back to simulated data:", error);
+        return { snapshot: simulateIotSnapshot(), isFallback: true };
+      }
+    },
+
+    async refreshPanel() {
+      const { snapshot, isFallback } = await this.fetchSnapshot();
+      if (!this.isTracking) return;
+      this.renderSnapshot(snapshot, isFallback);
+    },
+
+    startPolling() {
+      this.stopPolling();
+      this.intervalId = window.setInterval(() => {
+        this.refreshPanel().catch((error) => {
+          console.warn("AR IoT panel refresh failed:", error);
+        });
+      }, this.data.intervalms || 10000);
+    },
+
+    stopPolling() {
+      if (this.intervalId) {
+        window.clearInterval(this.intervalId);
+        this.intervalId = null;
+      }
+    },
+
+    async handleFound() {
+      this.isTracking = true;
+      this.setPanelVisible(true);
+      await this.refreshPanel();
+      this.startPolling();
+    },
+
+    handleLost() {
+      this.isTracking = false;
+      this.stopPolling();
+      this.setPanelVisible(false);
+    },
+  });
+}
+
+function setupArIotPanel() {
+  if (STATE.arIotPanelBound) return;
+  if (!window.AFRAME || !window.__AR_MIND_FILE_READY) return;
+
+  const targetNode = document.querySelector("[data-iot-panel-target='true']");
+  const panelNode = document.getElementById("ar-iot-panel");
+  if (!targetNode || !panelNode) return;
+
+  registerAframeIotPanelComponent();
+  targetNode.setAttribute(
+    "aframe-iot-panel",
+    [
+      "panel: #ar-iot-panel",
+      "titletext: #ar-iot-title",
+      "synctext: #ar-iot-sync",
+      "temperaturetext: #ar-iot-temp",
+      "phtext: #ar-iot-ph",
+      "dotext: #ar-iot-do",
+      `apiurl: ${window.__AR_IOT_DATA_API_URL || ""}`,
+      `apitoken: ${window.__AR_IOT_API_TOKEN || ""}`,
+      "intervalms: 10000",
+    ].join("; ")
+  );
+  STATE.arIotPanelBound = true;
+}
+
 function bindArTargetEvents() {
   const videos = Array.from(document.querySelectorAll(".ar-source-video"));
   const pairs = [
@@ -733,6 +950,7 @@ async function enterArMode() {
     if (resumeArTracking()) return;
 
     await ensureArRuntime();
+    setupArIotPanel();
   } catch (error) {
     setArStatus("error", "AR 載入失敗");
     appendMessage("system", error.message || "AR runtime 載入失敗。");

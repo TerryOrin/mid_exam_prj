@@ -126,9 +126,10 @@
     class="ar-scene"
     mindar-image="imageTargetSrc: {% static mind_file_relpath %}; uiScanning: false; uiLoading: false;"
     color-space="sRGB"
-    renderer="colorManagement: true, physicallyCorrectLights"
+    renderer="alpha: true; antialias: true; colorManagement: true; physicallyCorrectLights: true"
     vr-mode-ui="enabled: false"
     device-orientation-permission-ui="enabled: false"
+    background="color: transparent"
     embedded>
     <a-assets timeout="30000">
       {% for stop in ar_stops %}
@@ -147,8 +148,80 @@
     <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
     {# AR 影片覆蓋 Entity（MindAR 觸發） #}
     {% for stop in ar_stops %}
-    <a-entity id="target-{{ stop.target_index }}" mindar-image-target="targetIndex: {{ stop.target_index }}">
+    <a-entity
+      id="target-{{ stop.target_index }}"
+      mindar-image-target="targetIndex: {{ stop.target_index }}"
+      {% if stop.target_index == 2 %}data-iot-panel-target="true"{% endif %}>
       <a-video src="#ar-video-{{ forloop.counter }}" width="1" height="{{ stop.video_height }}" position="0 0 0.01"></a-video>
+      {% if stop.target_index == 2 %}
+      <a-entity
+        id="ar-iot-panel"
+        class="ar-iot-panel-entity"
+        position="0.9 0.2 0.04"
+        rotation="0 0 0"
+        visible="false">
+        <a-plane
+          width="0.86"
+          height="0.56"
+          color="#06141f"
+          opacity="0.78"
+          material="shader: flat; transparent: true; side: double">
+        </a-plane>
+        <a-plane
+          width="0.82"
+          height="0.05"
+          position="0 0.225 0.01"
+          color="#50dca0"
+          opacity="0.92"
+          material="shader: flat; transparent: true; side: double">
+        </a-plane>
+        <a-text
+          id="ar-iot-title"
+          value="AIOT 即時水質"
+          position="-0.35 0.16 0.02"
+          align="left"
+          anchor="left"
+          width="1.35"
+          color="#dffef1">
+        </a-text>
+        <a-text
+          id="ar-iot-sync"
+          value="等待資料同步"
+          position="-0.35 0.08 0.02"
+          align="left"
+          anchor="left"
+          width="1.25"
+          color="#7bcbb0">
+        </a-text>
+        <a-text
+          id="ar-iot-temp"
+          value="溫度 -- °C"
+          position="-0.35 -0.02 0.02"
+          align="left"
+          anchor="left"
+          width="1.25"
+          color="#ffffff">
+        </a-text>
+        <a-text
+          id="ar-iot-ph"
+          value="pH --"
+          position="-0.35 -0.12 0.02"
+          align="left"
+          anchor="left"
+          width="1.25"
+          color="#ffffff">
+        </a-text>
+        <a-text
+          id="ar-iot-do"
+          value="DO -- mg/L"
+          position="-0.35 -0.22 0.02"
+          align="left"
+          anchor="left"
+          width="1.25"
+          color="#ffffff">
+        </a-text>
+      </a-entity>
+      {% endif %}
     </a-entity>
     {% endfor %}
   </a-scene>
@@ -266,6 +339,8 @@
 <script>
   window.__AR_MIND_FILE_READY = {{ mind_file_ready|yesno:"true,false" }};
   window.__AR_GUIDE_API_URL   = "{% url 'ar_ai_guide_api' %}";
+  window.__AR_IOT_DATA_API_URL = "{% url 'iot_data_api' %}";
+  window.__AR_IOT_API_TOKEN    = "{{ iot_api_token|escapejs }}";
   window.__AR_AFRAME_SRC      = "https://aframe.io/releases/1.6.0/aframe.min.js";
   window.__AR_MINDAR_SRC      = "{% static 'ar/mindar-image-aframe.prod.js' %}";
   window.__CSRF_TOKEN         = "{{ csrf_token }}";
