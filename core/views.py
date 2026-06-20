@@ -23,6 +23,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST, require_http_methods
 import msgpack
 import requests
+from pydub import AudioSegment
 
 from chat.dashboard import (
     IOT_DEFAULT_INTERVAL_MINUTES as DASHBOARD_IOT_DEFAULT_INTERVAL_MINUTES,
@@ -1356,7 +1357,7 @@ def _parse_ar_guide_payload(request) -> tuple[bool, str, str | None]:
     return False, str(request.POST.get("text") or "").strip(), requested_model
 
 
-def _extract_uploaded_audio(request) -> tuple[bytes, str]:
+def _extract_uploaded_audio(request) -> tuple[bytes, str, str]:
     upload = request.FILES.get("audio")
     if not upload:
         raise ValueError("缺少音訊檔案。")
@@ -1371,7 +1372,11 @@ def _extract_uploaded_audio(request) -> tuple[bytes, str]:
         raise ValueError("音訊檔案過大，請控制在 10 MB 以內。")
 
     suffix = Path(upload.name or "speech.wav").suffix.lower() or ".wav"
-    return audio_bytes, suffix
+    mime_type = (
+        str(request.POST.get("audio_mime_type") or "").strip()
+        or str(getattr(upload, "content_type", "") or "").strip()
+    )
+    return audio_bytes, suffix, mime_type
 
 
 def _azure_speech_credentials(required: bool = True) -> tuple[str, str]:
@@ -1420,6 +1425,67 @@ def _inspect_wav_audio(audio_bytes: bytes) -> dict[str, float | int]:
     }
 
 
+def _infer_audio_format(suffix: str, mime_type: str) -> str | None:
+    suffix_map = {
+        ".wav": "wav",
+        ".wave": "wav",
+        ".webm": "webm",
+        ".ogg": "ogg",
+        ".oga": "ogg",
+        ".mp3": "mp3",
+        ".m4a": "mp4",
+        ".mp4": "mp4",
+        ".aac": "aac",
+    }
+    mime_map = {
+        "audio/wav": "wav",
+        "audio/x-wav": "wav",
+        "audio/wave": "wav",
+        "audio/webm": "webm",
+        "audio/ogg": "ogg",
+        "audio/mp4": "mp4",
+        "audio/x-m4a": "mp4",
+        "audio/aac": "aac",
+        "audio/mpeg": "mp3",
+    }
+
+    normalized_mime = mime_type.split(";", 1)[0].strip().lower()
+    if normalized_mime in mime_map:
+        return mime_map[normalized_mime]
+    return suffix_map.get((suffix or "").lower())
+
+
+def _normalize_audio_for_azure_stt(audio_bytes: bytes, suffix: str, mime_type: str) -> bytes:
+    audio_format = _infer_audio_format(suffix, mime_type)
+    source_stream = io.BytesIO(audio_bytes)
+
+    try:
+        if audio_format:
+            audio = AudioSegment.from_file(source_stream, format=audio_format)
+        else:
+            audio = AudioSegment.from_file(source_stream)
+    except Exception as exc:  # noqa: BLE001
+        raise RuntimeError(
+            "音訊轉檔失敗，請重新錄音後再試，或改用 Chrome / Safari 重新授權麥克風。"
+        ) from exc
+
+    normalized_audio = audio.set_frame_rate(16000).set_channels(1).set_sample_width(2)
+    wav_stream = io.BytesIO()
+
+    try:
+        normalized_audio.export(wav_stream, format="wav", codec="pcm_s16le")
+    except Exception as exc:  # noqa: BLE001
+        raise RuntimeError("音訊轉換為 Azure 所需 WAV 格式時失敗。") from exc
+
+    wav_bytes = wav_stream.getvalue()
+    wav_info = _inspect_wav_audio(wav_bytes)
+    if wav_info["duration_seconds"] > _AR_GUIDE_AZURE_STT_MAX_SECONDS:
+        raise RuntimeError(
+            f"Azure REST 語音辨識目前支援 {_AR_GUIDE_AZURE_STT_MAX_SECONDS} 秒內的短音檔，請縮短錄音時間。"
+        )
+    return wav_bytes
+
+
 def _summarize_azure_error(response: requests.Response) -> str:
     try:
         payload = response.json()
@@ -1439,20 +1505,15 @@ def _summarize_azure_error(response: requests.Response) -> str:
     return "未知錯誤"
 
 
-def _azure_stt(audio_bytes: bytes, suffix: str) -> str:
-    del suffix  # Audio is sent directly to Azure REST API.
-
+def _azure_stt(audio_bytes: bytes, suffix: str, mime_type: str = "") -> str:
     speech_key, speech_region = _azure_speech_credentials(required=True)
-    wav_info = _inspect_wav_audio(audio_bytes)
+    wav_bytes = _normalize_audio_for_azure_stt(audio_bytes, suffix, mime_type)
+    wav_info = _inspect_wav_audio(wav_bytes)
 
     if wav_info["channels"] != 1 or wav_info["sample_width"] != 2:
         raise RuntimeError("Azure REST 語音辨識需要 16-bit 單聲道 WAV 音檔。")
     if wav_info["sample_rate"] != 16000:
         raise RuntimeError("Azure REST 語音辨識需要 16 kHz 單聲道 WAV 音檔。")
-    if wav_info["duration_seconds"] > _AR_GUIDE_AZURE_STT_MAX_SECONDS:
-        raise RuntimeError(
-            f"Azure REST 語音辨識目前支援 {_AR_GUIDE_AZURE_STT_MAX_SECONDS} 秒內的短音檔，請縮短錄音時間。"
-        )
 
     url = _azure_speech_url(speech_region, "stt")
     headers = {
@@ -1466,7 +1527,7 @@ def _azure_stt(audio_bytes: bytes, suffix: str) -> str:
             url,
             params={"language": _AR_GUIDE_AZURE_STT_LANGUAGE, "format": "simple"},
             headers=headers,
-            data=audio_bytes,
+            data=wav_bytes,
             timeout=_AR_GUIDE_AZURE_STT_TIMEOUT,
         )
     except requests.RequestException as exc:
@@ -1581,8 +1642,8 @@ def ar_ai_guide_api(request):
     transcript = ""
     if request.FILES.get("audio"):
         try:
-            audio_bytes, suffix = _extract_uploaded_audio(request)
-            transcript = _azure_stt(audio_bytes, suffix)
+            audio_bytes, suffix, mime_type = _extract_uploaded_audio(request)
+            transcript = _azure_stt(audio_bytes, suffix, mime_type)
         except ValueError as exc:
             return JsonResponse({"error": str(exc)}, status=400)
         except RuntimeError as exc:

@@ -28,8 +28,9 @@ class AzureSpeechHttpTests(TestCase):
         {"AZURE_SPEECH_KEY": "speech-key", "AZURE_SPEECH_REGION": "eastasia"},
         clear=False,
     )
+    @patch("core.views._normalize_audio_for_azure_stt")
     @patch("core.views.requests.post")
-    def test_azure_stt_uses_short_audio_rest_api(self, mock_post):
+    def test_azure_stt_uses_short_audio_rest_api(self, mock_post, mock_normalize):
         class DummyResponse:
             status_code = 200
             text = ""
@@ -42,16 +43,50 @@ class AzureSpeechHttpTests(TestCase):
                 }
 
         mock_post.return_value = DummyResponse()
+        mock_normalize.return_value = self._wav_bytes()
 
         transcript = views._azure_stt(self._wav_bytes(), ".wav")
 
         self.assertEqual(transcript, "你好")
+        mock_normalize.assert_called_once()
         self.assertIn("eastasia.stt.speech.microsoft.com", mock_post.call_args.args[0])
         self.assertEqual(mock_post.call_args.kwargs["params"]["language"], "zh-TW")
         self.assertEqual(
             mock_post.call_args.kwargs["headers"]["Content-Type"],
             "audio/wav; codecs=audio/pcm; samplerate=16000",
         )
+
+    @patch("core.views.AudioSegment.from_file")
+    def test_normalize_audio_for_azure_stt_converts_mobile_webm_to_wav(self, mock_from_file):
+        normalized_wav = self._wav_bytes()
+
+        class FakeAudioSegment:
+            def set_frame_rate(self, frame_rate):
+                self.frame_rate = frame_rate
+                return self
+
+            def set_channels(self, channels):
+                self.channels = channels
+                return self
+
+            def set_sample_width(self, sample_width):
+                self.sample_width = sample_width
+                return self
+
+            def export(self, output, format="wav", codec=None):
+                output.write(normalized_wav)
+
+        mock_from_file.return_value = FakeAudioSegment()
+
+        wav_bytes = views._normalize_audio_for_azure_stt(
+            b"fake-webm-payload",
+            ".webm",
+            "audio/webm;codecs=opus",
+        )
+
+        self.assertEqual(wav_bytes[:4], b"RIFF")
+        self.assertEqual(views._inspect_wav_audio(wav_bytes)["sample_rate"], 16000)
+        self.assertEqual(mock_from_file.call_args.kwargs["format"], "webm")
 
     @patch.dict(
         "os.environ",

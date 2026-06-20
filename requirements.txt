@@ -3,6 +3,8 @@ Pillow
 google-genai
 python-dotenv
 django-jazzmin
-openai>=1.30
+openai>=2.41,<3
+httpx>=0.28,<1
 msgpack
 requests>=2.31
+pydub>=0.25
