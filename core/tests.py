@@ -4,9 +4,11 @@ import wave
 from datetime import timedelta
 from unittest.mock import ANY, patch
 
-from django.test import TestCase, override_settings
+from django.test import RequestFactory, TestCase, override_settings
 from django.urls import reverse
 from django.utils import timezone
+
+from fengcloud import prompts as prompt_library
 
 from . import views
 from .models import Event, StoryPost
@@ -194,6 +196,7 @@ class ChatbotApiTests(TestCase):
 
 class AiGuideChatTests(TestCase):
     def setUp(self):
+        self.factory = RequestFactory()
         Event.objects.create(
             title="春季導覽活動",
             slug="spring-tour",
@@ -263,6 +266,67 @@ class AiGuideChatTests(TestCase):
         self.assertTrue(payload["suggested_action"]["button_label"])
         mock_call.assert_called_once()
 
+    def test_ai_guide_chat_local_story_retrieval_matches_keywords(self):
+        matched = views._retrieve_local_stories("可以介紹水井三寶和白馬的故事嗎？")
+
+        self.assertTrue(matched)
+        self.assertIn("水井三寶", matched[0]["matched_keywords"])
+        self.assertIn("白馬", matched[0]["matched_keywords"])
+        self.assertIn("姻緣花", matched[0]["content"])
+
+    def test_ai_guide_chat_local_story_retrieval_matches_project_staff(self):
+        matched = views._retrieve_local_stories("計畫主持人許永和是誰？")
+
+        self.assertTrue(matched)
+        joined_content = " ".join(item["content"] for item in matched[:3])
+        self.assertIn("許永和", joined_content)
+        self.assertIn("yhsheu@nfu.edu.tw", joined_content)
+
+    @patch.dict("os.environ", {"DEEPSEEK_API_KEY": "deepseek-test-key"}, clear=False)
+    @patch("core.views.requests.post")
+    def test_call_deepseek_ai_guide_uses_requests_and_includes_story_context(self, mock_post):
+        class DummyResponse:
+            status_code = 200
+            text = ""
+
+            @staticmethod
+            def json():
+                return {
+                    "choices": [
+                        {
+                            "message": {
+                                "content": (
+                                    '{"reply_text":"水井三寶象徵在地記憶。",'
+                                    '"suggested_action":{"has_action":false,"button_label":"","url":""}}'
+                                )
+                            }
+                        }
+                    ]
+                }
+
+        mock_post.return_value = DummyResponse()
+        request = self.factory.get(reverse("home"))
+
+        raw_reply = views._call_deepseek_ai_guide(
+            request,
+            "請介紹水井三寶的故事",
+            page_path="/",
+            page_title="首頁",
+        )
+
+        self.assertIn("reply_text", raw_reply)
+        self.assertIn("/chat/completions", mock_post.call_args.args[0])
+        sent_payload = mock_post.call_args.kwargs["json"]
+        self.assertEqual(sent_payload["model"], views.AI_GUIDE_CHAT_MODEL)
+        self.assertIn("獨家參考資料", sent_payload["messages"][0]["content"])
+        self.assertIn("水井三寶", sent_payload["messages"][0]["content"])
+
+    def test_chat_prompt_route_table_includes_aiot_and_iot_pages(self):
+        route_rules = prompt_library.build_route_rules_table(include_api=False)
+
+        self.assertIn("/aiot-water-assistant/", route_rules)
+        self.assertIn("/iot-war-room/", route_rules)
+
 
 class ArGuidePageTests(TestCase):
     def test_ar_guide_page_renders(self):
@@ -274,6 +338,7 @@ class ArGuidePageTests(TestCase):
         self.assertContains(response, "風雲水井歷史介紹")
         self.assertContains(response, 'id="ar-model-select"', html=False)
         self.assertContains(response, 'id="ar-iot-panel"', html=False)
+        self.assertContains(response, 'data-marker-key="history"', html=False)
         self.assertContains(response, "__AR_IOT_DATA_API_URL", html=False)
 
 
@@ -283,7 +348,13 @@ class ArGuideApiTests(TestCase):
     def test_ar_guide_api_uses_selected_model(self, mock_direct_chat, mock_tts):
         response = self.client.post(
             reverse("ar_ai_guide_api"),
-            data=json.dumps({"text": "請介紹風雲水井", "model": "gemini-2.5-flash-lite"}),
+            data=json.dumps(
+                {
+                    "text": "請介紹風雲水井",
+                    "model": "gemini-2.5-flash-lite",
+                    "current_marker": "waterwheel",
+                }
+            ),
             content_type="application/json",
         )
 
@@ -298,7 +369,7 @@ class ArGuideApiTests(TestCase):
         args = mock_direct_chat.call_args
         self.assertEqual(args.args[0], "請介紹風雲水井")
         self.assertEqual(args.kwargs["model_name"], "gemini-2.5-flash-lite")
-        self.assertEqual(args.kwargs["system_prompt"], ANY)
+        self.assertIn("機電與物理專家", args.kwargs["system_prompt"])
         mock_tts.assert_called_once_with("這是中文導覽回覆")
         self.assertEqual(self.client.session["aiot_selected_model"], "gemini-2.5-flash-lite")
 

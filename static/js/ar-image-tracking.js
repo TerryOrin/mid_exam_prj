@@ -107,6 +107,7 @@ const STATE = {
   sceneReady: false,
   currentAudio: null,
   currentSpeech: null,
+  currentMarker: "",
   mediaStream: null,
   mediaRecorder: null,
   mediaMimeType: "",
@@ -455,6 +456,7 @@ async function uploadAudioBlob(blob, originalMimeType) {
   formData.append("audio", blob, audioFileNameForBlob(blob));
   formData.append("audio_mime_type", blob.type || originalMimeType || "");
   if (getSelectedModel()) formData.append("model", getSelectedModel());
+  if (STATE.currentMarker) formData.append("current_marker", STATE.currentMarker);
 
   const response = await fetch(window.__AR_GUIDE_API_URL, {
     method: "POST",
@@ -753,6 +755,7 @@ function stopArTracking() {
   }
 
   STATE.sceneReady = false;
+  STATE.currentMarker = "";
   resetArIotPanel();
 
   document.querySelectorAll(".ar-source-video").forEach((video) => {
@@ -924,18 +927,19 @@ function setupArIotPanel() {
 function bindArTargetEvents() {
   const videos = Array.from(document.querySelectorAll(".ar-source-video"));
   const pairs = [
-    { target: "#target-0", video: "#ar-video-1", label: "風雲水井" },
-    { target: "#target-1", video: "#ar-video-2", label: "水車地景" },
-    { target: "#target-2", video: "#ar-video-3", label: "智慧魚塭" },
+    { target: "#target-0", video: "#ar-video-1", label: "風雲水井", markerKey: "history" },
+    { target: "#target-1", video: "#ar-video-2", label: "水車地景", markerKey: "waterwheel" },
+    { target: "#target-2", video: "#ar-video-3", label: "智慧魚塭", markerKey: "aiot" },
   ];
 
-  pairs.forEach(({ target, video, label }) => {
+  pairs.forEach(({ target, video, label, markerKey }) => {
     const targetNode = document.querySelector(target);
     const videoNode = document.querySelector(video);
     if (!targetNode || !videoNode) return;
 
     targetNode.addEventListener("targetFound", async () => {
       console.log("[AR] target found", label);
+      STATE.currentMarker = markerKey || targetNode.dataset.markerKey || "";
       videos.forEach((item) => {
         if (item !== videoNode) pauseAndReset(item);
       });
@@ -952,6 +956,9 @@ function bindArTargetEvents() {
 
     targetNode.addEventListener("targetLost", () => {
       console.log("[AR] target lost", label);
+      if (STATE.currentMarker === (markerKey || targetNode.dataset.markerKey || "")) {
+        STATE.currentMarker = "";
+      }
       pauseAndReset(videoNode);
       DOM.scanLine()?.classList.remove("is-hidden");
       setArStatus("ready", "掃描中");

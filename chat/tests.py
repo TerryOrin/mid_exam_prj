@@ -109,3 +109,10 @@ class WaterQualityAssistantTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "AIOT 水質助手")
         self.assertNotContains(response, "AIOT Smart Operations")
+
+    def test_aiot_assistant_prompt_includes_current_metrics(self):
+        prompt = views._aiot_assistant_system_prompt()
+
+        self.assertIn("29.40 °C", prompt)
+        self.assertIn("8.10", prompt)
+        self.assertIn("5.80 mg/L", prompt)

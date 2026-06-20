@@ -4,13 +4,9 @@ import json
 import os
 from dataclasses import dataclass
 
-from . import tools
+from fengcloud import prompts as prompt_library
 
-SYSTEM_PROMPT = """You are the AIOT Water Quality Assistant for an aquaculture website.
-Help users interpret pond data, explain risk signals, and suggest practical next actions.
-Be specific, concise, and grounded in the tool data when tools are used.
-If measurements look risky, say why and suggest immediate checks or mitigation steps.
-"""
+from . import tools
 
 MAX_TOOL_LOOPS = 5
 GEMINI_OPENAI_BASE_URL = "https://generativelanguage.googleapis.com/v1beta/openai/"
@@ -176,7 +172,26 @@ def direct_chat(
 
 
 def chat(user_message: str, history: list[dict] | None = None, model_name: str | None = None) -> str:
-    messages: list[dict] = [{"role": "system", "content": SYSTEM_PROMPT}]
+    return chat_with_system_prompt(
+        user_message,
+        history=history,
+        model_name=model_name,
+        system_prompt=prompt_library.build_aiot_water_assistant_system_prompt(
+            current_temp="目前未提供",
+            current_ph="目前未提供",
+            current_do="目前未提供",
+        ),
+    )
+
+
+def chat_with_system_prompt(
+    user_message: str,
+    *,
+    system_prompt: str,
+    history: list[dict] | None = None,
+    model_name: str | None = None,
+) -> str:
+    messages: list[dict] = [{"role": "system", "content": system_prompt}]
     if history:
         messages.extend(history)
     messages.append({"role": "user", "content": user_message})

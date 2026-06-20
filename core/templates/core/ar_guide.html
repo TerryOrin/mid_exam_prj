@@ -138,6 +138,7 @@
     <a-entity
       id="target-{{ stop.target_index }}"
       mindar-image-target="targetIndex: {{ stop.target_index }}"
+      data-marker-key="{{ stop.marker_key }}"
       {% if stop.target_index == 2 %}data-iot-panel-target="true"{% endif %}>
       <a-video src="#ar-video-{{ forloop.counter }}" width="1" height="{{ stop.video_height }}" position="0 0 0.01"></a-video>
       {% if stop.target_index == 2 %}

@@ -6,6 +6,8 @@ from django.http import JsonResponse
 from django.shortcuts import render
 from django.views.decorators.http import require_GET, require_http_methods
 
+from fengcloud import prompts as prompt_library
+
 from . import llm
 from .dashboard import build_dashboard_payload
 
@@ -64,6 +66,22 @@ def _dashboard_payload() -> dict:
     return build_dashboard_payload(include_war_room=False)
 
 
+def _aiot_assistant_system_prompt() -> str:
+    metrics = _dashboard_payload().get("metrics", {})
+
+    def _format_value(value, unit: str = "") -> str:
+        if value is None:
+            return "目前無資料"
+        suffix = f" {unit}" if unit else ""
+        return f"{float(value):.2f}{suffix}"
+
+    return prompt_library.build_aiot_water_assistant_system_prompt(
+        current_temp=_format_value(metrics.get("temperature_c"), "°C"),
+        current_ph=_format_value(metrics.get("ph")),
+        current_do=_format_value(metrics.get("dissolved_oxygen_mg_l"), "mg/L"),
+    )
+
+
 def chat_page(request):
     current_model = _current_model_name(request)
     context = {
@@ -102,7 +120,12 @@ def chat_api(request):
     history = _get_session_history(request)
 
     try:
-        reply = llm.chat(message, history=history, model_name=model_name)
+        reply = llm.chat_with_system_prompt(
+            message,
+            history=history,
+            model_name=model_name,
+            system_prompt=_aiot_assistant_system_prompt(),
+        )
     except Exception as exc:  # noqa: BLE001
         return JsonResponse({"error": f"LLM request failed: {type(exc).__name__}: {exc}"}, status=500)
 

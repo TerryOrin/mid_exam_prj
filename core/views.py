@@ -33,6 +33,7 @@ from chat.dashboard import (
     build_iot_payload as build_aligned_iot_payload,
 )
 from chat import llm as shared_llm
+from fengcloud import prompts as prompt_library
 
 from .models import HeroSlide, Event, StoryPost
 from .forms import ContactForm
@@ -59,6 +60,48 @@ AI_GUIDE_CHAT_SESSION_KEY = "ai_guide_chat_count"
 AI_GUIDE_CHAT_MODEL = "deepseek-v4-flash"
 AI_GUIDE_CHAT_TIMEOUT_SECONDS = 20.0
 IOT_API_BROWSER_TOKEN_SESSION_KEY = "iot_browser_api_token"
+LOCAL_STORIES = [
+    {
+        "keywords": ["風雲客棧", "理念", "三生", "虎科大", "數位聚落", "USR"],
+        "content": "「風雲客棧數位平台」由國立虎尾科技大學電機資訊學院師生打造。以大學社會責任（USR）為核心，透過 AIoT 智慧養殖、STEAM 科技教育與在地文化保存，攜手水井村村民描繪「三生共好」永續藍圖。",
+    },
+    {
+        "keywords": ["故事", "水井三寶", "姻緣花", "白馬", "烏龜", "歷史"],
+        "content": "紀錄水井村歷史脈絡與沿海濕地生態，深入挖掘「水井三寶——姻緣花、白馬、烏龜」等珍貴文化象徵，讓百年記憶在數位空間傳承。",
+    },
+    {
+        "keywords": ["活動", "報名", "Qrobt", "地圖", "導覽"],
+        "content": "整合社區發展協會與學生工作坊活動資訊，提供線上報名系統。結合學生發想的「水井村 Qrobt 趣味地圖」，引領訪客實地探索百年漁村。",
+    },
+    {
+        "keywords": ["AIoT", "水質", "養殖", "溫度", "pH", "溶氧量", "投餌"],
+        "content": "團隊研發智慧養殖監控系統，漁民用手機便能即時掌握魚塭溫度、pH 值與溶氧量。搭配自動投餌與節水循環，降低人力負擔。",
+    },
+    {
+        "keywords": ["STEAM", "教育", "機器人", "OTTO", "Matrix", "青銀共學"],
+        "content": "大學生帶著 Matrix 機器人與互動程式課程走進偏鄉校園。透過青銀共學活動，讓阿公阿嬤與孫子輩產生新奇對話與笑聲。",
+    },
+    {
+        "keywords": ["計畫人員", "主持團隊", "團隊名單", "計畫成員", "聯絡窗口"],
+        "content": "本計畫團隊包含：計畫主持人許永和；共同主持人林正敏、張耀南；協同主持人莊文河、郭永明、吳添全、陳鳳雀；計畫聯絡人陳靜美。若需要窗口資訊，也可以直接詢問主持人、共同主持人、協同主持人或聯絡人。",
+    },
+    {
+        "keywords": ["計畫主持人", "許永和", "資訊工程系", "特聘教授", "院長"],
+        "content": "計畫主持人為許永和，單位是資訊工程系，職稱是特聘教授兼電機資訊學院院長，電話 0928471855，電子信箱 yhsheu@nfu.edu.tw。",
+    },
+    {
+        "keywords": ["共同主持人", "林正敏", "張耀南", "永續發展暨社會責任處", "生物科技系"],
+        "content": "共同主持人共有兩位：林正敏，單位是電機資訊學院，職稱為教授兼永續發展暨社會責任處執行長，電話 05-6313079，電子信箱 lcm@nfu.edu.tw；張耀南，單位是生物科技系，職稱為教授，電話 05-6315504，電子信箱 nelson@nfu.edu.tw。",
+    },
+    {
+        "keywords": ["協同主持人", "莊文河", "郭永明", "吳添全", "陳鳳雀", "電子工程系", "通識教育中心"],
+        "content": "協同主持人共有四位：莊文河，單位資訊工程系，職稱副教授，電話 05-6315584，電子信箱 riverjuang@nfu.edu.tw；郭永明，單位電子工程系，職稱助理教授，電話 05-631-5560，電子信箱 ymkuo@nfu.edu.tw；吳添全，單位電子工程系，職稱助理教授，電話 05-6315515，電子信箱 eetcwu@nfu.edu.tw；陳鳳雀，單位通識教育中心，職稱助理教授，電話 05-6315866，電子信箱 fanny@nfu.edu.tw。",
+    },
+    {
+        "keywords": ["計畫聯絡人", "陳靜美", "電資學院", "研究副管理師", "聯絡人"],
+        "content": "計畫聯絡人是陳靜美，單位為電資學院，職稱是研究副管理師，電話 05-6315602，電子信箱 g00441@nfu.edu.tw。",
+    },
+]
 
 
 def _events_with_image_first(queryset):
@@ -124,6 +167,7 @@ def ar_guide_view(request):
             "mission": "將鏡頭對準風雲水井圖卡，確認影片能穩定覆蓋在原圖位置上。",
             "video": "video/ar_video1.mp4",
             "target_index": 0,
+            "marker_key": prompt_library.MARKER_HISTORY,
         },
         {
             "eyebrow": "AR Stop 02",
@@ -134,6 +178,7 @@ def ar_guide_view(request):
             "mission": "移動鏡頭時確認影片仍鎖定在水車圖卡上，不要漂浮或錯位。",
             "video": "video/ar_video2.mp4",
             "target_index": 1,
+            "marker_key": prompt_library.MARKER_WATERWHEEL,
         },
         {
             "eyebrow": "AR Stop 03",
@@ -144,6 +189,7 @@ def ar_guide_view(request):
             "mission": "對準生態池圖卡後檢查影片是否完整覆蓋，並保持追蹤穩定。",
             "video": "video/ar_video3.mp4",
             "target_index": 2,
+            "marker_key": prompt_library.MARKER_AIOT_POOL,
         },
     ]
 
@@ -487,15 +533,6 @@ def _heuristic_ai_diagnosis(current: dict[str, float]) -> dict[str, object]:
     }
 
 
-_AI_DIAGNOSE_SYSTEM_PROMPT = (
-    "你是智慧養殖水質診斷助手。"
-    "請根據目前水溫、pH 與溶氧數值，用繁體中文提供短而具體的風險判讀。"
-    "只能回傳 JSON，格式為 "
-    '{"severity":"good|watch|alert","title":"...","advice":"...","facts":["...","..."]}。'
-    "不要輸出 Markdown，不要加前後說明。"
-)
-
-
 def _extract_json_object(text: str) -> str:
     fenced_match = re.search(r"```(?:json)?\s*(\{.*\})\s*```", text, flags=re.DOTALL)
     if fenced_match:
@@ -509,16 +546,14 @@ def _extract_json_object(text: str) -> str:
 
 
 def _llm_ai_diagnosis(current: dict[str, float], model_name: str) -> dict[str, object]:
-    prompt = (
-        "請針對以下魚塭即時數值做水質診斷。\n"
-        f"- 水溫：{current['temperature_c']:.2f} °C\n"
-        f"- pH：{current['ph']:.2f}\n"
-        f"- 溶氧：{current['dissolved_oxygen_mg_l']:.2f} mg/L\n"
-        "輸出內容要讓養殖現場人員可以直接採取行動。"
+    system_prompt = prompt_library.build_aiot_diagnosis_system_prompt(
+        current_temp=f"{current['temperature_c']:.2f} °C",
+        current_ph=f"{current['ph']:.2f}",
+        current_do=f"{current['dissolved_oxygen_mg_l']:.2f} mg/L",
     )
     reply = shared_llm.direct_chat(
-        prompt,
-        system_prompt=_AI_DIAGNOSE_SYSTEM_PROMPT,
+        "請輸出本次水質診斷 JSON。",
+        system_prompt=system_prompt,
         model_name=model_name,
     )
     payload = json.loads(_extract_json_object(reply))
@@ -879,6 +914,44 @@ def _build_ai_guide_action_options(request, user_message: str = "") -> list[dict
     return deduped
 
 
+def _retrieve_local_stories(user_message: str) -> list[dict[str, object]]:
+    text = str(user_message or "").strip()
+    lowered = text.lower()
+    matched: list[dict[str, object]] = []
+
+    for story in LOCAL_STORIES:
+        keywords = [str(keyword).strip() for keyword in story.get("keywords", []) if str(keyword).strip()]
+        matched_keywords = [
+            keyword
+            for keyword in keywords
+            if keyword in text or keyword.lower() in lowered
+        ]
+        if not matched_keywords:
+            continue
+        matched.append(
+            {
+                "keywords": keywords,
+                "matched_keywords": matched_keywords,
+                "content": str(story.get("content") or "").strip(),
+            }
+        )
+
+    matched.sort(key=lambda item: len(item["matched_keywords"]), reverse=True)
+    return matched
+
+
+def _build_ai_guide_story_reference(user_message: str) -> str:
+    matched_stories = _retrieve_local_stories(user_message)
+    if not matched_stories:
+        return ""
+
+    story_lines = []
+    for index, story in enumerate(matched_stories[:3], start=1):
+        keywords = "、".join(story["matched_keywords"])
+        story_lines.append(f"{index}. 命中關鍵字：{keywords}\n內容：{story['content']}")
+    return "\n\n".join(story_lines)
+
+
 def _default_ai_guide_button_label(url: str) -> str:
     if url.startswith(reverse("iot_war_room")):
         return "前往 IoT 戰情室"
@@ -901,6 +974,16 @@ def _default_ai_guide_button_label(url: str) -> str:
     if url.startswith("/stories/"):
         return "查看內容詳情"
     return "前往相關頁面"
+
+
+def _should_force_ai_guide_action(user_message: str) -> bool:
+    text = str(user_message or "").strip()
+    lowered = text.lower()
+    for keyword in prompt_library.CHAT_WIDGET_FORCE_ACTION_KEYWORDS:
+        normalized_keyword = keyword.lower()
+        if keyword in text or normalized_keyword in lowered:
+            return True
+    return False
 
 
 def _suggest_ai_guide_action_url(request, user_message: str, page_path: str = "") -> str:
@@ -938,6 +1021,10 @@ def _suggest_ai_guide_action_url(request, user_message: str, page_path: str = ""
 
 
 def _build_ai_guide_local_reply(user_message: str) -> str:
+    matched_stories = _retrieve_local_stories(user_message)
+    if matched_stories:
+        return str(matched_stories[0]["content"])
+
     matched_events, matched_posts = _rank_local_content(user_message)
     lowered = (user_message or "").lower()
 
@@ -980,10 +1067,17 @@ def _build_ai_guide_fallback_payload(
     *,
     raw_reply: str = "",
 ) -> dict[str, object]:
-    if raw_reply.strip():
-        return _build_ai_guide_payload(raw_reply.strip(), has_action=False)
-
     fallback_url = _suggest_ai_guide_action_url(request, user_message, page_path=page_path)
+    force_action = _should_force_ai_guide_action(user_message)
+
+    if raw_reply.strip():
+        return _build_ai_guide_payload(
+            raw_reply.strip(),
+            has_action=bool(force_action and fallback_url),
+            button_label=_default_ai_guide_button_label(fallback_url) if force_action else "",
+            url=fallback_url if force_action else "",
+        )
+
     return _build_ai_guide_payload(
         _build_ai_guide_local_reply(user_message),
         has_action=bool(fallback_url),
@@ -1005,6 +1099,7 @@ def _coerce_ai_guide_payload(
     action_options = _build_ai_guide_action_options(request, user_message)
     allowed_urls = {item["url"] for item in action_options}
     fallback_url = _suggest_ai_guide_action_url(request, user_message, page_path=page_path)
+    force_action = _should_force_ai_guide_action(user_message)
 
     reply_text = str(payload.get("reply_text") or "").strip() or _build_ai_guide_local_reply(
         user_message
@@ -1022,7 +1117,7 @@ def _coerce_ai_guide_payload(
         action_url = fallback_url
 
     should_show_action = bool(action_url) and (
-        bool(raw_action.get("has_action")) or bool(fallback_url)
+        bool(raw_action.get("has_action")) or bool(fallback_url) or force_action
     )
     button_label = str(raw_action.get("button_label") or "").strip()
     if should_show_action and not button_label:
@@ -1042,35 +1137,23 @@ def _build_ai_guide_system_prompt(
     page_path: str = "",
     page_title: str = "",
 ) -> str:
-    action_lines = "\n".join(
-        f"- {item['label']}：{item['url']}" for item in _build_ai_guide_action_options(request, user_message)
-    )
     site_context = _build_chat_context_payload(
         request=request,
         user_message=user_message,
         page_path=page_path,
         page_title=page_title,
     )
-
-    return (
-        "你是「風雲水鄉 AI 導覽助手」，只能回答本網站內容，並協助使用者找到對應頁面。"
-        "你必須永遠只輸出單一 JSON 字串，絕對不能輸出 Markdown、```json、前言、結語或任何 JSON 以外的文字。"
-        'JSON 格式必須完全符合：{"reply_text":"...","suggested_action":{"has_action":true,"button_label":"...","url":"/..."}}。'
-        "reply_text 要用繁體中文、親切、精簡，盡量控制在 80 字內。"
-        "如果 suggested_action.has_action 為 false，button_label 與 url 必須是空字串。"
-        "只有在使用者明確想看頁面、清單、詳情，或按一下按鈕會更有幫助時，才把 has_action 設為 true。"
-        "url 只能從下列相對路徑中挑選，不能自創、不能用完整網址、不能跳到站外：\n"
-        f"{action_lines}\n\n"
-        f"目前頁面：{site_context['current_page']}\n\n"
-        f"站內導覽：\n{site_context['navigation_lines']}\n\n"
-        f"相關活動：\n{site_context['event_lines']}\n\n"
-        f"相關文章：\n{site_context['post_lines']}"
+    return prompt_library.build_chat_widget_system_prompt(
+        route_rules=prompt_library.build_route_rules_table(include_api=False),
+        reference_data=_build_ai_guide_story_reference(user_message) or "無",
+        current_page=site_context["current_page"],
+        navigation_lines=site_context["navigation_lines"],
+        event_lines=site_context["event_lines"],
+        post_lines=site_context["post_lines"],
     )
 
 
 def _call_deepseek_ai_guide(request, user_message: str, page_path: str = "", page_title: str = "") -> str:
-    from openai import OpenAI
-
     api_key = ((os.environ.get("DS_API_KEY") or os.environ.get("DEEPSEEK_API_KEY") or "")).strip()
     if not api_key:
         raise RuntimeError("Missing DS_API_KEY or DEEPSEEK_API_KEY.")
@@ -1081,14 +1164,10 @@ def _call_deepseek_ai_guide(request, user_message: str, page_path: str = "", pag
         page_path=page_path,
         page_title=page_title,
     )
-    client = OpenAI(
-        api_key=api_key,
-        base_url=shared_llm.DEEPSEEK_OPENAI_BASE_URL,
-        timeout=AI_GUIDE_CHAT_TIMEOUT_SECONDS,
-    )
-    response = client.chat.completions.create(
-        model=AI_GUIDE_CHAT_MODEL,
-        messages=[
+    api_url = f"{shared_llm.DEEPSEEK_OPENAI_BASE_URL.rstrip('/')}/chat/completions"
+    request_payload = {
+        "model": AI_GUIDE_CHAT_MODEL,
+        "messages": [
             {"role": "system", "content": system_prompt},
             {
                 "role": "user",
@@ -1099,10 +1178,62 @@ def _call_deepseek_ai_guide(request, user_message: str, page_path: str = "", pag
                 ),
             },
         ],
-        temperature=0.2,
-        max_tokens=260,
-    )
-    reply_text = _llm_message_text(response.choices[0].message).strip()
+        "temperature": 0.2,
+        "max_tokens": 260,
+    }
+    headers = {
+        "Authorization": f"Bearer {api_key}",
+        "Content-Type": "application/json",
+        "Accept": "application/json",
+    }
+
+    try:
+        response = requests.post(
+            api_url,
+            headers=headers,
+            json=request_payload,
+            timeout=AI_GUIDE_CHAT_TIMEOUT_SECONDS,
+        )
+    except requests.RequestException as exc:
+        raise RuntimeError(f"DeepSeek API request failed: {exc}") from exc
+
+    try:
+        payload = response.json()
+    except ValueError:
+        payload = None
+
+    if response.status_code != 200:
+        detail = ""
+        if isinstance(payload, dict):
+            raw_error = payload.get("error")
+            if isinstance(raw_error, dict):
+                detail = str(raw_error.get("message") or "").strip()
+            elif raw_error:
+                detail = str(raw_error).strip()
+            if not detail:
+                detail = str(payload.get("message") or "").strip()
+        if not detail:
+            detail = re.sub(r"\s+", " ", (response.text or "").strip())[:220] or "Unknown API error."
+        raise RuntimeError(f"DeepSeek API request failed: HTTP {response.status_code} {detail}")
+
+    if not isinstance(payload, dict):
+        raise RuntimeError("DeepSeek returned a non-JSON response body.")
+
+    choices = payload.get("choices")
+    if not isinstance(choices, list) or not choices:
+        raise RuntimeError("DeepSeek returned no choices.")
+
+    message = choices[0].get("message") if isinstance(choices[0], dict) else None
+    content = message.get("content") if isinstance(message, dict) else None
+    if isinstance(content, list):
+        reply_text = "".join(
+            str(item.get("text") or "")
+            for item in content
+            if isinstance(item, dict)
+        ).strip()
+    else:
+        reply_text = str(content or "").strip()
+
     if not reply_text:
         raise RuntimeError("DeepSeek returned an empty reply.")
     return reply_text
@@ -1280,11 +1411,6 @@ def chatbot_api(request):
 
 _AR_GUIDE_SESSION_KEY = "chat_history"
 _AR_GUIDE_MAX_ROUNDS = 5
-_AR_GUIDE_SYSTEM_PROMPT = (
-    "你是雲林水井村的智慧養殖與漁村導覽專家。"
-    "請用繁體中文、親切、口語化且精簡的語氣回答。"
-    "字數盡量控制在 50 字以內適合語音播報。"
-)
 _AR_GUIDE_AZURE_STT_LANGUAGE = "zh-TW"
 _AR_GUIDE_AZURE_TTS_VOICE = "zh-TW-HsiaoChenNeural"
 _AR_GUIDE_AZURE_STT_MAX_SECONDS = 60
@@ -1334,7 +1460,18 @@ def _save_ar_guide_history(request, history: list[dict]) -> None:
     request.session.modified = True
 
 
-def _parse_ar_guide_payload(request) -> tuple[bool, str, str | None]:
+def _normalize_ar_marker(current_marker: str | None) -> str:
+    marker_key = str(current_marker or "").strip().lower()
+    if marker_key in {
+        prompt_library.MARKER_HISTORY,
+        prompt_library.MARKER_WATERWHEEL,
+        prompt_library.MARKER_AIOT_POOL,
+    }:
+        return marker_key
+    return ""
+
+
+def _parse_ar_guide_payload(request) -> tuple[bool, str, str | None, str]:
     content_type = request.content_type or ""
 
     if "application/json" in content_type:
@@ -1344,17 +1481,19 @@ def _parse_ar_guide_payload(request) -> tuple[bool, str, str | None]:
             raise ValueError("JSON 格式錯誤。") from exc
 
         if body.get("clear"):
-            return True, "", None
+            return True, "", None, ""
 
         requested_model = str(body.get("model") or "").strip() or None
-        return False, str(body.get("text") or "").strip(), requested_model
+        current_marker = _normalize_ar_marker(body.get("current_marker"))
+        return False, str(body.get("text") or "").strip(), requested_model, current_marker
 
     clear_flag = str(request.POST.get("clear") or "").lower()
     if clear_flag in {"1", "true", "yes"}:
-        return True, "", None
+        return True, "", None, ""
 
     requested_model = str(request.POST.get("model") or "").strip() or None
-    return False, str(request.POST.get("text") or "").strip(), requested_model
+    current_marker = _normalize_ar_marker(request.POST.get("current_marker"))
+    return False, str(request.POST.get("text") or "").strip(), requested_model, current_marker
 
 
 def _extract_uploaded_audio(request) -> tuple[bytes, str, str]:
@@ -1557,10 +1696,15 @@ def _azure_stt(audio_bytes: bytes, suffix: str, mime_type: str = "") -> str:
     raise RuntimeError(f"Azure STT 失敗：{recognition_status or '未知錯誤'}")
 
 
-def _call_llm_for_ar(question: str, history: list[dict], model_name: str) -> str:
+def _call_llm_for_ar(
+    question: str,
+    history: list[dict],
+    model_name: str,
+    current_marker: str = "",
+) -> str:
     return shared_llm.direct_chat(
         question,
-        system_prompt=_AR_GUIDE_SYSTEM_PROMPT,
+        system_prompt=prompt_library.build_ar_guide_system_prompt(current_marker),
         history=history,
         model_name=model_name,
     )
@@ -1626,7 +1770,7 @@ def _azure_tts_data_url(text: str) -> str:
 @require_POST
 def ar_ai_guide_api(request):
     try:
-        clear_requested, manual_text, requested_model = _parse_ar_guide_payload(request)
+        clear_requested, manual_text, requested_model, current_marker = _parse_ar_guide_payload(request)
     except ValueError as exc:
         return JsonResponse({"error": str(exc)}, status=400)
 
@@ -1659,7 +1803,12 @@ def ar_ai_guide_api(request):
     history = _get_ar_guide_history(request)
 
     try:
-        answer = _call_llm_for_ar(transcript, history, model_name)
+        answer = _call_llm_for_ar(
+            transcript,
+            history,
+            model_name,
+            current_marker=current_marker,
+        )
     except Exception as exc:
         logger.exception("AR guide LLM call failed: %s", exc)
         return JsonResponse({"error": f"AI 模型呼叫失敗：{exc}"}, status=500)
