@@ -76,7 +76,7 @@ function simulateIotSnapshot() {
 }
 
 const DOM = {
-  exhibitMode: () => document.getElementById("exhibit-display-mode"),
+  exhibitMode: () => document.getElementById("ar-guide-overview"),
   arImmersive: () => document.getElementById("ar-immersive-mode"),
   arScene: () => document.getElementById("ar-aframe-scene"),
   fallbackCamera: () => document.getElementById("ar-camera-fallback"),
@@ -112,9 +112,9 @@ const STATE = {
   mediaMimeType: "",
   mediaChunks: [],
   fallbackCameraStream: null,
-  scriptPromises: Object.create(null),
   ignoreMouseUntil: 0,
   arIotPanelBound: false,
+  sceneLoadedLogged: false,
 };
 
 function setArStatus(state, label) {
@@ -608,43 +608,112 @@ function bindMicControls() {
   });
 }
 
-function loadScriptOnce(src, testFn) {
-  if (!src) return Promise.reject(new Error("缺少 script 路徑。"));
-  if (typeof testFn === "function" && testFn()) return Promise.resolve();
-  if (STATE.scriptPromises[src]) return STATE.scriptPromises[src];
+function waitForSceneLoaded(scene) {
+  if (scene?.hasLoaded) return Promise.resolve();
 
-  STATE.scriptPromises[src] = new Promise((resolve, reject) => {
-    const existing = document.querySelector(`script[data-ar-src="${src}"]`);
-    if (existing) {
-      if (existing.dataset.loaded === "true") {
-        resolve();
-        return;
-      }
-      existing.addEventListener("load", () => resolve(), { once: true });
-      existing.addEventListener("error", () => reject(new Error(`載入失敗：${src}`)), { once: true });
+  return new Promise((resolve, reject) => {
+    if (!scene) {
+      reject(new Error("找不到 A-Frame scene。"));
       return;
     }
 
-    const script = document.createElement("script");
-    script.src = src;
-    script.async = true;
-    script.dataset.arSrc = src;
-    script.onload = () => {
-      script.dataset.loaded = "true";
-      resolve();
-    };
-    script.onerror = () => reject(new Error(`載入失敗：${src}`));
-    document.head.appendChild(script);
+    scene.addEventListener("loaded", resolve, { once: true });
   });
-
-  return STATE.scriptPromises[src];
 }
 
-async function ensureArRuntime() {
-  if (!window.__AR_MIND_FILE_READY) return;
+function cleanupMindarCameraFeeds() {
+  const videos = Array.from(document.querySelectorAll("video"));
+  videos.forEach((video) => {
+    if (video.classList.contains("ar-source-video")) return;
+    const stream = video.srcObject;
+    if (stream && typeof stream.getTracks === "function") {
+      stream.getTracks().forEach((track) => track.stop());
+      video.srcObject = null;
+    }
+    video.classList.remove("ar-camera-feed");
+  });
+}
 
-  await loadScriptOnce(window.__AR_AFRAME_SRC, () => Boolean(window.AFRAME));
-  await loadScriptOnce(window.__AR_MINDAR_SRC, () => Boolean(window.MINDAR?.IMAGE));
+function attachMindarCameraFeed() {
+  const videos = Array.from(document.querySelectorAll("video"));
+
+  const cameraVideo = videos.find((video) => {
+    const stream = video.srcObject;
+    return stream && typeof stream.getVideoTracks === "function" && stream.getVideoTracks().length > 0;
+  });
+
+  if (!cameraVideo) {
+    console.warn("[AR] MindAR camera video not found");
+    return null;
+  }
+
+  document.querySelectorAll(".ar-camera-feed").forEach((node) => {
+    if (node !== cameraVideo) node.classList.remove("ar-camera-feed");
+  });
+
+  cameraVideo.classList.add("ar-camera-feed");
+  cameraVideo.muted = true;
+  cameraVideo.playsInline = true;
+  cameraVideo.setAttribute("playsinline", "");
+  cameraVideo.setAttribute("webkit-playsinline", "");
+
+  console.log("[AR] camera feed attached", {
+    width: cameraVideo.videoWidth,
+    height: cameraVideo.videoHeight,
+    readyState: cameraVideo.readyState,
+  });
+
+  return cameraVideo;
+}
+
+function resetArIotPanel() {
+  const targetNode = document.querySelector("[data-iot-panel-target='true']");
+  const panelNode = document.getElementById("ar-iot-panel");
+  const component = targetNode?.components?.["aframe-iot-panel"];
+  component?.stopPolling?.();
+  component && (component.isTracking = false);
+  if (panelNode) {
+    panelNode.setAttribute("visible", false);
+  }
+}
+
+async function startArTracking() {
+  const scene = DOM.arScene();
+  if (!scene) throw new Error("找不到 AR scene。");
+
+  await waitForSceneLoaded(scene);
+
+  const arSystem = scene.systems?.["mindar-image-system"];
+  if (!arSystem) {
+    throw new Error("MindAR image system 尚未初始化。");
+  }
+
+  cleanupMindarCameraFeeds();
+  STATE.sceneReady = false;
+  console.log("[AR] arSystem.start requested");
+  console.log("[AR] calling arSystem.start()");
+  await Promise.resolve(arSystem.start());
+}
+
+function stopArTracking() {
+  const scene = DOM.arScene();
+  const arSystem = scene?.systems?.["mindar-image-system"];
+
+  try {
+    console.log("[AR] arSystem.stop requested");
+    arSystem?.stop?.();
+  } catch (error) {
+    console.warn("[AR] arSystem.stop failed", error);
+  }
+
+  STATE.sceneReady = false;
+  resetArIotPanel();
+
+  document.querySelectorAll(".ar-source-video").forEach((video) => {
+    video.pause();
+    video.currentTime = 0;
+  });
+  cleanupMindarCameraFeeds();
 }
 
 function registerAframeIotPanelComponent() {
@@ -819,18 +888,24 @@ function bindArTargetEvents() {
     const videoNode = document.querySelector(video);
     if (!targetNode || !videoNode) return;
 
-    targetNode.addEventListener("targetFound", () => {
+    targetNode.addEventListener("targetFound", async () => {
+      console.log("[AR] target found", label);
       videos.forEach((item) => {
         if (item !== videoNode) pauseAndReset(item);
       });
 
       videoNode.currentTime = 0;
-      videoNode.play().catch((error) => console.warn("AR video play blocked:", error));
+      try {
+        await videoNode.play();
+      } catch (error) {
+        console.warn("AR video play blocked:", error);
+      }
       DOM.scanLine()?.classList.add("is-hidden");
       setArStatus("found", `辨識到：${label}`);
     });
 
     targetNode.addEventListener("targetLost", () => {
+      console.log("[AR] target lost", label);
       pauseAndReset(videoNode);
       DOM.scanLine()?.classList.remove("is-hidden");
       setArStatus("ready", "掃描中");
@@ -847,15 +922,42 @@ function bindArSceneEvents() {
   const scene = DOM.arScene();
   if (!scene) return;
 
+  if (scene.hasLoaded && !STATE.sceneLoadedLogged) {
+    console.log("[AR] scene loaded");
+    STATE.sceneLoadedLogged = true;
+  } else {
+    scene.addEventListener("loaded", () => {
+      if (STATE.sceneLoadedLogged) return;
+      console.log("[AR] scene loaded");
+      STATE.sceneLoadedLogged = true;
+    }, { once: true });
+  }
+
   scene.addEventListener("arReady", () => {
+    console.log("[AR] arReady");
+    const feed = attachMindarCameraFeed();
+    if (!feed || feed.videoWidth === 0 || feed.videoHeight === 0) {
+      console.warn("[AR] camera stream exists but has no video frame yet");
+    }
     STATE.sceneReady = true;
     setArStatus("ready", "掃描中");
   });
 
-  scene.addEventListener("arError", () => {
+  scene.addEventListener("arError", (event) => {
+    const cameraFeed = attachMindarCameraFeed();
+    console.log("[AR] arError", event);
+    console.warn("[AR] arError detail", {
+      detail: event?.detail || null,
+      hasCameraVideo: Boolean(cameraFeed),
+      videoWidth: cameraFeed?.videoWidth || 0,
+      videoHeight: cameraFeed?.videoHeight || 0,
+    });
     STATE.sceneReady = false;
     setArStatus("error", "AR 啟動失敗");
-    appendMessage("system", "AR 鏡頭初始化失敗，請確認相機權限與 HTTPS 設定。");
+    appendMessage(
+      "system",
+      event?.detail?.message || "AR 鏡頭初始化失敗，請確認相機權限、HTTPS 與 target 檔案設定。"
+    );
   });
 
   document.addEventListener("visibilitychange", () => {
@@ -893,33 +995,6 @@ function stopFallbackCamera() {
   if (video) video.srcObject = null;
 }
 
-function pauseArTracking() {
-  const scene = DOM.arScene();
-  const system = scene?.systems?.["mindar-image-system"];
-  if (system?.pause) {
-    try {
-      system.pause();
-    } catch (error) {
-      console.warn("Pause AR tracking failed:", error);
-    }
-  }
-}
-
-function resumeArTracking() {
-  const scene = DOM.arScene();
-  const system = scene?.systems?.["mindar-image-system"];
-  if (system?.unpause && STATE.sceneReady) {
-    try {
-      system.unpause();
-      setArStatus("ready", "掃描中");
-      return true;
-    } catch (error) {
-      console.warn("Resume AR tracking failed:", error);
-    }
-  }
-  return false;
-}
-
 async function enterArMode() {
   if (STATE.arMode) return;
   STATE.arMode = true;
@@ -932,10 +1007,10 @@ async function enterArMode() {
   const immersive = DOM.arImmersive();
   if (immersive) {
     immersive.hidden = false;
-    immersive.style.display = "";
+    immersive.style.display = "block";
   }
 
-  setArStatus("booting", "啟動中");
+  setArStatus("booting", "啟動相機中");
   bindMicControls();
   await clearServerHistory();
 
@@ -946,14 +1021,12 @@ async function enterArMode() {
     }
 
     bindArSceneEvents();
-
-    if (resumeArTracking()) return;
-
-    await ensureArRuntime();
     setupArIotPanel();
+    await startArTracking();
   } catch (error) {
-    setArStatus("error", "AR 載入失敗");
-    appendMessage("system", error.message || "AR runtime 載入失敗。");
+    console.error("[AR] start failed", error);
+    setArStatus("error", "AR 啟動失敗");
+    appendMessage("system", error.message || "無法啟動 AR 相機。");
   }
 }
 
@@ -961,16 +1034,10 @@ function exitArMode() {
   if (!STATE.arMode) return;
   STATE.arMode = false;
 
-  document.body.classList.remove("ar-mode-active");
-  DOM.exhibitMode()?.style.setProperty("display", "");
-
-  const immersive = DOM.arImmersive();
-  if (immersive) immersive.hidden = true;
-
+  stopArTracking();
+  stopFallbackCamera();
   stopSpeechPlayback();
   removeStatusMessage();
-  pauseArTracking();
-  stopFallbackCamera();
   releaseMicrophoneStream();
 
   if (STATE.mediaRecorder?.state && STATE.mediaRecorder.state !== "inactive") {
@@ -981,6 +1048,16 @@ function exitArMode() {
   STATE.mediaChunks = [];
   STATE.holdActive = false;
   STATE.pendingRecorderStart = false;
+  document.body.classList.remove("ar-mode-active");
+  DOM.exhibitMode()?.style.setProperty("display", "");
+
+  const immersive = DOM.arImmersive();
+  if (immersive) {
+    immersive.hidden = true;
+    immersive.style.display = "none";
+  }
+
+  setArStatus("idle", "已退出 AR");
   setBusy(false, "按住說話");
 }
 

@@ -419,26 +419,15 @@ a:hover {
    ═══════════════════════════════════════════════════════════════════════════ */
 
 /* ── AR 模式 body 控制 ────────────────────────────────────────────────────── */
-body.ar-mode-active > .site-nav,
-body.ar-mode-active > main > footer,
-body.ar-mode-active .site-footer { display: none !important; }
+body.ar-mode-active {
+  overflow: hidden !important;
+}
+
+body.ar-mode-active .site-nav,
+body.ar-mode-active .site-footer,
 body.ar-mode-active .chat-launcher,
 body.ar-mode-active .chat-panel,
 body.ar-mode-active .chat-backdrop { display: none !important; }
-html:has(body.ar-mode-active),
-body.ar-mode-active,
-body.ar-mode-active .site-main,
-body.ar-mode-active #ar-immersive-mode,
-body.ar-mode-active #ar-aframe-scene,
-body.ar-mode-active #ar-aframe-scene canvas,
-body.ar-mode-active #ar-aframe-scene .a-canvas,
-body.ar-mode-active #ar-aframe-scene video,
-body.ar-mode-active .mindar-ui-overlay,
-body.ar-mode-active .mindar-video-container,
-body.ar-mode-active .mindar-video {
-  background: transparent !important;
-}
-body.ar-mode-active { overflow: hidden; }
 body.ar-lightbox-open { overflow: hidden; }
 
 /* ── Hero ── */
@@ -534,44 +523,50 @@ body.ar-lightbox-open { overflow: hidden; }
 
 /* ── AR 沉浸模式 ── */
 .ar-immersive {
-  position: fixed;
-  inset: 0;
-  z-index: 200;
-  background: transparent;
+  position: fixed !important;
+  inset: 0 !important;
+  z-index: 2147483000 !important;
+  overflow: hidden !important;
+  background: #000 !important;
   display: flex;
   flex-direction: column;
 }
-.ar-scene,
-.ar-scene canvas,
-.ar-scene .a-canvas {
+.ar-camera-feed {
   position: fixed !important;
-  top: 0;
-  left: 0;
+  inset: 0 !important;
+  display: block !important;
   width: 100vw !important;
-  height: 100vh !important;
-  z-index: 1;
-  background: transparent !important;
-}
-.ar-immersive video:not(.ar-source-video),
-.ar-immersive .mindar-video,
-.ar-immersive .mindar-video-container,
-.ar-immersive .mindar-ui-overlay {
+  height: 100dvh !important;
+  min-width: 100vw !important;
+  min-height: 100dvh !important;
+  object-fit: cover !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+  background: #000 !important;
   z-index: 0 !important;
+}
+.ar-immersive .ar-scene,
+.ar-immersive .a-canvas,
+.ar-immersive canvas {
+  position: fixed !important;
+  inset: 0 !important;
+  width: 100vw !important;
+  height: 100dvh !important;
   background: transparent !important;
+  z-index: 1 !important;
 }
 .ar-camera-fallback {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  object-fit: cover;
-  z-index: 0;
-  background: transparent;
+  position: fixed !important;
+  inset: 0 !important;
+  width: 100vw !important;
+  height: 100dvh !important;
+  object-fit: cover !important;
+  z-index: 0 !important;
+  background: #000 !important;
 }
 
 /* 掃描框 */
-.ar-scan-frame { position:absolute; inset:0; z-index:5; pointer-events:none; }
+.ar-scan-frame { position:fixed !important; inset:0; z-index:2 !important; pointer-events:none; }
 .ar-scan-frame__corner { position:absolute; width:34px; height:34px; border-color:rgba(255,255,255,0.85); border-style:solid; border-width:0; }
 .ar-scan-frame__corner--tl { top:calc(50% - 90px); left:calc(50% - 110px); border-top-width:3px; border-left-width:3px; border-radius:6px 0 0 0; }
 .ar-scan-frame__corner--tr { top:calc(50% - 90px); right:calc(50% - 110px); border-top-width:3px; border-right-width:3px; border-radius:0 6px 0 0; }
@@ -583,7 +578,7 @@ body.ar-lightbox-open { overflow: hidden; }
 .ar-immersive[data-state="found"] .ar-scan-frame__corner { border-color:rgba(80,220,160,1); transition:border-color 0.3s; }
 
 /* 頂部列 */
-.ar-top-bar { position:absolute; top:0; left:0; right:0; z-index:20; display:flex; align-items:center; justify-content:space-between; padding:0.85rem 1rem; background:linear-gradient(to bottom,rgba(0,0,0,0.6),transparent); pointer-events:none; }
+.ar-top-bar { position:fixed !important; top:0; left:0; right:0; z-index:2 !important; display:flex; align-items:center; justify-content:space-between; padding:0.85rem 1rem; background:linear-gradient(to bottom,rgba(0,0,0,0.6),transparent); pointer-events:none; }
 .ar-top-bar__brand { display:flex; align-items:center; gap:0.4rem; color:#fff; font-weight:700; font-size:0.92rem; }
 .ar-top-bar__brand i { font-size:1.2rem; color:#50dca0; }
 .ar-top-bar__right,
@@ -599,7 +594,7 @@ body.ar-lightbox-open { overflow: hidden; }
 .ar-exit-btn:hover { background:rgba(255,255,255,0.22); }
 
 /* 底部 AI 語音浮層 */
-.ar-voice-panel { position:absolute; bottom:0; left:0; right:0; z-index:15; display:flex; flex-direction:column; min-height:33vh; padding:0 0.85rem; background:linear-gradient(to top, rgba(0,0,0,0.72), rgba(0,0,0,0.52) 52%, rgba(0,0,0,0)); pointer-events:none; }
+.ar-voice-panel { position:fixed !important; bottom:0; left:0; right:0; z-index:2 !important; display:flex; flex-direction:column; min-height:33vh; padding:0 0.85rem; background:linear-gradient(to top, rgba(0,0,0,0.72), rgba(0,0,0,0.52) 52%, rgba(0,0,0,0)); pointer-events:none; }
 .ar-voice-meta { display:flex; align-items:center; justify-content:space-between; gap:0.75rem; padding-top:0.85rem; }
 .ar-model-picker { display:flex; align-items:center; gap:0.55rem; min-width:0; pointer-events:auto; }
 .ar-model-picker__label { font-size:0.74rem; color:rgba(255,255,255,0.68); white-space:nowrap; }

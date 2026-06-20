@@ -4,15 +4,12 @@
 {% block title %}AR 智慧導覽 – 風雲水鄉{% endblock %}
 
 {% block extra_head %}
-{# A-Frame 與 MindAR 只在 AR 模式啟動後動態載入，避免阻塞首次渲染 #}
+<script src="https://aframe.io/releases/1.6.0/aframe.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
 {% endblock %}
 
 {% block content %}
-
-{# ════════════════════════════════════════════════════════════════════════════
-   展場電腦展示模式（預設可見，AR 模式啟動後 display:none）
-   ════════════════════════════════════════════════════════════════════════════ #}
-<div id="exhibit-display-mode" class="exhibit-mode">
+<div id="ar-guide-overview" class="ar-guide-overview">
 
   {# ── Hero Banner ── #}
   <section class="ar-exhibit-hero">
@@ -111,7 +108,7 @@
     </div>
   </section>
 
-</div>{# / #exhibit-display-mode #}
+</div>
 
 
 {# ════════════════════════════════════════════════════════════════════════════
@@ -124,27 +121,17 @@
   <a-scene
     id="ar-aframe-scene"
     class="ar-scene"
-    mindar-image="imageTargetSrc: {% static mind_file_relpath %}; uiScanning: false; uiLoading: false;"
+    mindar-image="
+      imageTargetSrc: {% static mind_file_relpath %};
+      autoStart: false;
+      uiScanning: false;
+      uiLoading: false;
+    "
     color-space="sRGB"
     renderer="alpha: true; antialias: true; colorManagement: true; physicallyCorrectLights: true"
     vr-mode-ui="enabled: false"
     device-orientation-permission-ui="enabled: false"
-    background="color: transparent"
     embedded>
-    <a-assets timeout="30000">
-      {% for stop in ar_stops %}
-      <video
-        id="ar-video-{{ forloop.counter }}"
-        class="ar-source-video"
-        data-target-index="{{ stop.target_index }}"
-        data-target-title="{{ stop.title }}"
-        data-target-badge="{{ stop.badge }}"
-        data-target-copy="{{ stop.mission }}"
-        data-target-filename="{{ stop.video_filename }}"
-        src="{% static stop.video %}"
-        preload="auto" loop muted playsinline webkit-playsinline></video>
-      {% endfor %}
-    </a-assets>
     <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
     {# AR 影片覆蓋 Entity（MindAR 觸發） #}
     {% for stop in ar_stops %}
@@ -225,6 +212,20 @@
     </a-entity>
     {% endfor %}
   </a-scene>
+  <div class="ar-video-reservoir" hidden aria-hidden="true">
+      {% for stop in ar_stops %}
+      <video
+        id="ar-video-{{ forloop.counter }}"
+        class="ar-source-video"
+        data-target-index="{{ stop.target_index }}"
+        data-target-title="{{ stop.title }}"
+        data-target-badge="{{ stop.badge }}"
+        data-target-copy="{{ stop.mission }}"
+        data-target-filename="{{ stop.video_filename }}"
+        src="{% static stop.video %}"
+        preload="metadata" loop muted playsinline webkit-playsinline></video>
+      {% endfor %}
+  </div>
   {% else %}
   {# .mind 檔不存在時的 fallback：顯示相機畫面 #}
   <video id="ar-camera-fallback" class="ar-camera-fallback" autoplay playsinline muted></video>
@@ -341,8 +342,6 @@
   window.__AR_GUIDE_API_URL   = "{% url 'ar_ai_guide_api' %}";
   window.__AR_IOT_DATA_API_URL = "{% url 'iot_data_api' %}";
   window.__AR_IOT_API_TOKEN    = "{{ iot_api_token|escapejs }}";
-  window.__AR_AFRAME_SRC      = "https://aframe.io/releases/1.6.0/aframe.min.js";
-  window.__AR_MINDAR_SRC      = "{% static 'ar/mindar-image-aframe.prod.js' %}";
   window.__CSRF_TOKEN         = "{{ csrf_token }}";
 </script>
 <script src="{% static 'js/ar-image-tracking.js' %}?v=13" defer></script>
