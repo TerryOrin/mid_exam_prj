@@ -1281,6 +1281,10 @@ _AR_GUIDE_SYSTEM_PROMPT = (
     "請用繁體中文、親切、口語化且精簡的語氣回答。"
     "字數盡量控制在 50 字以內適合語音播報。"
 )
+_AZURE_HTTP_TRANSPORT_PROPERTY_CANDIDATES = (
+    "SpeechServiceConnection_TranslationRequestUsingConnect",
+    "TranslationRequestUsingConnect",
+)
 
 
 def _current_ar_guide_model_name(request, requested_model: str | None = None) -> str:
@@ -1366,10 +1370,50 @@ def _extract_uploaded_audio(request) -> tuple[bytes, str]:
     return audio_bytes, suffix
 
 
+def _configure_azure_http_transport(speechsdk, speech_config) -> None:
+    """
+    Prefer HTTP-friendly Azure Speech transport for PythonAnywhere.
+
+    PythonAnywhere free-tier outbound networking can block websocket-based Speech SDK
+    traffic. We try the documented/field-tested service property first, then fall back
+    to the raw property name if the installed SDK doesn't expose the enum member.
+    """
+
+    channel = speechsdk.ServicePropertyChannel.UriQueryParameter
+    property_id_enum = getattr(speechsdk, "PropertyId", None)
+
+    candidates: list[object] = []
+    if property_id_enum is not None:
+        for property_name in _AZURE_HTTP_TRANSPORT_PROPERTY_CANDIDATES:
+            enum_value = getattr(property_id_enum, property_name, None)
+            if enum_value is not None:
+                candidates.append(enum_value)
+    candidates.extend(_AZURE_HTTP_TRANSPORT_PROPERTY_CANDIDATES)
+
+    last_error = None
+    for candidate in candidates:
+        try:
+            speech_config.set_service_property(
+                name=candidate,
+                value="false",
+                channel=channel,
+            )
+            logger.info("Azure Speech SDK transport override applied with %r.", candidate)
+            return
+        except Exception as exc:  # noqa: BLE001
+            last_error = exc
+
+    logger.warning(
+        "Unable to apply Azure Speech HTTP transport override; default transport will be used: %s",
+        last_error,
+    )
+
+
 def _azure_stt_sync(audio_path: str, speech_key: str, speech_region: str, language: str = "zh-TW") -> str:
     import azure.cognitiveservices.speech as speechsdk  # type: ignore
 
     speech_config = speechsdk.SpeechConfig(subscription=speech_key, region=speech_region)
+    _configure_azure_http_transport(speechsdk, speech_config)
     speech_config.speech_recognition_language = language
     audio_config = speechsdk.audio.AudioConfig(filename=audio_path)
     recognizer = speechsdk.SpeechRecognizer(
@@ -1437,6 +1481,7 @@ def _azure_tts_sync(
     import azure.cognitiveservices.speech as speechsdk  # type: ignore
 
     speech_config = speechsdk.SpeechConfig(subscription=speech_key, region=speech_region)
+    _configure_azure_http_transport(speechsdk, speech_config)
     speech_config.speech_synthesis_voice_name = voice
     speech_config.set_speech_synthesis_output_format(
         speechsdk.SpeechSynthesisOutputFormat.Riff16Khz16BitMonoPcm

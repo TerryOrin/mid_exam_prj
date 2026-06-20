@@ -1,13 +1,88 @@
 import json
 from datetime import timedelta
+from types import SimpleNamespace
 from unittest.mock import ANY, patch
 
 from django.test import TestCase, override_settings
 from django.urls import reverse
 from django.utils import timezone
 
+from . import views
 from .models import Event, StoryPost
 from water.models import Pond, SensorReading
+
+
+class AzureSpeechTransportTests(TestCase):
+    def test_http_transport_override_prefers_sdk_enum_property(self):
+        class FakeSpeechConfig:
+            def __init__(self):
+                self.calls = []
+
+            def set_service_property(self, *, name, value, channel):
+                self.calls.append(
+                    {
+                        "name": name,
+                        "value": value,
+                        "channel": channel,
+                    }
+                )
+
+        speechsdk = SimpleNamespace(
+            PropertyId=SimpleNamespace(
+                SpeechServiceConnection_TranslationRequestUsingConnect="enum-http-flag"
+            ),
+            ServicePropertyChannel=SimpleNamespace(UriQueryParameter="uri-query"),
+        )
+        speech_config = FakeSpeechConfig()
+
+        views._configure_azure_http_transport(speechsdk, speech_config)
+
+        self.assertEqual(
+            speech_config.calls,
+            [
+                {
+                    "name": "enum-http-flag",
+                    "value": "false",
+                    "channel": "uri-query",
+                }
+            ],
+        )
+
+    def test_http_transport_override_falls_back_to_raw_property_name(self):
+        class FakeSpeechConfig:
+            def __init__(self):
+                self.calls = []
+
+            def set_service_property(self, *, name, value, channel):
+                self.calls.append(
+                    {
+                        "name": name,
+                        "value": value,
+                        "channel": channel,
+                    }
+                )
+                if name == "enum-http-flag":
+                    raise RuntimeError("unsupported enum property")
+
+        speechsdk = SimpleNamespace(
+            PropertyId=SimpleNamespace(
+                SpeechServiceConnection_TranslationRequestUsingConnect="enum-http-flag"
+            ),
+            ServicePropertyChannel=SimpleNamespace(UriQueryParameter="uri-query"),
+        )
+        speech_config = FakeSpeechConfig()
+
+        views._configure_azure_http_transport(speechsdk, speech_config)
+
+        self.assertEqual(speech_config.calls[0]["name"], "enum-http-flag")
+        self.assertEqual(
+            speech_config.calls[1],
+            {
+                "name": "SpeechServiceConnection_TranslationRequestUsingConnect",
+                "value": "false",
+                "channel": "uri-query",
+            },
+        )
 
 
 class ChatbotApiTests(TestCase):
