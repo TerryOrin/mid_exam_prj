@@ -111,6 +111,7 @@ const STATE = {
   mediaRecorder: null,
   mediaMimeType: "",
   mediaChunks: [],
+  recordingTimeoutId: 0,
   fallbackCameraStream: null,
   ignoreMouseUntil: 0,
   arIotPanelBound: false,
@@ -342,21 +343,53 @@ function releaseMicrophoneStream() {
   STATE.mediaStream = null;
 }
 
+function clearRecordingTimeout() {
+  if (!STATE.recordingTimeoutId) return;
+  window.clearTimeout(STATE.recordingTimeoutId);
+  STATE.recordingTimeoutId = 0;
+}
+
+function mixAudioBufferToMono(audioBuffer) {
+  if (audioBuffer.numberOfChannels === 1) {
+    return audioBuffer.getChannelData(0);
+  }
+
+  const length = audioBuffer.length;
+  const mixed = new Float32Array(length);
+  for (let channelIndex = 0; channelIndex < audioBuffer.numberOfChannels; channelIndex += 1) {
+    const channel = audioBuffer.getChannelData(channelIndex);
+    for (let sampleIndex = 0; sampleIndex < length; sampleIndex += 1) {
+      mixed[sampleIndex] += channel[sampleIndex] / audioBuffer.numberOfChannels;
+    }
+  }
+  return mixed;
+}
+
+function resampleMonoBuffer(sourceData, inputSampleRate, outputSampleRate) {
+  if (inputSampleRate === outputSampleRate) return sourceData;
+
+  const ratio = inputSampleRate / outputSampleRate;
+  const newLength = Math.max(1, Math.round(sourceData.length / ratio));
+  const result = new Float32Array(newLength);
+
+  for (let index = 0; index < newLength; index += 1) {
+    const sourceIndex = index * ratio;
+    const lowerIndex = Math.floor(sourceIndex);
+    const upperIndex = Math.min(sourceData.length - 1, lowerIndex + 1);
+    const weight = sourceIndex - lowerIndex;
+    result[index] =
+      sourceData[lowerIndex] * (1 - weight) +
+      sourceData[upperIndex] * weight;
+  }
+
+  return result;
+}
+
 function encodeWav(audioBuffer) {
-  const sampleRate = audioBuffer.sampleRate;
-  const channelData = audioBuffer.numberOfChannels === 1
-    ? audioBuffer.getChannelData(0)
-    : (() => {
-        const length = audioBuffer.length;
-        const mixed = new Float32Array(length);
-        for (let channelIndex = 0; channelIndex < audioBuffer.numberOfChannels; channelIndex += 1) {
-          const channel = audioBuffer.getChannelData(channelIndex);
-          for (let sampleIndex = 0; sampleIndex < length; sampleIndex += 1) {
-            mixed[sampleIndex] += channel[sampleIndex] / audioBuffer.numberOfChannels;
-          }
-        }
-        return mixed;
-      })();
+  const targetSampleRate = 16000;
+  const monoData = mixAudioBufferToMono(audioBuffer);
+  const channelData = resampleMonoBuffer(monoData, audioBuffer.sampleRate, targetSampleRate);
+  const sampleRate = targetSampleRate;
 
   const buffer = new ArrayBuffer(44 + channelData.length * 2);
   const view = new DataView(buffer);
@@ -518,6 +551,7 @@ async function startHoldRecording(event) {
 
     recorder.addEventListener("stop", () => {
       const shouldProcess = !STATE.isBusy;
+      clearRecordingTimeout();
       STATE.mediaRecorder = null;
       if (STATE.discardRecording) {
         STATE.discardRecording = false;
@@ -535,6 +569,7 @@ async function startHoldRecording(event) {
     });
 
     recorder.addEventListener("error", () => {
+      clearRecordingTimeout();
       appendMessage("system", "錄音失敗，請重新嘗試。");
       STATE.mediaRecorder = null;
       STATE.mediaChunks = [];
@@ -545,7 +580,16 @@ async function startHoldRecording(event) {
     });
 
     recorder.start();
+    clearRecordingTimeout();
+    STATE.recordingTimeoutId = window.setTimeout(() => {
+      if (STATE.mediaRecorder !== recorder || recorder.state === "inactive") return;
+      STATE.holdActive = false;
+      appendStatusMessage("錄音接近上限，正在送出辨識...");
+      recorder.stop();
+      setMicState("busy", "AI 辨識與思考中...");
+    }, 55000);
   } catch (error) {
+    clearRecordingTimeout();
     STATE.holdActive = false;
     STATE.pendingRecorderStart = false;
     STATE.mediaRecorder = null;
@@ -572,10 +616,12 @@ function stopHoldRecording(event) {
 
   const recorder = STATE.mediaRecorder;
   if (!recorder) {
+    clearRecordingTimeout();
     setMicState("idle", "按住說話");
     return;
   }
 
+  clearRecordingTimeout();
   if (recorder.state !== "inactive") recorder.stop();
   setMicState("busy", "AI 辨識與思考中...");
 }

@@ -1,6 +1,7 @@
+import io
 import json
+import wave
 from datetime import timedelta
-from types import SimpleNamespace
 from unittest.mock import ANY, patch
 
 from django.test import TestCase, override_settings
@@ -12,76 +13,75 @@ from .models import Event, StoryPost
 from water.models import Pond, SensorReading
 
 
-class AzureSpeechTransportTests(TestCase):
-    def test_http_transport_override_prefers_sdk_enum_property(self):
-        class FakeSpeechConfig:
-            def __init__(self):
-                self.calls = []
+class AzureSpeechHttpTests(TestCase):
+    def _wav_bytes(self, sample_rate=16000, channels=1, sample_width=2, frame_count=3200):
+        buffer = io.BytesIO()
+        with wave.open(buffer, "wb") as wav_file:
+            wav_file.setnchannels(channels)
+            wav_file.setsampwidth(sample_width)
+            wav_file.setframerate(sample_rate)
+            wav_file.writeframes(b"\x00" * frame_count * channels * sample_width)
+        return buffer.getvalue()
 
-            def set_service_property(self, *, name, value, channel):
-                self.calls.append(
-                    {
-                        "name": name,
-                        "value": value,
-                        "channel": channel,
-                    }
-                )
+    @patch.dict(
+        "os.environ",
+        {"AZURE_SPEECH_KEY": "speech-key", "AZURE_SPEECH_REGION": "eastasia"},
+        clear=False,
+    )
+    @patch("core.views.requests.post")
+    def test_azure_stt_uses_short_audio_rest_api(self, mock_post):
+        class DummyResponse:
+            status_code = 200
+            text = ""
 
-        speechsdk = SimpleNamespace(
-            PropertyId=SimpleNamespace(
-                SpeechServiceConnection_TranslationRequestUsingConnect="enum-http-flag"
-            ),
-            ServicePropertyChannel=SimpleNamespace(UriQueryParameter="uri-query"),
-        )
-        speech_config = FakeSpeechConfig()
-
-        views._configure_azure_http_transport(speechsdk, speech_config)
-
-        self.assertEqual(
-            speech_config.calls,
-            [
-                {
-                    "name": "enum-http-flag",
-                    "value": "false",
-                    "channel": "uri-query",
+            @staticmethod
+            def json():
+                return {
+                    "RecognitionStatus": "Success",
+                    "DisplayText": "你好。",
                 }
-            ],
-        )
 
-    def test_http_transport_override_falls_back_to_raw_property_name(self):
-        class FakeSpeechConfig:
-            def __init__(self):
-                self.calls = []
+        mock_post.return_value = DummyResponse()
 
-            def set_service_property(self, *, name, value, channel):
-                self.calls.append(
-                    {
-                        "name": name,
-                        "value": value,
-                        "channel": channel,
-                    }
-                )
-                if name == "enum-http-flag":
-                    raise RuntimeError("unsupported enum property")
+        transcript = views._azure_stt(self._wav_bytes(), ".wav")
 
-        speechsdk = SimpleNamespace(
-            PropertyId=SimpleNamespace(
-                SpeechServiceConnection_TranslationRequestUsingConnect="enum-http-flag"
-            ),
-            ServicePropertyChannel=SimpleNamespace(UriQueryParameter="uri-query"),
-        )
-        speech_config = FakeSpeechConfig()
-
-        views._configure_azure_http_transport(speechsdk, speech_config)
-
-        self.assertEqual(speech_config.calls[0]["name"], "enum-http-flag")
+        self.assertEqual(transcript, "你好")
+        self.assertIn("eastasia.stt.speech.microsoft.com", mock_post.call_args.args[0])
+        self.assertEqual(mock_post.call_args.kwargs["params"]["language"], "zh-TW")
         self.assertEqual(
-            speech_config.calls[1],
-            {
-                "name": "SpeechServiceConnection_TranslationRequestUsingConnect",
-                "value": "false",
-                "channel": "uri-query",
-            },
+            mock_post.call_args.kwargs["headers"]["Content-Type"],
+            "audio/wav; codecs=audio/pcm; samplerate=16000",
+        )
+
+    @patch.dict(
+        "os.environ",
+        {"AZURE_SPEECH_KEY": "speech-key", "AZURE_SPEECH_REGION": "eastasia"},
+        clear=False,
+    )
+    @patch("core.views.requests.post")
+    def test_azure_tts_data_url_uses_rest_api(self, mock_post):
+        class DummyResponse:
+            status_code = 200
+            text = ""
+            content = b"RIFFfake-wave-data"
+
+            @staticmethod
+            def json():
+                raise ValueError("audio response does not include json")
+
+        mock_post.return_value = DummyResponse()
+
+        data_url = views._azure_tts_data_url("這是測試播報")
+
+        self.assertTrue(data_url.startswith("data:audio/wav;base64,"))
+        self.assertIn("eastasia.tts.speech.microsoft.com", mock_post.call_args.args[0])
+        self.assertEqual(
+            mock_post.call_args.kwargs["headers"]["X-Microsoft-OutputFormat"],
+            "riff-24khz-16bit-mono-pcm",
+        )
+        self.assertIn(
+            "zh-TW-HsiaoChenNeural",
+            mock_post.call_args.kwargs["data"].decode("utf-8"),
         )
 
 

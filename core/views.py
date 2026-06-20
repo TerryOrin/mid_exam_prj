@@ -1,12 +1,14 @@
 import base64
+import io
 import json
 import logging
 import os
 import re
 import secrets
-import tempfile
+import wave
 from pathlib import Path
 from urllib.parse import urlparse
+from xml.sax.saxutils import escape as xml_escape
 
 from PIL import Image as PILImage
 from django.conf import settings
@@ -20,6 +22,7 @@ from django.utils.crypto import constant_time_compare
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST, require_http_methods
 import msgpack
+import requests
 
 from chat.dashboard import (
     IOT_DEFAULT_INTERVAL_MINUTES as DASHBOARD_IOT_DEFAULT_INTERVAL_MINUTES,
@@ -1281,10 +1284,11 @@ _AR_GUIDE_SYSTEM_PROMPT = (
     "請用繁體中文、親切、口語化且精簡的語氣回答。"
     "字數盡量控制在 50 字以內適合語音播報。"
 )
-_AZURE_HTTP_TRANSPORT_PROPERTY_CANDIDATES = (
-    "SpeechServiceConnection_TranslationRequestUsingConnect",
-    "TranslationRequestUsingConnect",
-)
+_AR_GUIDE_AZURE_STT_LANGUAGE = "zh-TW"
+_AR_GUIDE_AZURE_TTS_VOICE = "zh-TW-HsiaoChenNeural"
+_AR_GUIDE_AZURE_STT_MAX_SECONDS = 60
+_AR_GUIDE_AZURE_STT_TIMEOUT = (10, 75)
+_AR_GUIDE_AZURE_TTS_TIMEOUT = (10, 40)
 
 
 def _current_ar_guide_model_name(request, requested_model: str | None = None) -> str:
@@ -1370,97 +1374,126 @@ def _extract_uploaded_audio(request) -> tuple[bytes, str]:
     return audio_bytes, suffix
 
 
-def _configure_azure_http_transport(speechsdk, speech_config) -> None:
-    """
-    Prefer HTTP-friendly Azure Speech transport for PythonAnywhere.
+def _azure_speech_credentials(required: bool = True) -> tuple[str, str]:
+    speech_key = (os.environ.get("AZURE_SPEECH_KEY") or "").strip()
+    speech_region = (os.environ.get("AZURE_SPEECH_REGION") or "eastasia").strip()
+    if required and not speech_key:
+        raise RuntimeError("未設定 AZURE_SPEECH_KEY，無法使用 Azure 語音服務。")
+    return speech_key, speech_region
 
-    PythonAnywhere free-tier outbound networking can block websocket-based Speech SDK
-    traffic. We try the documented/field-tested service property first, then fall back
-    to the raw property name if the installed SDK doesn't expose the enum member.
-    """
 
-    channel = speechsdk.ServicePropertyChannel.UriQueryParameter
-    property_id_enum = getattr(speechsdk, "PropertyId", None)
-
-    candidates: list[object] = []
-    if property_id_enum is not None:
-        for property_name in _AZURE_HTTP_TRANSPORT_PROPERTY_CANDIDATES:
-            enum_value = getattr(property_id_enum, property_name, None)
-            if enum_value is not None:
-                candidates.append(enum_value)
-    candidates.extend(_AZURE_HTTP_TRANSPORT_PROPERTY_CANDIDATES)
-
-    last_error = None
-    for candidate in candidates:
-        try:
-            speech_config.set_service_property(
-                name=candidate,
-                value="false",
-                channel=channel,
+def _azure_speech_url(speech_region: str, service: str) -> str:
+    explicit_endpoint = (os.environ.get("AZURE_SPEECH_ENDPOINT") or "").strip().rstrip("/")
+    if explicit_endpoint:
+        if service == "stt":
+            return (
+                f"{explicit_endpoint}/stt/speech/recognition/conversation/"
+                "cognitiveservices/v1"
             )
-            logger.info("Azure Speech SDK transport override applied with %r.", candidate)
-            return
-        except Exception as exc:  # noqa: BLE001
-            last_error = exc
+        return f"{explicit_endpoint}/cognitiveservices/v1"
 
-    logger.warning(
-        "Unable to apply Azure Speech HTTP transport override; default transport will be used: %s",
-        last_error,
-    )
+    if service == "stt":
+        return (
+            f"https://{speech_region}.stt.speech.microsoft.com/"
+            "speech/recognition/conversation/cognitiveservices/v1"
+        )
+    return f"https://{speech_region}.tts.speech.microsoft.com/cognitiveservices/v1"
 
 
-def _azure_stt_sync(audio_path: str, speech_key: str, speech_region: str, language: str = "zh-TW") -> str:
-    import azure.cognitiveservices.speech as speechsdk  # type: ignore
+def _inspect_wav_audio(audio_bytes: bytes) -> dict[str, float | int]:
+    try:
+        with wave.open(io.BytesIO(audio_bytes), "rb") as wav_file:
+            channels = wav_file.getnchannels()
+            sample_rate = wav_file.getframerate()
+            sample_width = wav_file.getsampwidth()
+            frame_count = wav_file.getnframes()
+    except (wave.Error, EOFError) as exc:
+        raise RuntimeError("Azure REST 語音辨識目前需要 WAV/PCM 音檔。") from exc
 
-    speech_config = speechsdk.SpeechConfig(subscription=speech_key, region=speech_region)
-    _configure_azure_http_transport(speechsdk, speech_config)
-    speech_config.speech_recognition_language = language
-    audio_config = speechsdk.audio.AudioConfig(filename=audio_path)
-    recognizer = speechsdk.SpeechRecognizer(
-        speech_config=speech_config,
-        audio_config=audio_config,
-    )
-    result = recognizer.recognize_once()
+    duration_seconds = frame_count / sample_rate if sample_rate else 0
+    return {
+        "channels": channels,
+        "sample_rate": sample_rate,
+        "sample_width": sample_width,
+        "frame_count": frame_count,
+        "duration_seconds": duration_seconds,
+    }
 
-    if result.reason == speechsdk.ResultReason.RecognizedSpeech:
-        transcript = (result.text or "").strip()
+
+def _summarize_azure_error(response: requests.Response) -> str:
+    try:
+        payload = response.json()
+    except ValueError:
+        payload = None
+
+    if isinstance(payload, dict):
+        for key in ("error", "message", "RecognitionStatus", "DisplayText"):
+            value = payload.get(key)
+            if value:
+                return str(value)
+
+    raw_text = (response.text or "").strip()
+    if raw_text:
+        return re.sub(r"\s+", " ", raw_text)[:220]
+
+    return "未知錯誤"
+
+
+def _azure_stt(audio_bytes: bytes, suffix: str) -> str:
+    del suffix  # Audio is sent directly to Azure REST API.
+
+    speech_key, speech_region = _azure_speech_credentials(required=True)
+    wav_info = _inspect_wav_audio(audio_bytes)
+
+    if wav_info["channels"] != 1 or wav_info["sample_width"] != 2:
+        raise RuntimeError("Azure REST 語音辨識需要 16-bit 單聲道 WAV 音檔。")
+    if wav_info["sample_rate"] != 16000:
+        raise RuntimeError("Azure REST 語音辨識需要 16 kHz 單聲道 WAV 音檔。")
+    if wav_info["duration_seconds"] > _AR_GUIDE_AZURE_STT_MAX_SECONDS:
+        raise RuntimeError(
+            f"Azure REST 語音辨識目前支援 {_AR_GUIDE_AZURE_STT_MAX_SECONDS} 秒內的短音檔，請縮短錄音時間。"
+        )
+
+    url = _azure_speech_url(speech_region, "stt")
+    headers = {
+        "Ocp-Apim-Subscription-Key": speech_key,
+        "Content-Type": "audio/wav; codecs=audio/pcm; samplerate=16000",
+        "Accept": "application/json",
+    }
+
+    try:
+        response = requests.post(
+            url,
+            params={"language": _AR_GUIDE_AZURE_STT_LANGUAGE, "format": "simple"},
+            headers=headers,
+            data=audio_bytes,
+            timeout=_AR_GUIDE_AZURE_STT_TIMEOUT,
+        )
+    except requests.RequestException as exc:
+        raise RuntimeError(f"Azure STT HTTP 請求失敗：{exc}") from exc
+
+    if response.status_code != 200:
+        raise RuntimeError(
+            f"Azure STT 失敗：HTTP {response.status_code}，{_summarize_azure_error(response)}"
+        )
+
+    try:
+        payload = response.json()
+    except ValueError as exc:
+        raise RuntimeError("Azure STT 回傳格式無法解析。") from exc
+
+    recognition_status = str(payload.get("RecognitionStatus") or "").strip()
+    if recognition_status == "Success":
+        transcript = (payload.get("DisplayText") or "").strip()
         transcript = re.sub(r"[。．.!！?？]+$", "", transcript)
         if transcript:
             return transcript
         raise RuntimeError("Azure STT 沒有回傳有效文字。")
 
-    if result.reason == speechsdk.ResultReason.NoMatch:
+    if recognition_status == "NoMatch":
         raise RuntimeError("Azure STT 無法辨識語音內容，請再說一次。")
 
-    cancellation = speechsdk.CancellationDetails(result)
-    error_details = cancellation.error_details or "未知錯誤"
-    raise RuntimeError(f"Azure STT 失敗：{error_details}")
-
-
-def _azure_stt(audio_bytes: bytes, suffix: str) -> str:
-    try:
-        import azure.cognitiveservices.speech as speechsdk  # noqa: F401
-    except ImportError as exc:
-        raise RuntimeError("缺少 Azure Speech SDK，請先安裝 azure-cognitiveservices-speech。") from exc
-
-    speech_key = (os.environ.get("AZURE_SPEECH_KEY") or "").strip()
-    speech_region = (os.environ.get("AZURE_SPEECH_REGION") or "eastasia").strip()
-    if not speech_key:
-        raise RuntimeError("未設定 AZURE_SPEECH_KEY，無法進行語音辨識。")
-
-    temp_path = None
-    try:
-        with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as temp_file:
-            temp_file.write(audio_bytes)
-            temp_path = temp_file.name
-
-        return _azure_stt_sync(temp_path, speech_key, speech_region, language="zh-TW")
-    finally:
-        if temp_path:
-            try:
-                Path(temp_path).unlink(missing_ok=True)
-            except OSError:
-                logger.warning("Failed to delete temp audio file: %s", temp_path)
+    raise RuntimeError(f"Azure STT 失敗：{recognition_status or '未知錯誤'}")
 
 
 def _call_llm_for_ar(question: str, history: list[dict], model_name: str) -> str:
@@ -1478,30 +1511,39 @@ def _azure_tts_sync(
     speech_key: str,
     speech_region: str,
 ) -> bytes:
-    import azure.cognitiveservices.speech as speechsdk  # type: ignore
-
-    speech_config = speechsdk.SpeechConfig(subscription=speech_key, region=speech_region)
-    _configure_azure_http_transport(speechsdk, speech_config)
-    speech_config.speech_synthesis_voice_name = voice
-    speech_config.set_speech_synthesis_output_format(
-        speechsdk.SpeechSynthesisOutputFormat.Riff16Khz16BitMonoPcm
+    url = _azure_speech_url(speech_region, "tts")
+    ssml = (
+        "<speak version='1.0' xml:lang='zh-TW'>"
+        f"<voice name='{voice}'>{xml_escape(text)}</voice>"
+        "</speak>"
     )
-    synthesizer = speechsdk.SpeechSynthesizer(speech_config=speech_config, audio_config=None)
-    result = synthesizer.speak_text_async(text).get()
-    if result.reason != speechsdk.ResultReason.SynthesizingAudioCompleted:
-        raise RuntimeError(f"Azure TTS 失敗：{result.reason}")
-    return bytes(result.audio_data)
+    headers = {
+        "Ocp-Apim-Subscription-Key": speech_key,
+        "Content-Type": "application/ssml+xml",
+        "X-Microsoft-OutputFormat": "riff-24khz-16bit-mono-pcm",
+        "User-Agent": "mid_exam_prj/ar-guide",
+    }
+
+    try:
+        response = requests.post(
+            url,
+            headers=headers,
+            data=ssml.encode("utf-8"),
+            timeout=_AR_GUIDE_AZURE_TTS_TIMEOUT,
+        )
+    except requests.RequestException as exc:
+        raise RuntimeError(f"Azure TTS HTTP 請求失敗：{exc}") from exc
+
+    if response.status_code != 200:
+        raise RuntimeError(
+            f"Azure TTS 失敗：HTTP {response.status_code}，{_summarize_azure_error(response)}"
+        )
+
+    return response.content
 
 
 def _azure_tts_data_url(text: str) -> str:
-    try:
-        import azure.cognitiveservices.speech as speechsdk  # noqa: F401
-    except ImportError:
-        logger.warning("Azure Speech SDK not installed. Skip TTS.")
-        return ""
-
-    speech_key = (os.environ.get("AZURE_SPEECH_KEY") or "").strip()
-    speech_region = (os.environ.get("AZURE_SPEECH_REGION") or "eastasia").strip()
+    speech_key, speech_region = _azure_speech_credentials(required=False)
     if not speech_key:
         logger.warning("AZURE_SPEECH_KEY missing. Skip TTS.")
         return ""
@@ -1509,7 +1551,7 @@ def _azure_tts_data_url(text: str) -> str:
     try:
         audio_bytes = _azure_tts_sync(
             text=text,
-            voice="zh-TW-HsiaoChenNeural",
+            voice=_AR_GUIDE_AZURE_TTS_VOICE,
             speech_key=speech_key,
             speech_region=speech_region,
         )
