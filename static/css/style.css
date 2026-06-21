@@ -634,6 +634,7 @@ body.ar-lightbox-open { overflow: hidden; }
 /* 麥克風按鈕 */
 .ar-mic-wrap { display:flex; flex-direction:column; align-items:center; padding:0.4rem 0 1.2rem; background:linear-gradient(to top,rgba(0,0,0,0.82) 60%,transparent); margin:0 -0.85rem; padding-left:0.85rem; padding-right:0.85rem; pointer-events:none; }
 .ar-mic-hint { font-size:0.74rem; color:rgba(255,255,255,0.55); margin-bottom:0.5rem; letter-spacing:0.04em; }
+.ar-mic-limit { font-size:0.74rem; color:rgba(255,255,255,0.72); margin:-0.2rem 0 0.6rem; }
 .ar-mic-btn { position:relative; width:72px; height:72px; border-radius:50%; border:2px solid rgba(80,220,160,0.45); background:radial-gradient(circle at 40% 35%,rgba(80,220,160,0.25),rgba(12,44,30,0.9)); color:#fff; cursor:pointer; display:flex; align-items:center; justify-content:center; overflow:hidden; transition:transform 0.15s,box-shadow 0.15s; box-shadow:0 0 20px rgba(80,220,160,0.2),0 4px 16px rgba(0,0,0,0.5); -webkit-tap-highlight-color:transparent; user-select:none; pointer-events:auto; }
 .ar-mic-btn[data-state="recording"] { border-color:rgba(80,220,160,0.9); background:radial-gradient(circle at 40% 35%,rgba(80,220,160,0.4),rgba(12,44,30,0.95)); box-shadow:0 0 40px rgba(80,220,160,0.6),0 6px 24px rgba(0,0,0,0.5); transform:scale(1.08); }
 .ar-mic-btn[data-state="busy"] { opacity:.55; cursor:not-allowed; }
@@ -960,12 +961,19 @@ body.chat-open {
   border-top: 1px solid rgba(31, 74, 57, 0.16);
   padding: 0.68rem;
   display: flex;
+  align-items: flex-start;
   gap: 0.5rem;
   background: rgba(255, 255, 255, 0.36);
 }
 
+.chat-input__field {
+  flex: 1;
+  min-width: 0;
+}
+
 .chat-input input {
   flex: 1;
+  width: 100%;
   border: 1px solid rgba(31, 74, 57, 0.2);
   border-radius: 12px;
   padding: 0.56rem 0.72rem;
@@ -981,6 +989,21 @@ body.chat-open {
 .chat-input input:disabled,
 .chat-input button:disabled {
   opacity: 0.7;
+}
+
+.chat-input__meta {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 0.3rem;
+}
+
+.chat-input__counter {
+  font-size: 0.74rem;
+  color: rgba(31, 74, 57, 0.68);
+}
+
+.chat-input__counter.is-limit {
+  color: #9d5f09;
 }
 
 /* Responsive */

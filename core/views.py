@@ -35,12 +35,14 @@ from chat.dashboard import (
 from chat import llm as shared_llm
 from fengcloud import prompts as prompt_library
 
+from . import ai_guard
 from .models import HeroSlide, Event, StoryPost
 from .forms import ContactForm
 
 logger = logging.getLogger(__name__)
+usage_logger = logging.getLogger("ai_usage")
 AR_GUIDE_MODEL_SESSION_KEY = "aiot_selected_model"
-AR_GUIDE_MAX_AUDIO_BYTES = 10 * 1024 * 1024
+AR_GUIDE_MAX_AUDIO_BYTES = int(getattr(settings, "AI_GUARD_MAX_AUDIO_FILE_BYTES", 3 * 1024 * 1024))
 NAV_INTENT_KEYWORDS = [
     "打開",
     "點開",
@@ -353,10 +355,54 @@ def _parse_bounded_int(raw_value, *, default: int, minimum: int, maximum: int) -
     return max(minimum, min(maximum, value))
 
 
-def _json_no_store(payload: dict[str, object], *, status: int = 200):
+def _json_no_store(payload: dict[str, object], *, status: int = 200, headers: dict[str, str] | None = None):
     response = JsonResponse(payload, status=status)
     response["Cache-Control"] = "no-store, max-age=0"
+    for key, value in (headers or {}).items():
+        response[key] = value
     return response
+
+
+def _guard_error_response(message: str, *, status: int, retry_after: int | None = None):
+    response = _json_no_store(
+        {"error": message},
+        status=status,
+        headers={"Retry-After": str(max(int(retry_after), 1))} if retry_after is not None else None,
+    )
+    return response
+
+
+def _validate_json_request_meta(request, *, body_limit: int):
+    content_type = str(request.content_type or "").lower()
+    if "application/json" not in content_type:
+        return _guard_error_response("Content-Type 必須為 application/json。", status=400)
+
+    content_length = ai_guard.get_request_content_length(request)
+    if content_length > body_limit:
+        return _guard_error_response("Request body 過大。", status=413)
+    return None
+
+
+def _validate_and_normalize_ai_text_request(
+    request,
+    *,
+    endpoint_scope: str,
+    text: str,
+    endpoint_type: str,
+    content_length: int,
+):
+    validation = ai_guard.validate_ai_text(text, endpoint_type)
+    if validation["ok"]:
+        return None, validation["normalized_text"]
+
+    ai_guard.log_ai_abuse(
+        request,
+        endpoint_scope=endpoint_scope,
+        reason_code=validation["reason_code"],
+        text=validation["normalized_text"],
+        content_length=content_length,
+    )
+    return _guard_error_response(str(validation["message"]), status=400), validation["normalized_text"]
 
 
 def _iot_api_master_token() -> str:
@@ -555,6 +601,9 @@ def _llm_ai_diagnosis(current: dict[str, float], model_name: str) -> dict[str, o
         "請輸出本次水質診斷 JSON。",
         system_prompt=system_prompt,
         model_name=model_name,
+        max_output_tokens=220,
+        temperature=0.3,
+        usage_scope="ai_diagnose",
     )
     payload = json.loads(_extract_json_object(reply))
 
@@ -589,19 +638,61 @@ def ai_diagnose_api(request):
     if auth_error is not None:
         return auth_error
 
+    content_length = ai_guard.get_request_content_length(request)
+    meta_error = _validate_json_request_meta(
+        request,
+        body_limit=settings.AI_GUARD_MAX_JSON_BODY_BYTES,
+    )
+    if meta_error is not None:
+        ai_guard.log_ai_abuse(
+            request,
+            endpoint_scope="ai_diagnose",
+            reason_code="invalid_request_meta",
+            content_length=content_length,
+        )
+        return meta_error
+
     try:
         body = json.loads(request.body.decode("utf-8"))
     except (json.JSONDecodeError, UnicodeDecodeError):
-        return _json_no_store({"error": "Request body must be valid JSON."}, status=400)
+        ai_guard.log_ai_abuse(
+            request,
+            endpoint_scope="ai_diagnose",
+            reason_code="invalid_json",
+            content_length=content_length,
+        )
+        return _guard_error_response("Request body must be valid JSON.", status=400)
 
     raw_current = body.get("current") if isinstance(body, dict) else None
     if not isinstance(raw_current, dict):
-        return _json_no_store({"error": "current payload is required."}, status=400)
+        ai_guard.log_ai_abuse(
+            request,
+            endpoint_scope="ai_diagnose",
+            reason_code="missing_current_payload",
+            content_length=content_length,
+        )
+        return _guard_error_response("current payload is required.", status=400)
+
+    rate_limit_error = ai_guard.apply_rate_limits(
+        request,
+        ["chat_minute", "chat_hour", "chat_day", "ai_global_day"],
+        endpoint_scope="ai_diagnose",
+        content_length=content_length,
+    )
+    if rate_limit_error is not None:
+        rate_limit_error["Cache-Control"] = "no-store, max-age=0"
+        return rate_limit_error
 
     try:
         current = _normalise_current_metrics(raw_current)
     except ValueError as exc:
-        return _json_no_store({"error": str(exc)}, status=400)
+        ai_guard.log_ai_abuse(
+            request,
+            endpoint_scope="ai_diagnose",
+            reason_code="invalid_current_payload",
+            content_length=content_length,
+        )
+        return _guard_error_response(str(exc), status=400)
 
     model_name = ""
     if isinstance(body.get("model"), str):
@@ -1179,7 +1270,7 @@ def _call_deepseek_ai_guide(request, user_message: str, page_path: str = "", pag
             },
         ],
         "temperature": 0.2,
-        "max_tokens": 260,
+        "max_tokens": 300,
     }
     headers = {
         "Authorization": f"Bearer {api_key}",
@@ -1219,6 +1310,22 @@ def _call_deepseek_ai_guide(request, user_message: str, page_path: str = "", pag
     if not isinstance(payload, dict):
         raise RuntimeError("DeepSeek returned a non-JSON response body.")
 
+    try:
+        usage = payload.get("usage")
+        if isinstance(usage, dict):
+            usage_logger.info(
+                "ai_guide_chat_usage",
+                extra={
+                    "provider": "deepseek",
+                    "endpoint_scope": "ai_guide_chat",
+                    "input_tokens": usage.get("prompt_tokens"),
+                    "output_tokens": usage.get("completion_tokens"),
+                    "total_tokens": usage.get("total_tokens"),
+                },
+            )
+    except Exception:  # noqa: BLE001
+        logger.debug("Unable to log ai_guide_chat usage metadata.", exc_info=True)
+
     choices = payload.get("choices")
     if not isinstance(choices, list) or not choices:
         raise RuntimeError("DeepSeek returned no choices.")
@@ -1250,19 +1357,65 @@ def ai_guide_chat(request):
             )
         )
 
+    content_length = ai_guard.get_request_content_length(request)
+    meta_error = _validate_json_request_meta(
+        request,
+        body_limit=settings.AI_GUARD_MAX_JSON_BODY_BYTES,
+    )
+    if meta_error is not None:
+        ai_guard.log_ai_abuse(
+            request,
+            endpoint_scope="ai_guide_chat",
+            reason_code="invalid_request_meta",
+            content_length=content_length,
+        )
+        return meta_error
+
     try:
         body = json.loads(request.body.decode("utf-8"))
     except (json.JSONDecodeError, UnicodeDecodeError):
-        return _json_no_store({"error": "Request body must be valid JSON."}, status=400)
+        ai_guard.log_ai_abuse(
+            request,
+            endpoint_scope="ai_guide_chat",
+            reason_code="invalid_json",
+            content_length=content_length,
+        )
+        return _guard_error_response("Request body must be valid JSON.", status=400)
     if not isinstance(body, dict):
-        return _json_no_store({"error": "Request body must be a JSON object."}, status=400)
+        ai_guard.log_ai_abuse(
+            request,
+            endpoint_scope="ai_guide_chat",
+            reason_code="invalid_json_object",
+            content_length=content_length,
+        )
+        return _guard_error_response("Request body must be a JSON object.", status=400)
 
-    user_message = str(body.get("user_message") or "").strip()
+    user_message = str(body.get("user_message") or "")
     page_path = str(body.get("page_path") or "").strip()
     page_title = str(body.get("page_title") or "").strip()
 
-    if not user_message or len(user_message) > 500:
-        return _json_no_store({"error": "user_message is empty or too long."}, status=400)
+    text_error, normalized_text = _validate_and_normalize_ai_text_request(
+        request,
+        endpoint_scope="ai_guide_chat",
+        text=user_message,
+        endpoint_type=ai_guard.CHAT_ENDPOINT_TYPE,
+        content_length=content_length,
+    )
+    if text_error is not None:
+        return text_error
+    user_message = normalized_text
+
+    rate_limit_error = ai_guard.apply_rate_limits(
+        request,
+        ["chat_minute", "chat_hour", "chat_day", "ai_global_day"],
+        endpoint_scope="ai_guide_chat",
+        content_length=content_length,
+        text=user_message,
+    )
+    if rate_limit_error is not None:
+        rate_limit_error["Cache-Control"] = "no-store, max-age=0"
+        return rate_limit_error
+
     if page_path and not page_path.startswith("/"):
         page_path = "/"
     if len(page_title) > 200:
@@ -1308,27 +1461,77 @@ def ai_guide_chat(request):
 @require_POST
 def chatbot_api(request):
     """水井小管家 chatbot endpoint."""
-    from django.conf import settings
-
     count = request.session.get("chat_count", 0)
     if count >= MAX_CHAT_PER_SESSION:
-        return JsonResponse(
+        return _json_no_store(
             {
                 "reply": "你今天問了好多問題呢！歡迎明天再來聊，或直接透過「聯絡我們」頁面與我們聯繫 😊"
             },
-            status=200,
         )
 
+    content_length = ai_guard.get_request_content_length(request)
+    meta_error = _validate_json_request_meta(
+        request,
+        body_limit=settings.AI_GUARD_MAX_JSON_BODY_BYTES,
+    )
+    if meta_error is not None:
+        ai_guard.log_ai_abuse(
+            request,
+            endpoint_scope="chatbot_api",
+            reason_code="invalid_request_meta",
+            content_length=content_length,
+        )
+        return meta_error
+
     try:
-        body = json.loads(request.body)
-        user_message = body.get("message", "").strip()
+        body = json.loads(request.body.decode("utf-8"))
+    except (json.JSONDecodeError, UnicodeDecodeError):
+        ai_guard.log_ai_abuse(
+            request,
+            endpoint_scope="chatbot_api",
+            reason_code="invalid_json",
+            content_length=content_length,
+        )
+        return _guard_error_response("Request body must be valid JSON.", status=400)
+
+    if not isinstance(body, dict):
+        ai_guard.log_ai_abuse(
+            request,
+            endpoint_scope="chatbot_api",
+            reason_code="invalid_json_object",
+            content_length=content_length,
+        )
+        return _guard_error_response("Request body must be a JSON object.", status=400)
+
+    user_message = str(body.get("message") or "")
+    text_error, normalized_text = _validate_and_normalize_ai_text_request(
+        request,
+        endpoint_scope="chatbot_api",
+        text=user_message,
+        endpoint_type=ai_guard.CHAT_ENDPOINT_TYPE,
+        content_length=content_length,
+    )
+    if text_error is not None:
+        return text_error
+    user_message = normalized_text
+
+    rate_limit_error = ai_guard.apply_rate_limits(
+        request,
+        ["chat_minute", "chat_hour", "chat_day", "ai_global_day"],
+        endpoint_scope="chatbot_api",
+        content_length=content_length,
+        text=user_message,
+    )
+    if rate_limit_error is not None:
+        rate_limit_error["Cache-Control"] = "no-store, max-age=0"
+        return rate_limit_error
+
+    try:
         page_path = (body.get("page_path") or "").strip()
         page_title = (body.get("page_title") or "").strip()
-    except (json.JSONDecodeError, AttributeError):
-        return JsonResponse({"error": "Invalid request"}, status=400)
+    except AttributeError:
+        return _guard_error_response("Invalid request.", status=400)
 
-    if not user_message or len(user_message) > 500:
-        return JsonResponse({"error": "Message is empty or too long"}, status=400)
     if page_path and not page_path.startswith("/"):
         page_path = "/"
     if len(page_title) > 200:
@@ -1344,7 +1547,7 @@ def chatbot_api(request):
             page_title=page_title,
         )
         request.session["chat_count"] = count + 1
-        return JsonResponse({"reply": reply, "redirect_url": redirect_url}, status=200)
+        return _json_no_store({"reply": reply, "redirect_url": redirect_url}, status=200)
 
     ranked_events, ranked_posts = _rank_local_content(user_message)
     event_context_lines = []
@@ -1392,6 +1595,21 @@ def chatbot_api(request):
             model=getattr(settings, "GEMINI_MODEL", "gemini-2.0-flash"),
             contents=f"{system_prompt}\n\n使用者提問：{user_message}",
         )
+        try:
+            usage = getattr(response, "usage_metadata", None)
+            if usage is not None:
+                usage_logger.info(
+                    "chatbot_api_usage",
+                    extra={
+                        "provider": "gemini",
+                        "endpoint_scope": "chatbot_api",
+                        "input_tokens": getattr(usage, "prompt_token_count", None),
+                        "output_tokens": getattr(usage, "candidates_token_count", None),
+                        "total_tokens": getattr(usage, "total_token_count", None),
+                    },
+                )
+        except Exception:  # noqa: BLE001
+            logger.debug("Unable to log chatbot_api usage metadata.", exc_info=True)
         reply = (response.text or "").strip()
         if not reply:
             reply = _build_local_fallback_reply(
@@ -1404,7 +1622,7 @@ def chatbot_api(request):
         )
 
     request.session["chat_count"] = count + 1
-    return JsonResponse({"reply": reply, "redirect_url": redirect_url})
+    return _json_no_store({"reply": reply, "redirect_url": redirect_url})
 
 
 # ─── AR + AI 語音導覽 API ────────────────────────────────────────────────── #
@@ -1413,7 +1631,7 @@ _AR_GUIDE_SESSION_KEY = "chat_history"
 _AR_GUIDE_MAX_ROUNDS = 5
 _AR_GUIDE_AZURE_STT_LANGUAGE = "zh-TW"
 _AR_GUIDE_AZURE_TTS_VOICE = "zh-TW-HsiaoChenNeural"
-_AR_GUIDE_AZURE_STT_MAX_SECONDS = 60
+_AR_GUIDE_AZURE_STT_MAX_SECONDS = 25
 _AR_GUIDE_AZURE_STT_TIMEOUT = (10, 75)
 _AR_GUIDE_AZURE_TTS_TIMEOUT = (10, 40)
 
@@ -1502,13 +1720,13 @@ def _extract_uploaded_audio(request) -> tuple[bytes, str, str]:
         raise ValueError("缺少音訊檔案。")
 
     if upload.size and upload.size > AR_GUIDE_MAX_AUDIO_BYTES:
-        raise ValueError("音訊檔案過大，請控制在 10 MB 以內。")
+        raise ValueError("音訊檔案過大，請控制在 3 MB 以內。")
 
     audio_bytes = upload.read()
     if not audio_bytes:
         raise ValueError("音訊檔案內容為空。")
     if len(audio_bytes) > AR_GUIDE_MAX_AUDIO_BYTES:
-        raise ValueError("音訊檔案過大，請控制在 10 MB 以內。")
+        raise ValueError("音訊檔案過大，請控制在 3 MB 以內。")
 
     suffix = Path(upload.name or "speech.wav").suffix.lower() or ".wav"
     mime_type = (
@@ -1707,7 +1925,28 @@ def _call_llm_for_ar(
         system_prompt=prompt_library.build_ar_guide_system_prompt(current_marker),
         history=history,
         model_name=model_name,
+        max_output_tokens=220,
+        temperature=0.3,
+        usage_scope="ar_ai_guide",
     )
+
+
+def _limit_ar_answer(text: str) -> str:
+    cleaned = re.sub(r"\s+", " ", str(text or "")).strip()
+    if not cleaned:
+        return ""
+
+    sentences = [
+        segment.strip()
+        for segment in re.split(r"(?<=[。！？!?])\s*", cleaned)
+        if segment.strip()
+    ]
+    if sentences:
+        cleaned = " ".join(sentences[:4]).strip()
+
+    if len(cleaned) > 500:
+        cleaned = cleaned[:500].rstrip()
+    return cleaned
 
 
 def _azure_tts_sync(
@@ -1769,35 +2008,95 @@ def _azure_tts_data_url(text: str) -> str:
 
 @require_POST
 def ar_ai_guide_api(request):
+    content_length = ai_guard.get_request_content_length(request)
     try:
         clear_requested, manual_text, requested_model, current_marker = _parse_ar_guide_payload(request)
     except ValueError as exc:
-        return JsonResponse({"error": str(exc)}, status=400)
+        ai_guard.log_ai_abuse(
+            request,
+            endpoint_scope="ar_ai_guide",
+            reason_code="invalid_payload",
+            content_length=content_length,
+        )
+        return _guard_error_response(str(exc), status=400)
 
     if clear_requested:
         _save_ar_guide_history(request, [])
-        return JsonResponse({"ok": True})
+        return _json_no_store({"ok": True})
+
+    if content_length > settings.AI_GUARD_MAX_AUDIO_BODY_BYTES:
+        ai_guard.log_ai_abuse(
+            request,
+            endpoint_scope="ar_ai_guide",
+            reason_code="audio_body_too_large",
+            content_length=content_length,
+        )
+        return _guard_error_response("音訊請求過大，請控制在 3 MB 以內。", status=413)
+
+    rate_limit_error = ai_guard.apply_rate_limits(
+        request,
+        ["ar_voice_minute", "ar_voice_hour", "ar_voice_day", "ai_global_day"],
+        endpoint_scope="ar_ai_guide",
+        content_length=content_length,
+        text=manual_text,
+    )
+    if rate_limit_error is not None:
+        rate_limit_error["Cache-Control"] = "no-store, max-age=0"
+        return rate_limit_error
 
     try:
         model_name = _current_ar_guide_model_name(request, requested_model)
     except ValueError as exc:
-        return JsonResponse({"error": str(exc)}, status=400)
+        return _guard_error_response(str(exc), status=400)
 
     transcript = ""
     if request.FILES.get("audio"):
+        upload = request.FILES.get("audio")
+        if upload and upload.size and upload.size > settings.AI_GUARD_MAX_AUDIO_FILE_BYTES:
+            ai_guard.log_ai_abuse(
+                request,
+                endpoint_scope="ar_ai_guide",
+                reason_code="audio_file_too_large",
+                content_length=content_length,
+            )
+            return _guard_error_response("音訊檔案過大，請控制在 3 MB 以內。", status=413)
+
         try:
             audio_bytes, suffix, mime_type = _extract_uploaded_audio(request)
             transcript = _azure_stt(audio_bytes, suffix, mime_type)
         except ValueError as exc:
-            return JsonResponse({"error": str(exc)}, status=400)
+            ai_guard.log_ai_abuse(
+                request,
+                endpoint_scope="ar_ai_guide",
+                reason_code="invalid_audio_payload",
+                content_length=content_length,
+            )
+            return _guard_error_response(str(exc), status=400)
         except RuntimeError as exc:
             logger.warning("AR guide STT failed: %s", exc)
-            return JsonResponse({"error": str(exc)}, status=500)
+            return _guard_error_response(str(exc), status=500)
     else:
         transcript = manual_text
 
     if not transcript:
-        return JsonResponse({"error": "缺少可辨識的語音或文字內容。"}, status=400)
+        ai_guard.log_ai_abuse(
+            request,
+            endpoint_scope="ar_ai_guide",
+            reason_code="empty_transcript",
+            content_length=content_length,
+        )
+        return _guard_error_response("缺少可辨識的語音或文字內容。", status=400)
+
+    text_error, normalized_transcript = _validate_and_normalize_ai_text_request(
+        request,
+        endpoint_scope="ar_ai_guide",
+        text=transcript,
+        endpoint_type=ai_guard.AR_VOICE_ENDPOINT_TYPE,
+        content_length=content_length,
+    )
+    if text_error is not None:
+        return text_error
+    transcript = normalized_transcript
 
     request.session[AR_GUIDE_MODEL_SESSION_KEY] = model_name
     history = _get_ar_guide_history(request)
@@ -1811,14 +2110,18 @@ def ar_ai_guide_api(request):
         )
     except Exception as exc:
         logger.exception("AR guide LLM call failed: %s", exc)
-        return JsonResponse({"error": f"AI 模型呼叫失敗：{exc}"}, status=500)
+        return _guard_error_response(f"AI 模型呼叫失敗：{exc}", status=500)
+
+    answer = _limit_ar_answer(answer)
+    if not answer:
+        return _guard_error_response("AI 導覽目前沒有產生可播報的內容。", status=500)
 
     history.append({"role": "user", "content": transcript})
     history.append({"role": "assistant", "content": answer})
     _save_ar_guide_history(request, history)
 
     audio_url = _azure_tts_data_url(answer)
-    return JsonResponse(
+    return _json_no_store(
         {
             "transcript": transcript,
             "text": answer,

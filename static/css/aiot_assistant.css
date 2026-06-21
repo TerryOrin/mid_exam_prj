@@ -289,9 +289,14 @@
 .aiot-composer {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
   gap: 0.85rem;
   padding-top: 1rem;
   border-top: 1px solid rgba(18, 84, 94, 0.08);
+}
+
+.aiot-composer__field {
+  min-width: 0;
 }
 
 .aiot-composer input {
@@ -306,6 +311,21 @@
   outline: none;
   border-color: #58a9bb;
   box-shadow: 0 0 0 3px rgba(36, 157, 174, 0.12);
+}
+
+.aiot-composer__meta {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 0.35rem;
+}
+
+.aiot-composer__counter {
+  font-size: 0.78rem;
+  color: #5c7270;
+}
+
+.aiot-composer__counter.is-limit {
+  color: #9b5d16;
 }
 
 @media (max-width: 991px) {

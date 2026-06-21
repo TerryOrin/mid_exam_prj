@@ -4,6 +4,8 @@ import wave
 from datetime import timedelta
 from unittest.mock import ANY, patch
 
+from django.core.cache import caches
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import RequestFactory, TestCase, override_settings
 from django.urls import reverse
 from django.utils import timezone
@@ -124,6 +126,11 @@ class AzureSpeechHttpTests(TestCase):
 
 class ChatbotApiTests(TestCase):
     def setUp(self):
+        for alias in ("default", "ai_rate_limit"):
+            try:
+                caches[alias].clear()
+            except Exception:  # noqa: BLE001
+                continue
         Event.objects.create(
             title="春季導覽活動",
             slug="spring-tour",
@@ -193,9 +200,23 @@ class ChatbotApiTests(TestCase):
         payload = response.json()
         self.assertTrue(payload["redirect_url"].endswith("/stories/usr-team-record/"))
 
+    @override_settings(GEMINI_API_KEY="fake-key")
+    @patch("google.genai.Client")
+    def test_chatbot_rejects_repetition_spam_before_provider_call(self, mock_client):
+        response = self._post_chat("哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈")
+
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("簡短問題", response.json()["error"])
+        mock_client.assert_not_called()
+
 
 class AiGuideChatTests(TestCase):
     def setUp(self):
+        for alias in ("default", "ai_rate_limit"):
+            try:
+                caches[alias].clear()
+            except Exception:  # noqa: BLE001
+                continue
         self.factory = RequestFactory()
         Event.objects.create(
             title="春季導覽活動",
@@ -327,6 +348,60 @@ class AiGuideChatTests(TestCase):
         self.assertIn("/aiot-water-assistant/", route_rules)
         self.assertIn("/iot-war-room/", route_rules)
 
+    @patch("core.views._call_deepseek_ai_guide")
+    def test_ai_guide_chat_rejects_large_code_payload_before_model(self, mock_call):
+        code_payload = (
+            "```javascript\n"
+            "const dashboard = [];\n"
+            "function renderPanel() {\n"
+            "  console.log('hello');\n"
+            "  const query = \"SELECT * FROM pond_readings\";\n"
+            "  return fetch('/api/data').then((resp) => resp.json());\n"
+            "}\n"
+            "npm install chart.js\n"
+            "pip install django\n"
+            "</script>\n"
+            "```"
+        ) * 2 + "const alpha = beta && gamma;\nSELECT * FROM logs;\n"
+
+        response = self._post_chat(code_payload)
+
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("技術 payload", response.json()["error"])
+        mock_call.assert_not_called()
+
+    @patch("core.views._call_deepseek_ai_guide")
+    def test_ai_guide_chat_rejects_repetition_spam_before_model(self, mock_call):
+        response = self._post_chat("哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈")
+
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("簡短問題", response.json()["error"])
+        mock_call.assert_not_called()
+
+    @patch("core.views._call_deepseek_ai_guide")
+    def test_ai_guide_chat_rejects_601_chars_before_model(self, mock_call):
+        response = self._post_chat("水" * 601)
+
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("600 字元以內", response.json()["error"])
+        mock_call.assert_not_called()
+
+    @patch(
+        "core.views._call_deepseek_ai_guide",
+        return_value='{"reply_text":"可以到 AR 導覽頁看看。","suggested_action":{"has_action":true,"button_label":"前往 AR 導覽","url":"/ar/"}}',
+    )
+    def test_ai_guide_chat_rate_limits_seventh_request(self, mock_call):
+        for _ in range(6):
+            response = self._post_chat("水井村有哪些 AR 體驗站？")
+            self.assertEqual(response.status_code, 200)
+
+        blocked = self._post_chat("水井村有哪些 AR 體驗站？")
+
+        self.assertEqual(blocked.status_code, 429)
+        self.assertTrue(blocked.headers.get("Retry-After"))
+        self.assertIn("操作過於頻繁", blocked.json()["error"])
+        self.assertEqual(mock_call.call_count, 6)
+
 
 class ArGuidePageTests(TestCase):
     def test_ar_guide_page_renders(self):
@@ -343,6 +418,13 @@ class ArGuidePageTests(TestCase):
 
 
 class ArGuideApiTests(TestCase):
+    def setUp(self):
+        for alias in ("default", "ai_rate_limit"):
+            try:
+                caches[alias].clear()
+            except Exception:  # noqa: BLE001
+                continue
+
     @patch("core.views._azure_tts_data_url", return_value="data:audio/wav;base64,ZmFrZQ==")
     @patch("core.views.shared_llm.direct_chat", return_value="這是中文導覽回覆")
     def test_ar_guide_api_uses_selected_model(self, mock_direct_chat, mock_tts):
@@ -382,6 +464,42 @@ class ArGuideApiTests(TestCase):
 
         self.assertEqual(response.status_code, 400)
         self.assertIn("Unsupported model", response.json()["error"])
+
+    @patch("core.views._azure_stt")
+    def test_ar_guide_api_rejects_audio_larger_than_3mb_before_stt(self, mock_stt):
+        oversized_audio = SimpleUploadedFile(
+            "speech.wav",
+            b"x" * (3 * 1024 * 1024 + 1),
+            content_type="audio/wav",
+        )
+
+        response = self.client.post(reverse("ar_ai_guide_api"), data={"audio": oversized_audio})
+
+        self.assertIn(response.status_code, {400, 413})
+        self.assertIn("3 MB", response.json()["error"])
+        mock_stt.assert_not_called()
+
+    @patch("core.views._azure_tts_data_url")
+    @patch("core.views._call_llm_for_ar")
+    @patch("core.views._azure_stt", return_value="哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈")
+    @patch("core.views._extract_uploaded_audio", return_value=(b"wav", ".wav", "audio/wav"))
+    def test_ar_guide_api_rejects_spam_transcript_before_llm_and_tts(
+        self,
+        mock_extract,
+        mock_stt,
+        mock_call_llm,
+        mock_tts,
+    ):
+        audio_file = SimpleUploadedFile("speech.wav", b"fake-bytes", content_type="audio/wav")
+
+        response = self.client.post(reverse("ar_ai_guide_api"), data={"audio": audio_file})
+
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("簡短問題", response.json()["error"])
+        mock_extract.assert_called_once()
+        mock_stt.assert_called_once()
+        mock_call_llm.assert_not_called()
+        mock_tts.assert_not_called()
 
 
 class IotWarRoomTests(TestCase):

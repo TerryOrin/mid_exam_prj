@@ -113,11 +113,15 @@ const STATE = {
   mediaMimeType: "",
   mediaChunks: [],
   recordingTimeoutId: 0,
+  recordingWarningTimeoutId: 0,
   fallbackCameraStream: null,
   ignoreMouseUntil: 0,
   arIotPanelBound: false,
   sceneLoadedLogged: false,
 };
+
+const AR_RECORDING_WARNING_MS = 20000;
+const AR_RECORDING_MAX_MS = 25000;
 
 function setArStatus(state, label) {
   const immersive = DOM.arImmersive();
@@ -345,9 +349,14 @@ function releaseMicrophoneStream() {
 }
 
 function clearRecordingTimeout() {
-  if (!STATE.recordingTimeoutId) return;
-  window.clearTimeout(STATE.recordingTimeoutId);
-  STATE.recordingTimeoutId = 0;
+  if (STATE.recordingWarningTimeoutId) {
+    window.clearTimeout(STATE.recordingWarningTimeoutId);
+    STATE.recordingWarningTimeoutId = 0;
+  }
+  if (STATE.recordingTimeoutId) {
+    window.clearTimeout(STATE.recordingTimeoutId);
+    STATE.recordingTimeoutId = 0;
+  }
 }
 
 function mixAudioBufferToMono(audioBuffer) {
@@ -583,13 +592,17 @@ async function startHoldRecording(event) {
 
     recorder.start();
     clearRecordingTimeout();
+    STATE.recordingWarningTimeoutId = window.setTimeout(() => {
+      if (STATE.mediaRecorder !== recorder || recorder.state === "inactive") return;
+      appendStatusMessage("已錄到 20 秒，接近上限，建議準備放開送出。");
+    }, AR_RECORDING_WARNING_MS);
     STATE.recordingTimeoutId = window.setTimeout(() => {
       if (STATE.mediaRecorder !== recorder || recorder.state === "inactive") return;
       STATE.holdActive = false;
-      appendStatusMessage("錄音接近上限，正在送出辨識...");
+      appendStatusMessage("已達 25 秒上限，正在送出辨識...");
       recorder.stop();
       setMicState("busy", "AI 辨識與思考中...");
-    }, 55000);
+    }, AR_RECORDING_MAX_MS);
   } catch (error) {
     clearRecordingTimeout();
     STATE.holdActive = false;

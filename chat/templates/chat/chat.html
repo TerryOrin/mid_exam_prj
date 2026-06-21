@@ -131,7 +131,12 @@
         </div>
 
         <form id="form" class="aiot-composer">
-          <input type="text" id="input" placeholder="輸入問題，例如：2 號池最近 7 天的水質趨勢" autocomplete="off">
+          <div class="aiot-composer__field">
+            <input type="text" id="input" placeholder="輸入問題，例如：2 號池最近 7 天的水質趨勢" autocomplete="off" maxlength="600">
+            <div class="aiot-composer__meta">
+              <span class="aiot-composer__counter" id="input-counter">0 / 600</span>
+            </div>
+          </div>
           <button id="send" type="submit" class="btn btn-brand">送出</button>
         </form>
       </div>
@@ -147,12 +152,14 @@
     const log = document.getElementById("log");
     const form = document.getElementById("form");
     const input = document.getElementById("input");
+    const inputCounter = document.getElementById("input-counter");
     const sendBtn = document.getElementById("send");
     const applyModelBtn = document.getElementById("apply-model");
     const clearHistoryBtn = document.getElementById("clear-history");
     const modelStatus = document.getElementById("model-status");
     const topStatus = document.getElementById("top-status");
     const modelInputs = Array.from(document.querySelectorAll('input[name="model"]'));
+    const maxChars = 600;
 
     function getSelectedModel() {
       const selected = document.querySelector('input[name="model"]:checked');
@@ -175,6 +182,22 @@
       wrapper.querySelector(".aiot-msg__body").textContent = body;
       log.appendChild(wrapper);
       log.scrollTop = log.scrollHeight;
+    }
+
+    function updateCounter() {
+      const length = input.value.length;
+      inputCounter.textContent = `${length} / ${maxChars}`;
+      inputCounter.classList.toggle("is-limit", length >= maxChars);
+      sendBtn.disabled = !input.value.trim() || length > maxChars;
+    }
+
+    function buildRateLimitMessage(response, payload) {
+      const retryAfter = Number(response.headers.get("Retry-After") || 0);
+      if (payload?.error) return payload.error;
+      if (response.status === 429 && retryAfter > 0) {
+        return `操作過於頻繁，請在 ${retryAfter} 秒後再試。`;
+      }
+      return "請求失敗。";
     }
 
     async function refreshDashboard() {
@@ -256,11 +279,16 @@
     form.addEventListener("submit", async function (event) {
       event.preventDefault();
       const message = input.value.trim();
-      if (!message) return;
+      if (!message || message.length > maxChars) {
+        updateCounter();
+        return;
+      }
 
       const selectedModel = getSelectedModel();
       addMsg("你", message, "user");
       input.value = "";
+      updateCounter();
+      input.disabled = true;
       sendBtn.disabled = true;
 
       try {
@@ -274,7 +302,7 @@
         });
         const data = await resp.json();
         if (!resp.ok) {
-          addMsg("系統", data.error || "請求失敗。", "error");
+          addMsg("系統", buildRateLimitMessage(resp, data), "error");
           return;
         }
 
@@ -287,7 +315,9 @@
       } catch (err) {
         addMsg("系統", `連線失敗：${err.message}`, "error");
       } finally {
+        input.disabled = false;
         sendBtn.disabled = false;
+        updateCounter();
         input.focus();
       }
     });
@@ -299,6 +329,8 @@
       form.requestSubmit();
     });
 
+    input.addEventListener("input", updateCounter);
+
     for (const inputNode of modelInputs) {
       inputNode.addEventListener("change", syncModelCardState);
     }
@@ -306,6 +338,7 @@
     applyModelBtn.addEventListener("click", applyModelSelection);
     clearHistoryBtn?.addEventListener("click", clearHistory);
     syncModelCardState();
+    updateCounter();
     log.scrollTop = log.scrollHeight;
   })();
 </script>

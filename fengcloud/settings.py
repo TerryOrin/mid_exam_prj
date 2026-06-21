@@ -192,6 +192,47 @@ MEDIA_ROOT = BASE_DIR / "media"
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
+CACHES = {
+    "default": {
+        "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+        "LOCATION": "fengcloud-default-cache",
+    },
+    "ai_rate_limit": {
+        "BACKEND": (
+            "django.core.cache.backends.locmem.LocMemCache"
+            if DEBUG
+            else "django.core.cache.backends.db.DatabaseCache"
+        ),
+        "LOCATION": (
+            "fengcloud-ai-rate-limit-cache"
+            if DEBUG
+            else "ai_rate_limit_cache"
+        ),
+        "TIMEOUT": None,
+        "OPTIONS": {
+            "MAX_ENTRIES": 5000,
+        },
+    },
+}
+
+AI_RATE_LIMIT_CACHE_ALIAS = "ai_rate_limit"
+AI_GUARD_MAX_JSON_BODY_BYTES = 16 * 1024
+AI_GUARD_MAX_AUDIO_BODY_BYTES = 3 * 1024 * 1024
+AI_GUARD_MAX_AUDIO_FILE_BYTES = 3 * 1024 * 1024
+AI_GUARD_CHAT_MAX_CHARS = 600
+AI_GUARD_AR_TEXT_MAX_CHARS = 350
+AI_GUARD_HISTORY_MAX_MESSAGES = 20
+AI_GUARD_HISTORY_MAX_CHARS = 6000
+AI_GUARD_RATE_LIMITS = {
+    "chat_minute": {"limit": 6, "window_seconds": 60},
+    "chat_hour": {"limit": 25, "window_seconds": 3600},
+    "chat_day": {"limit": 60, "window_seconds": 86400},
+    "ar_voice_minute": {"limit": 3, "window_seconds": 60},
+    "ar_voice_hour": {"limit": 12, "window_seconds": 3600},
+    "ar_voice_day": {"limit": 25, "window_seconds": 86400},
+    "ai_global_day": {"limit": 200, "window_seconds": 86400},
+}
+
 # PythonAnywhere HTTPS 配置（相機和 AR 功能需要 HTTPS）
 if not DEBUG:
     # 生產環境安全設置

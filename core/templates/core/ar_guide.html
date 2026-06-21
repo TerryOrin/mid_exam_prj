@@ -307,6 +307,7 @@
     {# Hold-to-Talk 麥克風按鈕 #}
     <div class="ar-mic-wrap">
       <div class="ar-mic-hint" id="ar-mic-hint">按住說話</div>
+      <div class="ar-mic-limit">單次語音導覽最長 25 秒</div>
       <button
         type="button"
         id="ar-mic-btn"
@@ -345,5 +346,5 @@
   window.__AR_IOT_API_TOKEN    = "{{ iot_api_token|escapejs }}";
   window.__CSRF_TOKEN         = "{{ csrf_token }}";
 </script>
-<script src="{% static 'js/ar-image-tracking.js' %}?v=13" defer></script>
+<script src="{% static 'js/ar-image-tracking.js' %}?v=14" defer></script>
 {% endblock %}

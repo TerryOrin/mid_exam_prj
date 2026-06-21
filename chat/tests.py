@@ -1,6 +1,8 @@
+import json
 from unittest.mock import patch
 
-from django.test import SimpleTestCase, TestCase
+from django.core.cache import caches
+from django.test import SimpleTestCase, TestCase, override_settings
 from django.urls import reverse
 from django.utils import timezone
 
@@ -61,6 +63,11 @@ class LlmConfigTests(SimpleTestCase):
 
 class WaterQualityAssistantTests(TestCase):
     def setUp(self):
+        for alias in ("default", "ai_rate_limit"):
+            try:
+                caches[alias].clear()
+            except Exception:  # noqa: BLE001
+                continue
         self.pond = Pond.objects.create(name="Test Pond", species="Tilapia")
         SensorReading.objects.create(
             pond=self.pond,
@@ -116,3 +123,57 @@ class WaterQualityAssistantTests(TestCase):
         self.assertIn("29.40 °C", prompt)
         self.assertIn("8.10", prompt)
         self.assertIn("5.80 mg/L", prompt)
+
+    @patch("chat.views.llm.chat_with_system_prompt")
+    def test_chat_api_rejects_large_code_payload_before_llm_call(self, mock_chat):
+        code_payload = (
+            "```python\n"
+            "from pathlib import Path\n"
+            "def run_script():\n"
+            "    print('hello world')\n"
+            "    return Path('data.json').read_text()\n"
+            "pip install django\n"
+            "SELECT * FROM pond_readings;\n"
+            "```"
+        ) * 3
+
+        response = self.client.post(
+            reverse("chat:chat-api"),
+            data=json.dumps({"message": code_payload}),
+            content_type="application/json",
+        )
+
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("技術 payload", response.json()["error"])
+        mock_chat.assert_not_called()
+
+    @patch("chat.views.llm.chat_with_system_prompt", return_value="收到，目前先持續觀察。")
+    @override_settings(
+        AI_GUARD_RATE_LIMITS={
+            "chat_minute": {"limit": 60, "window_seconds": 60},
+            "chat_hour": {"limit": 120, "window_seconds": 3600},
+            "chat_day": {"limit": 240, "window_seconds": 86400},
+            "ar_voice_minute": {"limit": 3, "window_seconds": 60},
+            "ar_voice_hour": {"limit": 12, "window_seconds": 3600},
+            "ar_voice_day": {"limit": 25, "window_seconds": 86400},
+            "ai_global_day": {"limit": 400, "window_seconds": 86400},
+        }
+    )
+    def test_chat_api_trims_history_to_recent_10_rounds_and_6000_chars(self, mock_chat):
+        for index in range(20):
+            message = (
+                f"第 {index + 1} 輪請分析魚塭水質與增氧建議，"
+                "我想知道溫度、pH、溶氧、巡池安排與投餌節奏。"
+            )
+            response = self.client.post(
+                reverse("chat:chat-api"),
+                data=json.dumps({"message": message}),
+                content_type="application/json",
+            )
+            self.assertEqual(response.status_code, 200)
+
+        history = mock_chat.call_args.kwargs["history"]
+        total_chars = sum(len(item["content"]) for item in history)
+
+        self.assertLessEqual(len(history), 20)
+        self.assertLessEqual(total_chars, 6000)

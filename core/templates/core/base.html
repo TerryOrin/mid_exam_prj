@@ -112,7 +112,12 @@
       <button type="button" class="chat-quick__item" data-question="我想使用 AIOT 水質助手。">AIOT 助手</button>
     </div>
     <div class="chat-input">
-      <input type="text" id="chatInput" placeholder="例如：帶我看看 IoT 戰情室">
+      <div class="chat-input__field">
+        <input type="text" id="chatInput" placeholder="例如：帶我看看 IoT 戰情室" maxlength="600">
+        <div class="chat-input__meta">
+          <span class="chat-input__counter" id="chatInputCounter">0 / 600</span>
+        </div>
+      </div>
       <button class="btn btn-brand btn-sm" id="chatSendBtn">送出</button>
     </div>
   </div>
@@ -127,9 +132,11 @@
     const closeBtn = document.getElementById("chatCloseBtn");
     const sendBtn = document.getElementById("chatSendBtn");
     const input = document.getElementById("chatInput");
+    const inputCounter = document.getElementById("chatInputCounter");
     const log = document.getElementById("chatLog");
     const quick = document.getElementById("chatQuick");
     const csrf = document.querySelector('meta[name="csrf-token"]')?.content || "";
+    const maxChars = 600;
 
     let isSending = false;
 
@@ -207,13 +214,37 @@
         button.disabled = busy;
       });
       panel?.setAttribute("aria-busy", busy ? "true" : "false");
+      if (!busy) updateCounter();
+    }
+
+    function updateCounter() {
+      if (!input || !inputCounter) return;
+      const length = input.value.length;
+      inputCounter.textContent = `${length} / ${maxChars}`;
+      inputCounter.classList.toggle("is-limit", length >= maxChars);
+      if (!isSending) {
+        sendBtn.disabled = !input.value.trim() || length > maxChars;
+      }
+    }
+
+    function buildRateLimitMessage(response, payload) {
+      const retryAfter = Number(response.headers.get("Retry-After") || 0);
+      if (payload?.error) return payload.error;
+      if (response.status === 429 && retryAfter > 0) {
+        return `操作過於頻繁，請在 ${retryAfter} 秒後再試。`;
+      }
+      return "導覽助手暫時無法回應。";
     }
 
     async function send(rawText) {
       if (isSending) return;
       const text = (rawText || input.value || "").trim();
-      if (!text) return;
+      if (!text || text.length > maxChars) {
+        updateCounter();
+        return;
+      }
       input.value = "";
+      updateCounter();
       appendMessage("user", text);
       const waiting = appendThinking();
       setFormBusy(true);
@@ -232,7 +263,7 @@
         });
         const data = await res.json();
         if (!res.ok) {
-          throw new Error(data.error || "導覽助手暫時無法回應。");
+          throw new Error(buildRateLimitMessage(res, data));
         }
         waiting.remove();
         appendMessage(
@@ -274,6 +305,7 @@
     backdrop?.addEventListener("click", () => setPanelState(false));
     closeBtn?.addEventListener("click", () => setPanelState(false));
     sendBtn?.addEventListener("click", send);
+    input?.addEventListener("input", updateCounter);
     input?.addEventListener("keydown", (event) => {
       if (event.key === "Enter") send();
     });
@@ -286,6 +318,7 @@
     document.addEventListener("keydown", (event) => {
       if (event.key === "Escape") setPanelState(false);
     });
+    updateCounter();
     scrollLog(false);
   })();
   </script>

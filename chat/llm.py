@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import logging
 import os
 from dataclasses import dataclass
 
@@ -11,6 +12,7 @@ from . import tools
 MAX_TOOL_LOOPS = 5
 GEMINI_OPENAI_BASE_URL = "https://generativelanguage.googleapis.com/v1beta/openai/"
 DEEPSEEK_OPENAI_BASE_URL = "https://api.deepseek.com"
+usage_logger = logging.getLogger("ai_usage")
 
 
 @dataclass(frozen=True)
@@ -133,21 +135,69 @@ def _message_text(msg) -> str:
     return ""
 
 
-def _completion_request_kwargs(model: ModelConfig, messages: list[dict]) -> dict:
+def _completion_request_kwargs(
+    model: ModelConfig,
+    messages: list[dict],
+    *,
+    max_output_tokens: int | None = None,
+    temperature: float | None = None,
+) -> dict:
     kwargs = {
         "model": model.key,
         "messages": messages,
     }
+    if max_output_tokens is not None:
+        kwargs["max_tokens"] = int(max_output_tokens)
+    if temperature is not None:
+        kwargs["temperature"] = float(temperature)
     if model.provider == "deepseek":
         kwargs["reasoning_effort"] = "high"
         kwargs["extra_body"] = {"thinking": {"type": "enabled"}}
     return kwargs
 
 
-def _tool_completion_request_kwargs(model: ModelConfig, messages: list[dict]) -> dict:
-    kwargs = _completion_request_kwargs(model, messages)
+def _tool_completion_request_kwargs(
+    model: ModelConfig,
+    messages: list[dict],
+    *,
+    max_output_tokens: int | None = None,
+    temperature: float | None = None,
+) -> dict:
+    kwargs = _completion_request_kwargs(
+        model,
+        messages,
+        max_output_tokens=max_output_tokens,
+        temperature=temperature,
+    )
     kwargs["tools"] = tools.TOOL_SCHEMAS
     return kwargs
+
+
+def _log_usage(response, *, provider: str, endpoint_scope: str | None) -> None:
+    if not endpoint_scope:
+        return
+
+    try:
+        usage = getattr(response, "usage", None)
+        if usage is None:
+            return
+        if hasattr(usage, "model_dump"):
+            usage = usage.model_dump()
+        if not isinstance(usage, dict):
+            return
+
+        usage_logger.info(
+            "llm_usage",
+            extra={
+                "provider": provider,
+                "endpoint_scope": endpoint_scope,
+                "input_tokens": usage.get("prompt_tokens"),
+                "output_tokens": usage.get("completion_tokens"),
+                "total_tokens": usage.get("total_tokens"),
+            },
+        )
+    except Exception:  # noqa: BLE001
+        return
 
 
 def direct_chat(
@@ -156,6 +206,9 @@ def direct_chat(
     system_prompt: str,
     history: list[dict] | None = None,
     model_name: str | None = None,
+    max_output_tokens: int | None = None,
+    temperature: float | None = None,
+    usage_scope: str | None = None,
 ) -> str:
     messages: list[dict] = [{"role": "system", "content": system_prompt}]
     if history:
@@ -164,7 +217,15 @@ def direct_chat(
 
     model = resolve_model(model_name)
     client = _client(model)
-    response = client.chat.completions.create(**_completion_request_kwargs(model, messages))
+    response = client.chat.completions.create(
+        **_completion_request_kwargs(
+            model,
+            messages,
+            max_output_tokens=max_output_tokens,
+            temperature=temperature,
+        )
+    )
+    _log_usage(response, provider=model.provider, endpoint_scope=usage_scope)
     text = _message_text(response.choices[0].message).strip()
     if not text:
         raise RuntimeError("The model did not return a final answer.")
@@ -190,6 +251,9 @@ def chat_with_system_prompt(
     system_prompt: str,
     history: list[dict] | None = None,
     model_name: str | None = None,
+    max_output_tokens: int | None = None,
+    temperature: float | None = None,
+    usage_scope: str | None = None,
 ) -> str:
     messages: list[dict] = [{"role": "system", "content": system_prompt}]
     if history:
@@ -200,7 +264,15 @@ def chat_with_system_prompt(
     client = _client(model)
 
     for _ in range(MAX_TOOL_LOOPS):
-        response = client.chat.completions.create(**_tool_completion_request_kwargs(model, messages))
+        response = client.chat.completions.create(
+            **_tool_completion_request_kwargs(
+                model,
+                messages,
+                max_output_tokens=max_output_tokens,
+                temperature=temperature,
+            )
+        )
+        _log_usage(response, provider=model.provider, endpoint_scope=usage_scope)
         msg = response.choices[0].message
 
         if not msg.tool_calls:
