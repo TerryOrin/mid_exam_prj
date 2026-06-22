@@ -8,3 +8,4 @@ httpx>=0.28,<1
 msgpack
 requests>=2.31
 pydub>=0.25
+audioop-lts; python_version>="3.13"

@@ -132,6 +132,21 @@
     vr-mode-ui="enabled: false"
     device-orientation-permission-ui="enabled: false"
     embedded>
+    {# ── A-Frame Assets（影片必須放在 a-assets 內才能被 a-video 以 ID 引用） ── #}
+    <a-assets>
+      {% for stop in ar_stops %}
+      <video
+        id="ar-video-{{ forloop.counter }}"
+        class="ar-source-video"
+        data-target-index="{{ stop.target_index }}"
+        data-target-title="{{ stop.title }}"
+        data-target-badge="{{ stop.badge }}"
+        data-target-copy="{{ stop.mission }}"
+        data-target-filename="{{ stop.video_filename }}"
+        src="{% static stop.video %}"
+        preload="auto" loop muted playsinline webkit-playsinline crossorigin="anonymous"></video>
+      {% endfor %}
+    </a-assets>
     <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
     {# AR 影片覆蓋 Entity（MindAR 觸發） #}
     {% for stop in ar_stops %}
@@ -213,20 +228,7 @@
     </a-entity>
     {% endfor %}
   </a-scene>
-  <div class="ar-video-reservoir" hidden aria-hidden="true">
-      {% for stop in ar_stops %}
-      <video
-        id="ar-video-{{ forloop.counter }}"
-        class="ar-source-video"
-        data-target-index="{{ stop.target_index }}"
-        data-target-title="{{ stop.title }}"
-        data-target-badge="{{ stop.badge }}"
-        data-target-copy="{{ stop.mission }}"
-        data-target-filename="{{ stop.video_filename }}"
-        src="{% static stop.video %}"
-        preload="metadata" loop muted playsinline webkit-playsinline></video>
-      {% endfor %}
-  </div>
+  {# 影片已移入 <a-assets> 內（見上方），此處保留為空以保持結構完整 #}
   {% else %}
   {# .mind 檔不存在時的 fallback：顯示相機畫面 #}
   <video id="ar-camera-fallback" class="ar-camera-fallback" autoplay playsinline muted></video>
@@ -346,5 +348,5 @@
   window.__AR_IOT_API_TOKEN    = "{{ iot_api_token|escapejs }}";
   window.__CSRF_TOKEN         = "{{ csrf_token }}";
 </script>
-<script src="{% static 'js/ar-image-tracking.js' %}?v=14" defer></script>
+<script src="{% static 'js/ar-image-tracking.js' %}?v=15" defer></script>
 {% endblock %}

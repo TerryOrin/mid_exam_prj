@@ -988,14 +988,20 @@ function bindArSceneEvents() {
   const scene = DOM.arScene();
   if (!scene) return;
 
-  if (scene.hasLoaded && !STATE.sceneLoadedLogged) {
-    console.log("[AR] scene loaded");
-    STATE.sceneLoadedLogged = true;
+  if (scene.hasLoaded) {
+    if (!STATE.sceneLoadedLogged) {
+      console.log("[AR] scene loaded");
+      STATE.sceneLoadedLogged = true;
+    }
+    // scene 已經載入完成，直接設置 IoT 面板組件
+    setupArIotPanel();
   } else {
     scene.addEventListener("loaded", () => {
       if (STATE.sceneLoadedLogged) return;
       console.log("[AR] scene loaded");
       STATE.sceneLoadedLogged = true;
+      // scene 載入完成後再設置 IoT 面板組件
+      setupArIotPanel();
     }, { once: true });
   }
 
@@ -1007,6 +1013,8 @@ function bindArSceneEvents() {
     }
     STATE.sceneReady = true;
     setArStatus("ready", "掃描中");
+    // MindAR 就緒後再次確認 IoT 面板已正確連結
+    setupArIotPanel();
   });
 
   scene.addEventListener("arError", (event) => {
